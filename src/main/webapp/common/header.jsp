@@ -21,8 +21,8 @@
     </div>
 
     <div class="auth-actions">
-      <a class="btn btn-ghost" href="${pageContext.request.contextPath}/page/login.jsp">Đăng nhập</a>
-      <a class="btn btn-primary" href="${pageContext.request.contextPath}/page/register.jsp">Đăng ký</a>
+      <a class="btn btn-ghost" href="${pageContext.request.contextPath}/login">Đăng nhập</a>
+      <a class="btn btn-primary" href="${pageContext.request.contextPath}/register">Đăng ký</a>
     </div>
 
     <button class="menu-toggle" type="button">
