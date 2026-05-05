@@ -20,6 +20,12 @@
       </nav>
     </div>
 
+    <form class="header-search" id="headerSearch">
+      <span class="material-symbols-outlined">search</span>
+      <input type="search" placeholder="Tìm kiếm tài liệu...">
+      <button class="btn btn-primary" type="submit">Tìm</button>
+    </form>
+
     <div class="auth-actions">
       <a class="btn btn-ghost" href="${pageContext.request.contextPath}/login">Đăng nhập</a>
       <a class="btn btn-primary" href="${pageContext.request.contextPath}/register">Đăng ký</a>

@@ -3,7 +3,9 @@
   const mainNav = document.querySelector(".main-nav");
   const authActions = document.querySelector(".auth-actions");
   const searchForm = document.querySelector("#homeSearch");
+  const headerSearchForm = document.querySelector("#headerSearch");
   const searchInput = document.querySelector("#searchInput");
+  const headerSearchInput = headerSearchForm ? headerSearchForm.querySelector("input") : null;
   const tags = document.querySelectorAll(".tag");
   const cards = document.querySelectorAll(".document-card");
   const backToTop = document.querySelector(".back-to-top");
@@ -52,7 +54,21 @@
       const activeTag = document.querySelector(".tag.active");
       applyFilter(activeTag ? activeTag.dataset.topic : "all", searchInput.value);
     });
+    if (headerSearchForm && headerSearchInput) {
+      headerSearchForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        const activeTag = document.querySelector(".tag.active");
+        applyFilter(activeTag ? activeTag.dataset.topic : "all", headerSearchInput.value);
+        document.querySelector("#documentGrid").scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+
+      headerSearchInput.addEventListener("input", function () {
+        const activeTag = document.querySelector(".tag.active");
+        applyFilter(activeTag ? activeTag.dataset.topic : "all", headerSearchInput.value);
+      });
+    }
   }
+
 
   if (backToTop) {
     window.addEventListener("scroll", function () {
