@@ -127,6 +127,18 @@
             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
             <input class="pl-10 pr-4 py-2 bg-slate-50 border-none rounded-full w-64 text-sm focus:ring-2 focus:ring-primary/20" placeholder="Tìm kiếm tài liệu..." type="text"/>
         </div>
+<%
+    Object loggedInUser = session.getAttribute("authUser");
+    if (loggedInUser == null) {
+        loggedInUser = session.getAttribute("adminUser");
+    }
+%>
+<% if (loggedInUser == null) { %>
+        <div class="flex items-center gap-3">
+            <a href="${pageContext.request.contextPath}/page/user/login.jsp" class="px-4 py-2 text-slate-500 font-medium hover:text-blue-600 active:scale-95 transition-transform duration-150 inline-block text-center">Đăng nhập</a>
+            <a href="${pageContext.request.contextPath}/page/user/register.jsp" class="px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all active:scale-95 inline-block text-center">Đăng ký</a>
+        </div>
+<% } else { %>
         <div class="flex items-center gap-3">
             <button class="p-2 text-slate-500 hover:text-blue-600 transition-colors duration-200">
                 <span class="material-symbols-outlined">notifications</span>
@@ -134,10 +146,11 @@
             <button class="p-2 text-slate-500 hover:text-blue-600 transition-colors duration-200">
                 <span class="material-symbols-outlined">settings</span>
             </button>
-            <div class="w-8 h-8 rounded-full overflow-hidden border border-slate-200 cursor-pointer">
+            <a href="${pageContext.request.contextPath}/page/user/profile.jsp" class="w-8 h-8 rounded-full overflow-hidden border border-slate-200 cursor-pointer inline-block">
                 <img alt="User avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6Sm4Wwf37q9lf35z5TmeY6HJS_6wxGrNKjlhv4LI43ivt8NdxWrCZwRHs0kfU8d_YqUfc9rQn5v_8at_4Nd1z43Qn48vkZ_UMuwBfz2ICkVcOdOponfwWibINdVdBisSOF8u-_-IJqUbwkmsk8GqaJbfh2pkpnzOBnk4wS-FcOwP5wFdOZTmGemZhv51swvomej2xICs0PSxAayUiI2hsu-8blVlTSfN89ZBXjjHnkCaa0ZZazQEmF8g38DVZhyv41EF3T7t6ojnC"/>
-            </div>
+            </a>
         </div>
+<% } %>
     </div>
 </header>
 <!-- Main Content -->
