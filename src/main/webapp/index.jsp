@@ -7,6 +7,10 @@
 <body>
 <h1>WebShareDocument</h1>
 <br/>
+<a href="page/login.jsp">Trang đăng nhập người dùng</a>
+<br/>
+<a href="page/register.jsp">Trang đăng ký người dùng</a>
+<br/>
 <a href="page/overview.jsp">Vào trang quản trị</a>
 </body>
 </html>
