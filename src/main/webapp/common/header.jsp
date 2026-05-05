@@ -16,7 +16,7 @@
       <nav class="main-nav">
         <a class="<%= isHomePage ? "active" : "" %>" href="${pageContext.request.contextPath}/page/home.jsp">Trang chủ</a>
         <a class="<%= isDocumentsPage ? "active" : "" %>" href="${pageContext.request.contextPath}/page/documents.jsp">Tài liệu</a>
-        <a class="<%= isCategoryPage ? "active" : "" %>" href="${pageContext.request.contextPath}/page/category.jsp">Danh mục</a>
+        <a class="<%= isCategoryPage ? "active" : "" %>" href="${pageContext.request.contextPath}/page/category-admin.jsp">Danh mục</a>
       </nav>
     </div>
 
