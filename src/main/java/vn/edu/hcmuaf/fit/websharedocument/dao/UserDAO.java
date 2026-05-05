@@ -13,14 +13,15 @@ public class UserDAO {
     /**
      * Xác thực đăng nhập cho người dùng thường.
      */
-    public User loginUser(String email, String password) {
-        String sql = "SELECT * FROM users WHERE email = ? AND password = ? AND role = 'user' AND is_active = 1";
+    public User loginUser(String identifier, String password) {
+        String sql = "SELECT * FROM users WHERE (email = ? OR username = ?) AND password = ? AND is_active = 1";
 
         try (Connection conn = DBConnect.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setString(1, email);
-            ps.setString(2, password); // Cần mã hóa password trong thực tế
+            ps.setString(1, identifier);
+            ps.setString(2, identifier);
+            ps.setString(3, password); // Cần mã hóa password trong thực tế
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
