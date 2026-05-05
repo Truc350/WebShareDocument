@@ -52,6 +52,6 @@ public class LoginServlet extends HttpServlet {
 
         HttpSession session = request.getSession();
         session.setAttribute("authUser", user);
-        response.sendRedirect(request.getContextPath() + "/page/home.jsp");
+        response.sendRedirect(request.getContextPath() + "/page/user/home.jsp");
     }
 }

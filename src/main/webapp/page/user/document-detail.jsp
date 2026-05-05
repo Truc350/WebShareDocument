@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/home.css">
     <script id="tailwind-config">
       tailwind.config = {
         darkMode: "class",
@@ -112,55 +113,15 @@
     </style>
 </head>
 <body class="bg-surface font-body-md text-on-background min-h-screen flex flex-col">
-<!-- TopNavBar -->
-<header class="fixed top-0 z-50 flex items-center justify-between w-full h-16 px-6 lg:px-8 max-w-[1280px] mx-auto left-0 right-0 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shadow-[0_4px_12px_rgba(0,0,0,0.05)] font-manrope antialiased">
-    <div class="flex items-center gap-8">
-        <a href="${pageContext.request.contextPath}/" class="text-2xl font-extrabold tracking-tight text-blue-700 dark:text-blue-500 cursor-pointer active:scale-95 transition-transform">DocShare</a>
-        <nav class="hidden md:flex items-center gap-6">
-            <a class="text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 font-semibold transition-colors duration-200" href="#">Trang chủ</a>
-            <a class="text-slate-500 dark:text-slate-400 font-medium hover:text-blue-600 dark:hover:text-blue-300 transition-colors duration-200" href="#">Tài liệu</a>
-            <a class="text-slate-500 dark:text-slate-400 font-medium hover:text-blue-600 dark:hover:text-blue-300 transition-colors duration-200" href="#">Danh mục</a>
-        </nav>
-    </div>
-    <div class="flex items-center gap-4">
-        <div class="relative hidden lg:block">
-            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-            <input class="pl-10 pr-4 py-2 bg-slate-50 border-none rounded-full w-64 text-sm focus:ring-2 focus:ring-primary/20" placeholder="Tìm kiếm tài liệu..." type="text"/>
-        </div>
-<%
-    Object loggedInUser = session.getAttribute("authUser");
-    if (loggedInUser == null) {
-        loggedInUser = session.getAttribute("adminUser");
-    }
-%>
-<% if (loggedInUser == null) { %>
-        <div class="flex items-center gap-3">
-            <a href="${pageContext.request.contextPath}/page/user/login.jsp" class="px-4 py-2 text-slate-500 font-medium hover:text-blue-600 active:scale-95 transition-transform duration-150 inline-block text-center">Đăng nhập</a>
-            <a href="${pageContext.request.contextPath}/page/user/register.jsp" class="px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all active:scale-95 inline-block text-center">Đăng ký</a>
-        </div>
-<% } else { %>
-        <div class="flex items-center gap-3">
-            <button class="p-2 text-slate-500 hover:text-blue-600 transition-colors duration-200">
-                <span class="material-symbols-outlined">notifications</span>
-            </button>
-            <button class="p-2 text-slate-500 hover:text-blue-600 transition-colors duration-200">
-                <span class="material-symbols-outlined">settings</span>
-            </button>
-            <a href="${pageContext.request.contextPath}/page/user/profile.jsp" class="w-8 h-8 rounded-full overflow-hidden border border-slate-200 cursor-pointer inline-block">
-                <img alt="User avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6Sm4Wwf37q9lf35z5TmeY6HJS_6wxGrNKjlhv4LI43ivt8NdxWrCZwRHs0kfU8d_YqUfc9rQn5v_8at_4Nd1z43Qn48vkZ_UMuwBfz2ICkVcOdOponfwWibINdVdBisSOF8u-_-IJqUbwkmsk8GqaJbfh2pkpnzOBnk4wS-FcOwP5wFdOZTmGemZhv51swvomej2xICs0PSxAayUiI2hsu-8blVlTSfN89ZBXjjHnkCaa0ZZazQEmF8g38DVZhyv41EF3T7t6ojnC"/>
-            </a>
-        </div>
-<% } %>
-    </div>
-</header>
+    <jsp:include page="/common/header.jsp" />
 <!-- Main Content -->
 <main class="mt-16 flex-grow">
     <div class="max-w-[1280px] mx-auto px-6 lg:px-8 py-8">
         <!-- Breadcrumbs -->
         <nav class="flex items-center gap-2 text-label-sm text-secondary mb-6">
-            <a class="hover:text-primary" href="#">Trang chủ</a>
+            <a class="hover:text-primary" href="${pageContext.request.contextPath}/page/user/home.jsp">Trang chủ</a>
             <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-            <a class="hover:text-primary" href="#">Tài liệu học tập</a>
+            <a class="hover:text-primary" href="${pageContext.request.contextPath}/page/user/documents.jsp">Tài liệu học tập</a>
             <span class="material-symbols-outlined text-[16px]">chevron_right</span>
             <span class="text-on-surface font-medium">Giáo trình Kinh tế học vi mô</span>
         </nav>
@@ -341,18 +302,6 @@
         </div>
     </div>
 </main>
-<!-- Footer -->
-<footer class="w-full py-8 mt-auto flex flex-col md:flex-row justify-between items-center px-6 lg:px-8 max-w-[1280px] mx-auto bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 font-manrope text-sm">
-    <div class="mb-4 md:mb-0">
-        <span class="text-lg font-bold text-slate-900 dark:text-white">DocShare</span>
-        <p class="text-slate-500 dark:text-slate-400 mt-1">© 2024 DocShare Inc. All rights reserved.</p>
-    </div>
-    <div class="flex flex-wrap justify-center gap-6">
-        <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors" href="#">Privacy Policy</a>
-        <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors" href="#">Terms of Service</a>
-        <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors" href="#">Security</a>
-        <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors" href="#">Help Center</a>
-    </div>
-</footer>
+    <jsp:include page="/common/footer.jsp" />
 </body>
 </html>

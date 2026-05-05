@@ -8,6 +8,7 @@
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/home.css">
 <script id="tailwind-config">
         tailwind.config = {
           darkMode: "class",
@@ -112,43 +113,7 @@
     </style>
 </head>
 <body class="bg-surface font-body-md text-on-surface">
-<!-- TopNavBar -->
-<header class="bg-white sticky top-0 z-50 shadow-sm border-b border-gray-200">
-<div class="flex items-center justify-between px-6 py-4 max-w-[1200px] mx-auto w-full font-inter text-sm antialiased">
-<div class="flex items-center gap-8">
-<a href="${pageContext.request.contextPath}/" class="text-2xl font-bold tracking-tight text-blue-700">DocShare</a>
-<nav class="hidden md:flex items-center gap-6">
-<a class="text-gray-600 font-medium hover:text-blue-600 transition-colors duration-200" href="${pageContext.request.contextPath}/">Trang chủ</a>
-<a class="text-blue-700 font-semibold border-b-2 border-blue-700 pb-1" href="${pageContext.request.contextPath}/page/user/search.jsp">Tài liệu</a>
-<a class="text-gray-600 font-medium hover:text-blue-600 transition-colors duration-200" href="#">Danh mục</a>
-</nav>
-</div>
-<div class="flex items-center gap-6 flex-1 justify-end">
-<div class="relative w-full max-w-md hidden md:block">
-<input class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all text-body-sm" placeholder="Tìm kiếm tài liệu..." type="text" value="giải tích"/>
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-</div>
-<%
-    Object loggedInUser = session.getAttribute("authUser");
-    if (loggedInUser == null) {
-        loggedInUser = session.getAttribute("adminUser");
-    }
-%>
-<% if (loggedInUser == null) { %>
-<div class="flex items-center gap-3">
-<a href="${pageContext.request.contextPath}/page/user/login.jsp" class="px-4 py-2 text-gray-600 font-medium hover:text-blue-600 active:scale-95 transition-transform duration-150 inline-block text-center">Đăng nhập</a>
-<a href="${pageContext.request.contextPath}/page/user/register.jsp" class="px-5 py-2 bg-primary-container text-white rounded-lg font-semibold hover:bg-primary transition-all active:scale-95 inline-block text-center">Đăng ký</a>
-</div>
-<% } else { %>
-<div class="flex items-center">
-<a href="${pageContext.request.contextPath}/page/user/profile.jsp" class="w-10 h-10 rounded-full overflow-hidden border-2 border-slate-200 cursor-pointer hover:border-primary transition-all inline-block">
-<img alt="User profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/ADBb0ug4CXcMmwegILK4lWj8bWs8v2X_vuMy6-LBRQF1FYynHLUyoHqobkn-VnJQ65peL-tVRoN1SIOoa_I2rS3tvURNOPLHv348rcn73crAbOgD06Faz9LnW6EZrTpuZaU9Ha4OJd_8uTdzsuedks7UzvWGxYNvttn__o0z_RfRd0qusaqa3Re10IIBVWTE1GFr-Mt8BFFRMwNi9QLPpZ86sPBQfrZblcTS6xcgMuOB-osxmIgU9eE_FNgpjFMzZD9kCZ-YHi3X60-Iqw"/>
-</a>
-</div>
-<% } %>
-</div>
-</div>
-</header>
+<jsp:include page="/common/header.jsp" />
 <!-- Main Content Layout -->
 <main class="max-w-[1200px] mx-auto px-6 py-8 flex gap-gutter">
 <!-- Left Sidebar Filter -->
@@ -335,70 +300,6 @@
 </div>
 </div>
 </main>
-<!-- Footer -->
-<footer class="bg-white border-t border-gray-200 mt-20">
-<div class="max-w-[1200px] mx-auto px-6 py-16">
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
-<div class="lg:col-span-2">
-<span class="text-2xl font-bold tracking-tight text-blue-700 block mb-4">DocShare</span>
-<p class="text-on-surface-variant text-body-sm max-w-xs mb-6">
-          Nền tảng chia sẻ và lưu trữ tài liệu học tập hàng đầu cho sinh viên Việt Nam. Kết nối tri thức, nâng tầm tương lai.
-        </p>
-<div class="flex gap-4">
-<a class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-primary-container hover:text-white transition-all" href="#">
-<span class="material-symbols-outlined text-[20px]">public</span>
-</a>
-<a class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-primary-container hover:text-white transition-all" href="#">
-<span class="material-symbols-outlined text-[20px]">mail</span>
-</a>
-<a class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-primary-container hover:text-white transition-all" href="#">
-<span class="material-symbols-outlined text-[20px]">groups</span>
-</a>
-</div>
-</div>
-<div>
-<h4 class="font-bold text-on-surface mb-6">Về DocShare</h4>
-<ul class="flex flex-col gap-4 text-body-sm text-on-surface-variant">
-<li><a class="hover:text-primary transition-colors" href="#">Giới thiệu</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">Tuyển dụng</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">Blog kiến thức</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">Đối tác</a></li>
-</ul>
-</div>
-<div>
-<h4 class="font-bold text-on-surface mb-6">Hỗ trợ</h4>
-<ul class="flex flex-col gap-4 text-body-sm text-on-surface-variant">
-<li><a class="hover:text-primary transition-colors" href="#">Trung tâm trợ giúp</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">Liên hệ hỗ trợ</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">Báo cáo nội dung</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">Câu hỏi thường gặp</a></li>
-</ul>
-</div>
-<div>
-<h4 class="font-bold text-on-surface mb-6">Pháp lý</h4>
-<ul class="flex flex-col gap-4 text-body-sm text-on-surface-variant">
-<li><a class="hover:text-primary transition-colors" href="#">Điều khoản sử dụng</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">Chính sách bảo mật</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">Bản quyền nội dung</a></li>
-</ul>
-</div>
-</div>
-<div class="border-t border-gray-100 pt-12">
-<div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
-<div class="max-w-md w-full">
-<h4 class="font-bold text-on-surface mb-2">Bản tin</h4>
-<p class="text-body-sm text-on-surface-variant mb-4">Nhận cập nhật mới nhất về các tài liệu và tính năng mới.</p>
-<form class="flex gap-2">
-<input class="flex-1 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg focus:outline-none focus:border-primary transition-all text-body-sm" placeholder="Email của bạn" type="email"/>
-<button class="px-6 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-primary-container transition-all active:scale-95" type="submit">Đăng ký</button>
-</form>
-</div>
-<div class="text-body-sm text-on-surface-variant">
-          © 2024 DocShare. All rights reserved.
-        </div>
-</div>
-</div>
-</div>
-</footer>
+<jsp:include page="/common/footer.jsp" />
 <!-- Toast Notifications Stack -->
 </body></html>
