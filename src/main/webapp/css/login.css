@@ -1,18 +1,301 @@
+/* ============================================
+   Material Symbols
+   ============================================ */
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
-
 .material-symbols-filled {
   font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-.error-border {
-  border-color: #E24B4A !important;
+/* ============================================
+   Design Tokens
+   ============================================ */
+:root {
+  --surface:                  #FFFFFF;
+  --surface-container-low:    #EEEEF8;   /* nền trang tím nhạt */
+  --surface-container-lowest: #FFFFFF;   /* card trắng */
+  --outline-variant:          #E2E5EE;
+
+  --primary-container:        #2563EB;   /* xanh nút & link đậm */
+  --primary:                  #2563EB;
+  --on-primary:               #FFFFFF;
+
+  --on-surface:               #111827;
+  --on-surface-variant:       #6B7280;
+
+  --error-custom:             #E24B4A;
+
+  /* Spacing */
+  --stack-lg: 32px;
+  --stack-md: 16px;
+  --stack-sm: 8px;
+  --unit: 6px;
+  --margin-mobile: 16px;
+  --margin-desktop: 40px;
 }
 
+/* ============================================
+   Reset & Base
+   ============================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--surface-container-low);
+  color: var(--on-surface);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================
+   Tailwind custom class map
+   ============================================ */
+.bg-surface                  { background-color: var(--surface) !important; }
+.bg-surface-container-low    { background-color: var(--surface-container-low) !important; }
+.bg-surface-container-lowest { background-color: var(--surface-container-lowest) !important; }
+.bg-primary-container        { background-color: var(--primary-container) !important; }
+
+.text-on-surface         { color: var(--on-surface) !important; }
+.text-on-surface-variant { color: var(--on-surface-variant) !important; }
+.text-primary-container  { color: var(--primary-container) !important; }
+.text-on-primary         { color: var(--on-primary) !important; }
+.text-error-custom       { color: var(--error-custom) !important; }
+
+.border-outline-variant  { border-color: var(--outline-variant) !important; }
+
+/* ============================================
+   Typography
+   ============================================ */
+.font-body-md, .text-body-md {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.font-body-sm, .text-body-sm {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.font-headline-md, .text-headline-md {
+  font-family: 'Manrope', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.font-headline-sm, .text-headline-sm {
+  font-family: 'Manrope', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.font-label-md, .text-label-md {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.font-label-sm, .text-label-sm {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ============================================
+   Spacing utilities
+   ============================================ */
+.p-stack-lg    { padding: var(--stack-lg); }
+.py-stack-lg   { padding-top: 40px; padding-bottom: 40px; }
+.mb-stack-lg   { margin-bottom: 24px; }
+.mb-stack-sm   { margin-bottom: 6px; }
+.mt-stack-md   { margin-top: var(--stack-md); }
+.mt-stack-lg   { margin-top: 20px; }
+.pt-stack-md   { padding-top: var(--stack-md); }
+.space-y-stack-md > * + * { margin-top: 14px; }
+.space-y-unit > * + *     { margin-top: 5px; }
+.px-margin-mobile { padding-left: var(--margin-mobile); padding-right: var(--margin-mobile); }
+@media (min-width: 768px) {
+  .md\:px-margin-desktop { padding-left: var(--margin-desktop); padding-right: var(--margin-desktop); }
+}
+
+/* ============================================
+   Card
+   ============================================ */
+section.rounded-xl {
+  border-radius: 12px !important;
+  border: 1px solid #E4E7EE !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07) !important;
+}
+
+/* ============================================
+   Alert banners
+   ============================================ */
+.alert-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background-color: #FEE2E2;
+  border: 1px solid #FECACA;
+  margin-bottom: 12px;
+}
+.alert-error span.icon  { color: #E24B4A; font-size: 18px; flex-shrink: 0; }
+.alert-error span.msg   { font-size: 13px; color: #B91C1C; font-weight: 500; }
+
+.alert-locked {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background-color: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  margin-bottom: 16px;
+}
+.alert-locked span.icon { color: #6B7280; font-size: 18px; flex-shrink: 0; }
+.alert-locked span.msg  { font-size: 13px; color: #374151; }
+
+/* ============================================
+   Form inputs — có icon bên trái
+   ============================================ */
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input-wrap .input-icon {
+  position: absolute;
+  left: 13px;
+  color: #9CA3AF;
+  font-size: 17px;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  user-select: none;
+}
+.input-wrap input {
+  width: 100%;
+  padding: 10px 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: var(--on-surface);
+  background-color: #fff;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input-wrap input::placeholder { color: #9CA3AF; }
+.input-wrap input:focus {
+  border-color: var(--primary-container);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* password toggle inside input-wrap */
+.input-wrap .pw-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9CA3AF;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+.input-wrap .pw-toggle:hover { color: var(--on-surface-variant); }
+
+/* fallback: bare inputs not in .input-wrap */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="password"] {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: var(--on-surface);
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  padding: 10px 14px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+input::placeholder { color: #9CA3AF; }
+input:focus {
+  border-color: var(--primary-container);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* ============================================
+   Error state
+   ============================================ */
+.error-border {
+  border-color: #E24B4A !important;
+  box-shadow: 0 0 0 3px rgba(226, 75, 74, 0.12) !important;
+}
 .error-message {
   color: #E24B4A;
   font-family: 'Inter', sans-serif;
   font-size: 12px;
   margin-top: 4px;
 }
+
+/* ============================================
+   Submit button
+   ============================================ */
+button[type="submit"] {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px !important;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: background-color 0.15s, transform 0.1s;
+}
+button[type="submit"]:hover  { background-color: #1D4ED8 !important; }
+button[type="submit"]:active { transform: scale(0.98); }
+
+/* ============================================
+   "Quên mật khẩu?" link
+   ============================================ */
+a.forgot-link {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--primary-container);
+  text-decoration: none;
+}
+a.forgot-link:hover { text-decoration: underline; }
+
+/* ============================================
+   Bottom link — "Chưa có tài khoản? Đăng ký"
+   ============================================ */
+.bottom-link {
+  font-size: 13px;
+  color: var(--on-surface-variant);
+}
+.bottom-link a {
+  color: var(--primary-container);
+  font-weight: 600;
+  text-decoration: none;
+}
+.bottom-link a:hover { text-decoration: underline; }
+
+/* ============================================
+   Focus ring helpers
+   ============================================ */
+.focus\:ring-1:focus                { box-shadow: 0 0 0 3px rgba(37,99,235,0.12) !important; }
+.focus\:ring-primary-container:focus { box-shadow: 0 0 0 3px rgba(37,99,235,0.12) !important; }
+.focus\:border-primary-container:focus { border-color: var(--primary-container) !important; }
+
+/* ============================================
+   Misc
+   ============================================ */
+.text-\[32px\] { font-size: 32px; }
+.text-\[20px\] { font-size: 20px; }
+.text-outline  { color: #9CA3AF; }
+a { text-decoration: none; }
+label { font-size: 13px; color: var(--on-surface-variant); display: block; }

@@ -11,6 +11,40 @@ import java.sql.SQLException;
 public class UserDAO {
 
     /**
+     * Xác thực đăng nhập cho người dùng thường.
+     */
+    public User loginUser(String email, String password) {
+        String sql = "SELECT * FROM users WHERE email = ? AND password = ? AND role = 'user' AND is_active = 1";
+
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, email);
+            ps.setString(2, password); // Cần mã hóa password trong thực tế
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    User user = new User();
+                    user.setId(rs.getInt("id"));
+                    user.setUsername(rs.getString("username"));
+                    user.setEmail(rs.getString("email"));
+                    user.setPassword(rs.getString("password"));
+                    user.setFullName(rs.getString("full_name"));
+                    user.setRole(rs.getString("role"));
+                    user.setIsActive(rs.getInt("is_active"));
+                    user.setCreatedAt(rs.getTimestamp("created_at"));
+                    user.setUpdatedAt(rs.getTimestamp("updated_at"));
+                    user.setLastLogin(rs.getTimestamp("last_login"));
+                    return user;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
      * Xác thực đăng nhập cho Admin
      * Mật khẩu có thể cần hash (ví dụ BCrypt) trong thực tế
      */

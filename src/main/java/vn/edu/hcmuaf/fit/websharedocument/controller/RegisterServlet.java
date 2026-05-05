@@ -23,7 +23,7 @@ public class RegisterServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        request.getRequestDispatcher("/page/register.jsp").forward(request, response);
+        request.getRequestDispatcher("/page/user/register.jsp").forward(request, response);
     }
 
     @Override
@@ -41,20 +41,20 @@ public class RegisterServlet extends HttpServlet {
         if (fullName == null || email == null || phone == null || password == null || confirmPassword == null ||
             fullName.isEmpty() || email.isEmpty() || phone.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
             request.setAttribute("error", "Vui lòng điền đầy đủ thông tin!");
-            request.getRequestDispatcher("/page/register.jsp").forward(request, response);
+            request.getRequestDispatcher("/page/user/register.jsp").forward(request, response);
             return;
         }
 
         if (!password.equals(confirmPassword)) {
             request.setAttribute("error", "Mật khẩu xác nhận không khớp!");
-            request.getRequestDispatcher("/page/register.jsp").forward(request, response);
+            request.getRequestDispatcher("/page/user/register.jsp").forward(request, response);
             return;
         }
 
         // Kiểm tra xem số điện thoại (username) hoặc email đã tồn tại chưa
         if (userDAO.checkUserExist(phone, email)) {
             request.setAttribute("error", "Số điện thoại hoặc Email đã được sử dụng!");
-            request.getRequestDispatcher("/page/register.jsp").forward(request, response);
+            request.getRequestDispatcher("/page/user/register.jsp").forward(request, response);
             return;
         }
 
@@ -71,10 +71,10 @@ public class RegisterServlet extends HttpServlet {
         if (isRegistered) {
             // Chuyển hướng sang trang đăng nhập, kèm thông báo thành công
             request.getSession().setAttribute("message", "Đăng ký thành công! Vui lòng đăng nhập.");
-            response.sendRedirect(request.getContextPath() + "/page/login.jsp");
+            response.sendRedirect(request.getContextPath() + "/login");
         } else {
             request.setAttribute("error", "Đăng ký thất bại, vui lòng thử lại sau!");
-            request.getRequestDispatcher("/page/register.jsp").forward(request, response);
+            request.getRequestDispatcher("/page/user/register.jsp").forward(request, response);
         }
     }
 }
