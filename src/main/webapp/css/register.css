@@ -1,0 +1,18 @@
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.material-symbols-filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.error-border {
+  border-color: #E24B4A !important;
+}
+
+.error-message {
+  color: #E24B4A;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  margin-top: 4px;
+}
