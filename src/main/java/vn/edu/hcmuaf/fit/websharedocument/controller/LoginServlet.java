@@ -51,7 +51,13 @@ public class LoginServlet extends HttpServlet {
         userDAO.updateLastLogin(user.getId());
 
         HttpSession session = request.getSession();
-        session.setAttribute("authUser", user);
-        response.sendRedirect(request.getContextPath() + "/page/user/home.jsp");
+        session.setAttribute("authUser", user); // Lưu authUser dùng chung
+        
+        if ("admin".equals(user.getRole())) {
+            session.setAttribute("adminUser", user); // Phục vụ cho AdminFilter
+            response.sendRedirect(request.getContextPath() + "/page/overview.jsp");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/page/user/home.jsp");
+        }
     }
 }
