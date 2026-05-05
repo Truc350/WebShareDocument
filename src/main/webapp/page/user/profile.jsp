@@ -153,9 +153,9 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end gap-1">
-                                        <button class="p-1.5 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0555dd] transition-colors" title="Chỉnh sửa">
+                                        <a href="edit-document.jsp" class="p-1.5 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0555dd] transition-colors block" title="Chỉnh sửa">
                                             <span class="material-symbols-outlined text-[20px]">edit</span>
-                                        </button>
+                                        </a>
                                         <button class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" title="Xóa">
                                             <span class="material-symbols-outlined text-[20px]">delete</span>
                                         </button>
@@ -176,9 +176,9 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end gap-1">
-                                        <button class="p-1.5 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0555dd] transition-colors" title="Chỉnh sửa">
+                                        <a href="edit-document.jsp" class="p-1.5 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0555dd] transition-colors block" title="Chỉnh sửa">
                                             <span class="material-symbols-outlined text-[20px]">edit</span>
-                                        </button>
+                                        </a>
                                         <button class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" title="Xóa">
                                             <span class="material-symbols-outlined text-[20px]">delete</span>
                                         </button>
@@ -199,9 +199,9 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end gap-1">
-                                        <button class="p-1.5 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0555dd] transition-colors" title="Chỉnh sửa">
+                                        <a href="edit-document.jsp" class="p-1.5 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0555dd] transition-colors block" title="Chỉnh sửa">
                                             <span class="material-symbols-outlined text-[20px]">edit</span>
-                                        </button>
+                                        </a>
                                         <button class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" title="Xóa">
                                             <span class="material-symbols-outlined text-[20px]">delete</span>
                                         </button>
@@ -222,9 +222,9 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end gap-1">
-                                        <button class="p-1.5 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0555dd] transition-colors" title="Chỉnh sửa">
+                                        <a href="edit-document.jsp" class="p-1.5 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0555dd] transition-colors block" title="Chỉnh sửa">
                                             <span class="material-symbols-outlined text-[20px]">edit</span>
-                                        </button>
+                                        </a>
                                         <button class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" title="Xóa">
                                             <span class="material-symbols-outlined text-[20px]">delete</span>
                                         </button>
