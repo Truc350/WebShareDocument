@@ -58,7 +58,7 @@
             <p class="eyebrow">KHÁM PHÁ</p>
             <h2>Tài liệu nổi bật nhất</h2>
           </div>
-          <a class="link-more" href="${pageContext.request.contextPath}/page/category-admin.jsp">
+          <a class="link-more" href="${pageContext.request.contextPath}/page/user/category.jsp">
             Xem tất cả
             <span class="material-symbols-outlined">arrow_forward</span>
           </a>
@@ -139,27 +139,27 @@
         </div>
         
         <div class="category-grid">
-          <a href="${pageContext.request.contextPath}/page/category-admin.jsp" class="category-item">
+          <a href="${pageContext.request.contextPath}/page/user/category.jsp" class="category-item">
             <span class="material-symbols-outlined">account_balance</span>
             <strong>Kinh tế</strong>
           </a>
-          <a href="${pageContext.request.contextPath}/page/category-admin.jsp" class="category-item">
+          <a href="${pageContext.request.contextPath}/page/user/category.jsp" class="category-item">
             <span class="material-symbols-outlined">gavel</span>
             <strong>Luật học</strong>
           </a>
-          <a href="${pageContext.request.contextPath}/page/category-admin.jsp" class="category-item">
+          <a href="${pageContext.request.contextPath}/page/user/category.jsp" class="category-item">
             <span class="material-symbols-outlined">developer_board</span>
             <strong>Công nghệ</strong>
           </a>
-          <a href="${pageContext.request.contextPath}/page/category-admin.jsp" class="category-item">
+          <a href="${pageContext.request.contextPath}/page/user/category.jsp" class="category-item">
             <span class="material-symbols-outlined">medical_services</span>
             <strong>Y dược</strong>
           </a>
-          <a href="${pageContext.request.contextPath}/page/category-admin.jsp" class="category-item">
+          <a href="${pageContext.request.contextPath}/page/user/category.jsp" class="category-item">
             <span class="material-symbols-outlined">palette</span>
             <strong>Nghệ thuật</strong>
           </a>
-          <a href="${pageContext.request.contextPath}/page/category-admin.jsp" class="category-item">
+          <a href="${pageContext.request.contextPath}/page/user/category.jsp" class="category-item">
             <span class="material-symbols-outlined">language</span>
             <strong>Ngoại ngữ</strong>
           </a>

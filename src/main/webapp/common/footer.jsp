@@ -3,7 +3,7 @@
   <div class="container">
     <div class="footer-grid">
       <div class="footer-col">
-        <a class="brand" href="${pageContext.request.contextPath}/page/home.jsp">
+        <a class="brand" href="${pageContext.request.contextPath}/page/user/home.jsp">
           <span class="material-symbols-outlined">description</span>
           <strong>DocShare</strong>
         </a>
@@ -17,8 +17,8 @@
       <div class="footer-col">
         <h3>Tài liệu</h3>
         <ul>
-          <li><a href="${pageContext.request.contextPath}/page/documents.jsp">Mới nhất</a></li>
-          <li><a href="${pageContext.request.contextPath}/page/documents.jsp">Tải nhiều nhất</a></li>
+          <li><a href="${pageContext.request.contextPath}/page/user/documents.jsp">Mới nhất</a></li>
+          <li><a href="${pageContext.request.contextPath}/page/user/documents.jsp">Tải nhiều nhất</a></li>
         </ul>
       </div>
 

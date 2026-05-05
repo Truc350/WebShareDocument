@@ -1,13 +1,13 @@
 (function () {
-  const form = document.querySelector("#categorySearch");
-  const keywordInput = document.querySelector("#categoryKeyword");
+  const headerSearchForm = document.querySelector("#headerSearch");
+  const headerSearchInput = headerSearchForm ? headerSearchForm.querySelector("input") : null;
   const cards = Array.from(document.querySelectorAll(".category-item-card"));
   const emptyState = document.querySelector("#emptyCategory");
   const fieldGrid = document.querySelector("#fieldGrid");
   const toggleFields = document.querySelector("#toggleFields");
 
   function applySearch() {
-    const keyword = (keywordInput ? keywordInput.value : "").trim().toLowerCase();
+    const keyword = (headerSearchInput ? headerSearchInput.value : "").trim().toLowerCase();
     let visibleCount = 0;
 
     cards.forEach(function (card) {
@@ -24,21 +24,19 @@
     }
   }
 
-  if (form) {
-    form.addEventListener("submit", function (event) {
+  if (headerSearchForm && headerSearchInput) {
+    headerSearchForm.addEventListener("submit", function (event) {
       event.preventDefault();
       applySearch();
     });
-  }
 
-  if (keywordInput) {
-    keywordInput.addEventListener("input", applySearch);
+    headerSearchInput.addEventListener("input", applySearch);
   }
 
   if (toggleFields && fieldGrid) {
     toggleFields.addEventListener("click", function () {
       const expanded = fieldGrid.classList.toggle("expanded");
-      toggleFields.firstChild.textContent = expanded ? "Thu gọn " : "Xem thêm ";
+      toggleFields.firstChild.textContent = expanded ? "Thu gọn " : "Xem tất cả khoa/ngành học ";
       toggleFields.querySelector(".material-symbols-outlined").textContent = expanded ? "expand_less" : "expand_more";
     });
   }
