@@ -1,0 +1,18 @@
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.active-tab {
+    border-bottom: 2px solid #0555dd;
+    color: #0555dd;
+    font-weight: 600;
+}
+
+.inactive-tab {
+    color: #64748b; /* text-slate-500 */
+    font-weight: 500;
+}
+
+.inactive-tab:hover {
+    color: #0555dd;
+}
