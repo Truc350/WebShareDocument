@@ -22,15 +22,15 @@
       <span class="material-symbols-outlined mr-3 text-white">dashboard</span>
       <span>Tổng quan</span>
     </a>
-    <a class="flex items-center px-6 py-3 text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:pl-8 active:scale-[0.98]" href="${pageContext.request.contextPath}/page/admin.jsp">
+    <a class="flex items-center px-6 py-3 text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:pl-8 active:scale-[0.98]" href="${pageContext.request.contextPath}/page/management-doc.jsp">
       <span class="material-symbols-outlined mr-3">description</span>
       <span>Quản lý Tài liệu</span>
     </a>
-    <a class="flex items-center px-6 py-3 text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:pl-8 active:scale-[0.98]" href="${pageContext.request.contextPath}/page/user.jsp">
+    <a class="flex items-center px-6 py-3 text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:pl-8 active:scale-[0.98]" href="${pageContext.request.contextPath}/page/user-admin.jsp">
       <span class="material-symbols-outlined mr-3">group</span>
       <span>Quản lý Người dùng</span>
     </a>
-    <a class="flex items-center px-6 py-3 text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:pl-8 active:scale-[0.98]" href="${pageContext.request.contextPath}/page/category.jsp">
+    <a class="flex items-center px-6 py-3 text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:pl-8 active:scale-[0.98]" href="${pageContext.request.contextPath}/page/category-admin.jsp">
       <span class="material-symbols-outlined mr-3">category</span>
       <span>Danh mục</span>
     </a>
