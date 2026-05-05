@@ -27,9 +27,22 @@
                     <span class="material-symbols-outlined text-slate-400 mr-2 text-[20px]">search</span>
                     <input type="text" placeholder="Tìm kiếm tài liệu..." class="bg-transparent border-none p-0 text-sm focus:ring-0 text-slate-700 w-full placeholder:text-slate-400 outline-none"/>
                 </div>
-                <div class="w-8 h-8 rounded-full overflow-hidden border border-slate-200 cursor-pointer shrink-0">
+<%
+    Object loggedInUser = session.getAttribute("authUser");
+    if (loggedInUser == null) {
+        loggedInUser = session.getAttribute("adminUser");
+    }
+%>
+<% if (loggedInUser == null) { %>
+        <div class="flex items-center gap-3">
+            <a href="${pageContext.request.contextPath}/page/user/login.jsp" class="px-4 py-2 text-slate-500 font-medium hover:text-blue-600 active:scale-95 transition-transform duration-150 inline-block text-center">Đăng nhập</a>
+            <a href="${pageContext.request.contextPath}/page/user/register.jsp" class="px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all active:scale-95 inline-block text-center">Đăng ký</a>
+        </div>
+<% } else { %>
+                <a href="${pageContext.request.contextPath}/page/user/profile.jsp" class="w-8 h-8 rounded-full overflow-hidden border border-slate-200 cursor-pointer shrink-0 inline-block">
                     <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVzesd2P-nam4BHQFwKldg010YLy277-swKDEWeWhvvHtuI5j25aF2P4fkLabJVc1iMTSGhyxW9WodAis0iCWdjs9W7rAItUqEqxuxf825ZNf-rDNp1GN-YDXDXlOjEBL3mmMgCkIHg3-sRGGmJAdcFAyTKpfv9hl96dpMtuq9w4yZiOvvsVBcB7SKHsfnXG2azOAKmI5LcW_JcECELkseJrB5agN_pkmIIzCKJjTJO6MSAn0RW2H2PbbKF-A9_i7HoJX8sOtnKItv" alt="User" class="w-full h-full object-cover"/>
-                </div>
+                </a>
+<% } %>
             </div>
         </div>
     </nav>

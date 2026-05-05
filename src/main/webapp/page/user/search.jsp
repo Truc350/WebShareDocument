@@ -128,10 +128,24 @@
 <input class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all text-body-sm" placeholder="Tìm kiếm tài liệu..." type="text" value="giải tích"/>
 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
 </div>
+<%
+    Object loggedInUser = session.getAttribute("authUser");
+    if (loggedInUser == null) {
+        loggedInUser = session.getAttribute("adminUser");
+    }
+%>
+<% if (loggedInUser == null) { %>
 <div class="flex items-center gap-3">
-<a href="${pageContext.request.contextPath}/page/login.jsp" class="px-4 py-2 text-gray-600 font-medium hover:text-blue-600 active:scale-95 transition-transform duration-150 inline-block text-center">Đăng nhập</a>
-<a href="${pageContext.request.contextPath}/page/register.jsp" class="px-5 py-2 bg-primary-container text-white rounded-lg font-semibold hover:bg-primary transition-all active:scale-95 inline-block text-center">Đăng ký</a>
+<a href="${pageContext.request.contextPath}/page/user/login.jsp" class="px-4 py-2 text-gray-600 font-medium hover:text-blue-600 active:scale-95 transition-transform duration-150 inline-block text-center">Đăng nhập</a>
+<a href="${pageContext.request.contextPath}/page/user/register.jsp" class="px-5 py-2 bg-primary-container text-white rounded-lg font-semibold hover:bg-primary transition-all active:scale-95 inline-block text-center">Đăng ký</a>
 </div>
+<% } else { %>
+<div class="flex items-center">
+<a href="${pageContext.request.contextPath}/page/user/profile.jsp" class="w-10 h-10 rounded-full overflow-hidden border-2 border-slate-200 cursor-pointer hover:border-primary transition-all inline-block">
+<img alt="User profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/ADBb0ug4CXcMmwegILK4lWj8bWs8v2X_vuMy6-LBRQF1FYynHLUyoHqobkn-VnJQ65peL-tVRoN1SIOoa_I2rS3tvURNOPLHv348rcn73crAbOgD06Faz9LnW6EZrTpuZaU9Ha4OJd_8uTdzsuedks7UzvWGxYNvttn__o0z_RfRd0qusaqa3Re10IIBVWTE1GFr-Mt8BFFRMwNi9QLPpZ86sPBQfrZblcTS6xcgMuOB-osxmIgU9eE_FNgpjFMzZD9kCZ-YHi3X60-Iqw"/>
+</a>
+</div>
+<% } %>
 </div>
 </div>
 </header>
