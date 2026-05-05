@@ -1,0 +1,13 @@
+body {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  background-color: #F8FAFF;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.tab-active {
+  border-bottom: 2px solid #0555DD;
+  color: #0555DD;
+}

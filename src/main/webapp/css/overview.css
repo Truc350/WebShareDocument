@@ -1,0 +1,43 @@
+body {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  background-color: #faf8ff;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.chart-grid {
+  background-image:
+    linear-gradient(#e2e8f0 1px, transparent 1px),
+    linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.bar-40 {
+  height: 40%;
+}
+
+.bar-55 {
+  height: 55%;
+}
+
+.bar-65 {
+  height: 65%;
+}
+
+.bar-70 {
+  height: 70%;
+}
+
+.bar-85 {
+  height: 85%;
+}
+
+.bar-95 {
+  height: 95%;
+}
+
+.storage-progress {
+  width: 48%;
+}
