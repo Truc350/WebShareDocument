@@ -66,7 +66,7 @@
 
         <div class="featured-grid" id="documentGrid">
           <!-- Featured Main Card -->
-          <article class="main-featured-card document-card" data-title="Giáo trình Giải tích 1 - Đại học Bách Khoa Hà Nội" data-category="Kỹ thuật">
+          <article class="main-featured-card document-card" style="cursor: pointer;" onclick="window.location.href='${pageContext.request.contextPath}/page/user/document-detail.jsp'" data-title="Giáo trình Giải tích 1 - Đại học Bách Khoa Hà Nội" data-category="Kỹ thuật">
             <div class="card-image-wrap">
               <span class="badge-hot">HOT</span>
               <img src="https://images.unsplash.com/photo-1544391439-1df5c17ad713?auto=format&fit=crop&q=80&w=800" alt="Laptop mockup">
@@ -93,7 +93,7 @@
 
           <!-- Sub Featured Cards -->
           <div class="sub-featured-list">
-            <article class="small-featured-card document-card" data-title="Lập trình C cơ bản từ con số 0" data-category="Công nghệ">
+            <article class="small-featured-card document-card" style="cursor: pointer;" onclick="window.location.href='${pageContext.request.contextPath}/page/user/document-detail.jsp'" data-title="Lập trình C cơ bản từ con số 0" data-category="Công nghệ">
               <div class="card-icon-wrap">
                 <span class="material-symbols-outlined" style="color: #2563eb;">terminal</span>
               </div>
@@ -110,7 +110,7 @@
               </div>
             </article>
 
-            <article class="small-featured-card document-card" data-title="Tâm lý học đại cương - Tổng hợp đề thi" data-category="Khoa học">
+            <article class="small-featured-card document-card" style="cursor: pointer;" onclick="window.location.href='${pageContext.request.contextPath}/page/user/document-detail.jsp'" data-title="Tâm lý học đại cương - Tổng hợp đề thi" data-category="Khoa học">
               <div class="card-icon-wrap">
                 <span class="material-symbols-outlined" style="color: #2563eb;">psychology</span>
               </div>
