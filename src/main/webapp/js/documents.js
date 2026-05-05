@@ -1,8 +1,8 @@
 (function () {
   const grid = document.querySelector("#documentsGrid");
   const cards = Array.from(document.querySelectorAll(".doc-card"));
-  const searchForm = document.querySelector("#documentsSearch");
-  const keywordInput = document.querySelector("#documentKeyword");
+  const headerSearchForm = document.querySelector("#headerSearch");
+  const headerSearchInput = headerSearchForm ? headerSearchForm.querySelector("input") : null;
   const filterInputs = Array.from(document.querySelectorAll(".filter-sidebar input[type='checkbox']"));
   const clearButton = document.querySelector("#clearFilters");
   const resultCount = document.querySelector("#resultCount");
@@ -25,7 +25,7 @@
   }
 
   function applyFilters() {
-    const keyword = (keywordInput ? keywordInput.value : "").trim().toLowerCase();
+    const keyword = (headerSearchInput ? headerSearchInput.value : "").trim().toLowerCase();
     const categories = selectedValues("category");
     const subjects = selectedValues("subject");
     const formats = selectedValues("format");
@@ -75,15 +75,13 @@
     });
   }
 
-  if (searchForm) {
-    searchForm.addEventListener("submit", function (event) {
+  if (headerSearchForm && headerSearchInput) {
+    headerSearchForm.addEventListener("submit", function (event) {
       event.preventDefault();
       applyFilters();
     });
-  }
 
-  if (keywordInput) {
-    keywordInput.addEventListener("input", applyFilters);
+    headerSearchInput.addEventListener("input", applyFilters);
   }
 
   filterInputs.forEach(function (input) {
@@ -95,8 +93,8 @@
       filterInputs.forEach(function (input) {
         input.checked = false;
       });
-      if (keywordInput) {
-        keywordInput.value = "";
+      if (headerSearchInput) {
+        headerSearchInput.value = "";
       }
       applyFilters();
     });

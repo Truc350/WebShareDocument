@@ -28,11 +28,6 @@
           <h1>Danh sách tài liệu học tập</h1>
           <p>Tìm kiếm, lọc và sắp xếp tài liệu theo danh mục, môn học hoặc định dạng file.</p>
         </div>
-        <form class="documents-search" id="documentsSearch">
-          <span class="material-symbols-outlined">search</span>
-          <input id="documentKeyword" type="search" placeholder="Tìm kiếm tài liệu...">
-          <button class="btn btn-primary" type="submit">Tìm</button>
-        </form>
       </section>
 
       <div class="documents-layout">
