@@ -27,7 +27,13 @@
     </form>
 
     <div class="auth-actions" style="display: flex; align-items: center; gap: 12px;">
-      <% if (session.getAttribute("user") != null) { %>
+      <%
+        Object loggedInUser = session.getAttribute("authUser");
+        if (loggedInUser == null) {
+          loggedInUser = session.getAttribute("adminUser");
+        }
+      %>
+      <% if (loggedInUser != null) { %>
         <a href="${pageContext.request.contextPath}/page/user/profile.jsp" title="Hồ sơ cá nhân" style="display: block; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; border: 2px solid #e2e8f0; cursor: pointer; transition: border-color 0.2s;" onmouseover="this.style.borderColor='#0555dd'" onmouseout="this.style.borderColor='#e2e8f0'">
           <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVzesd2P-nam4BHQFwKldg010YLy277-swKDEWeWhvvHtuI5j25aF2P4fkLabJVc1iMTSGhyxW9WodAis0iCWdjs9W7rAItUqEqxuxf825ZNf-rDNp1GN-YDXDXlOjEBL3mmMgCkIHg3-sRGGmJAdcFAyTKpfv9hl96dpMtuq9w4yZiOvvsVBcB7SKHsfnXG2azOAKmI5LcW_JcECELkseJrB5agN_pkmIIzCKJjTJO6MSAn0RW2H2PbbKF-A9_i7HoJX8sOtnKItv" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
         </a>

@@ -17,7 +17,7 @@
 <main class="documents-page">
     <div class="container">
         <nav class="breadcrumb" aria-label="Breadcrumb">
-            <a href="${pageContext.request.contextPath}/page/home.jsp">Trang chủ</a>
+            <a href="${pageContext.request.contextPath}/page/user/home.jsp">Trang chủ</a>
             <span class="material-symbols-outlined">chevron_right</span>
             <span>Tài liệu</span>
         </nav>

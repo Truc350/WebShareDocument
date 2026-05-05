@@ -125,7 +125,16 @@ button, input { font: inherit; border: none; outline: none; background: none; }
   flex: 1;
   font-size: 14px;
   color: var(--text);
-  padding: 4px 0;
+  padding: 4px 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.header-search input:focus {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .header-search .btn-primary {
