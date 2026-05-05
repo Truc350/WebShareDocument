@@ -119,7 +119,7 @@
 <a href="${pageContext.request.contextPath}/" class="text-2xl font-bold tracking-tight text-blue-700">DocShare</a>
 <nav class="hidden md:flex items-center gap-6">
 <a class="text-gray-600 font-medium hover:text-blue-600 transition-colors duration-200" href="${pageContext.request.contextPath}/">Trang chủ</a>
-<a class="text-blue-700 font-semibold border-b-2 border-blue-700 pb-1" href="${pageContext.request.contextPath}/page/search.jsp">Tài liệu</a>
+<a class="text-blue-700 font-semibold border-b-2 border-blue-700 pb-1" href="${pageContext.request.contextPath}/page/user/search.jsp">Tài liệu</a>
 <a class="text-gray-600 font-medium hover:text-blue-600 transition-colors duration-200" href="#">Danh mục</a>
 </nav>
 </div>
@@ -221,7 +221,7 @@
 <!-- Grid of Document Cards -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 <!-- Card 1 -->
-<div class="bg-white border border-gray-100 rounded-xl p-md shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group cursor-pointer" onclick="window.location.href='${pageContext.request.contextPath}/page/document-detail.jsp'">
+<div class="bg-white border border-gray-100 rounded-xl p-md shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group cursor-pointer" onclick="window.location.href='document-detail.jsp'">
 <div class="aspect-[3/4] bg-gray-100 rounded-lg mb-4 overflow-hidden relative">
 <img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7s_JcQph7d9Zoqlze-gyuQewjhFoCFLtMkMnJR3oL6DgqkQbwtQr81jrVM3AIX4hdDTqe8X_FqPPcf01xFNvm480ZdPrMNq-UaUM6S2LiXNsDCACkPjOLhGXsH3HjarfBj9r6EtolJrgCorAy1MX61I6D8bEyfrqt3YKK9E7N4St829MIVV6izBlzjEfNEc_2W9PcDiPOxmVnEcxLTWYl9R-j97Enot0lhz8SJvsPb6XSfh8q7nxx8tjMFCXcG3dul9fLuX2i1JAD"/>
 <span class="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold">PDF</span>
@@ -236,7 +236,7 @@
 </div>
 </div>
 <!-- Card 2 -->
-<div class="bg-white border border-gray-100 rounded-xl p-md shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group cursor-pointer" onclick="window.location.href='${pageContext.request.contextPath}/page/document-detail.jsp'">
+<div class="bg-white border border-gray-100 rounded-xl p-md shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group cursor-pointer" onclick="window.location.href='document-detail.jsp'">
 <div class="aspect-[3/4] bg-gray-100 rounded-lg mb-4 overflow-hidden relative">
 <img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDB-MgGh9FMkL-MSYtjlW2rlYPR3aNl9xEjAp5XNhxYX7CbFMCoJ_sSsU7tmBbmwdoNKXg_gWSyqGb9vDzZj2kicIhw_LiJlCtIQsi5itTaTEOIR43Xn0Fry4DtM_cXtSiFb2JAeFNYQtoA_j1uYvU7F7Q1MiidQvQ_ANOQJ8qAXwGGDODtG-75HY-Vmok6liNuxFeIYEbLJh0N4bEuyvyM3ShNCZd9XK4uWu7SUUf3B6kVPueJbodhTm2zdr853oZEvSL9VVuL-YR-"/>
 <span class="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold">DOCX</span>
@@ -251,7 +251,7 @@
 </div>
 </div>
 <!-- Card 3 -->
-<div class="bg-white border border-gray-100 rounded-xl p-md shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group cursor-pointer" onclick="window.location.href='${pageContext.request.contextPath}/page/document-detail.jsp'">
+<div class="bg-white border border-gray-100 rounded-xl p-md shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group cursor-pointer" onclick="window.location.href='document-detail.jsp'">
 <div class="aspect-[3/4] bg-gray-100 rounded-lg mb-4 overflow-hidden relative">
 <img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbzVebjhJvHqhCiwxHhI9qv-VW7Kaz-roxisYw4Q10juLRCg9l5h7cbU8x8rmio-HQfz-H0Eqk5qIxj_01LUxc6WqLmvwyXzaXIHkpJ4gNxCfwdjEtJp3lmRK8vYCTSgCzDDXjhplgbTyGoXbkgTb5N5P5X38AeSe7bRT_5Xd3SICar0-pMHucv6zhvTOJnURmNZVQ-JSiwaqVP_qfC4Vbzbg7WoNN9FteCUv5QPGY6rMPoUyme5YBZ5K-gQF12Qf8ED74JsaVuBu8"/>
 <span class="absolute top-2 right-2 bg-orange-600 text-white px-2 py-1 rounded text-[10px] font-bold">PPTX</span>
@@ -266,7 +266,7 @@
 </div>
 </div>
 <!-- Card 4 -->
-<div class="bg-white border border-gray-100 rounded-xl p-md shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group cursor-pointer" onclick="window.location.href='${pageContext.request.contextPath}/page/document-detail.jsp'">
+<div class="bg-white border border-gray-100 rounded-xl p-md shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group cursor-pointer" onclick="window.location.href='document-detail.jsp'">
 <div class="aspect-[3/4] bg-gray-100 rounded-lg mb-4 overflow-hidden relative">
 <img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9VHJ7-IHN5NajmckxpW7t1u9WZXkUX5JNWxNMKOERL-RtkTTNT_IEPjcE_2Ir26ZQLk9ZXjTbfvZ1Zty8Ph-qKEmpTnj60JY-ric7m9b9TcjaLc4UJRFaoHW1cDe2VW5_z9-q33RF5E2iWaDk4Yi_oWNuPSUuxuwfn8yTDjbx6sAtEd3SQ26xjnwehe6oyY-3aVgxYD-zP-msO9alhd7Ar4Rasxq9eGbDfLYC1BwPArg4B5ZOJZNdiD2KHoSL9gUorMg9nkPKxuA8"/>
 <span class="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold">PDF</span>
@@ -281,7 +281,7 @@
 </div>
 </div>
 <!-- Card 5 -->
-<div class="bg-white border border-gray-100 rounded-xl p-md shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group cursor-pointer" onclick="window.location.href='${pageContext.request.contextPath}/page/document-detail.jsp'">
+<div class="bg-white border border-gray-100 rounded-xl p-md shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group cursor-pointer" onclick="window.location.href='document-detail.jsp'">
 <div class="aspect-[3/4] bg-gray-100 rounded-lg mb-4 overflow-hidden relative">
 <img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSD_WhcXBpgwzbec0c3b4ag7amZfkW-2f34xdDGkhf5FJwLzw8OskaWJNsPtT4jGQnWUipOqa5Xf96UgTSiqfQ4faXPcETKS6vhKgTKKfBE07nl9sFsxn3aMitXcvKzttN0Fq-NeJyMCoxd1_pfhkbBasanZA0L4FgDg36KUvfuFhs-tnPP_dxZ7JVx-bpWuWoezXWTdNnK4FGiVBDz-aZSNHZvXeF1WTDBXLDpMUqZChyoHwIHn92s-GUMwXCtPhFccbi2QLML--f"/>
 <span class="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold">PDF</span>
@@ -296,7 +296,7 @@
 </div>
 </div>
 <!-- Card 6 -->
-<div class="bg-white border border-gray-100 rounded-xl p-md shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group cursor-pointer" onclick="window.location.href='${pageContext.request.contextPath}/page/document-detail.jsp'">
+<div class="bg-white border border-gray-100 rounded-xl p-md shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group cursor-pointer" onclick="window.location.href='document-detail.jsp'">
 <div class="aspect-[3/4] bg-gray-100 rounded-lg mb-4 overflow-hidden relative">
 <img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzg3d-Bl7dq0p-L1UCpmfqGwfewo7dLa1Bny5EMmjYG5EDLFIxdOHfgx6bVnoqB83WTD26V9PN7VFoQAgtcpf-BtMR5jxdpTLed_rL9JbXDPaDThECAxqRvFCh2_MEARAHUr7ZuVBfK8q2bhhYy03YFnkquWiBwCHsz-knO_sTCkkt21220MzJMZ99thNXf4ie0CTdlbCLwrZzP36YGxk4dHBDi2uxTVUZoy2fZJQIb7nX03Flva_5RsItm6az_gwgkDgDP1M-Pt_y"/>
 <span class="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold">PDF</span>

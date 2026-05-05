@@ -1,22 +1,22 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%
   String currentPath = request.getRequestURI();
-  boolean isHomePage = currentPath.endsWith("/page/home.jsp") || currentPath.endsWith("/index.jsp") || currentPath.endsWith("/");
-  boolean isDocumentsPage = currentPath.endsWith("/page/documents.jsp");
-  boolean isCategoryPage = currentPath.endsWith("/page/category.jsp");
+  boolean isHomePage = currentPath.endsWith("/page/user/home.jsp") || currentPath.endsWith("/index.jsp") || currentPath.endsWith("/");
+  boolean isDocumentsPage = currentPath.endsWith("/page/user/documents.jsp");
+  boolean isCategoryPage = currentPath.endsWith("/page/user/category.jsp");
 %>
 <header class="site-header">
   <div class="container nav-wrap">
     <div class="header-left">
-      <a class="brand" href="${pageContext.request.contextPath}/page/home.jsp">
+      <a class="brand" href="${pageContext.request.contextPath}/page/user/home.jsp">
         <span class="material-symbols-outlined">description</span>
         <strong>DocShare</strong>
       </a>
 
       <nav class="main-nav">
-        <a class="<%= isHomePage ? "active" : "" %>" href="${pageContext.request.contextPath}/page/home.jsp">Trang chủ</a>
-        <a class="<%= isDocumentsPage ? "active" : "" %>" href="${pageContext.request.contextPath}/page/documents.jsp">Tài liệu</a>
-        <a class="<%= isCategoryPage ? "active" : "" %>" href="${pageContext.request.contextPath}/page/category-admin.jsp">Danh mục</a>
+        <a class="<%= isHomePage ? "active" : "" %>" href="${pageContext.request.contextPath}/page/user/home.jsp">Trang chủ</a>
+        <a class="<%= isDocumentsPage ? "active" : "" %>" href="${pageContext.request.contextPath}/page/user/documents.jsp">Tài liệu</a>
+        <a class="<%= isCategoryPage ? "active" : "" %>" href="${pageContext.request.contextPath}/page/user/category.jsp">Danh mục</a>
       </nav>
     </div>
 
