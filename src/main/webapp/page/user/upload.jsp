@@ -70,33 +70,28 @@
                         <span class="material-symbols-outlined">close</span>
                     </button>
                 </div>
-                <!-- UC5.1.3: Điền tiêu đề, danh mục, môn học -->
                 <div class="form-grid">
                     <div class="field full">
-                        <label for="title">Tiêu đề tài liệu <span class="required">*</span></label>
-                        <input type="text" id="title" name="title" placeholder="VD: Đề thi cuối kỳ Lập trình Web 2024"
+                        <label for="title">Tiêu đề tài liệu*</label>
+                        <input id="title" name="title" type="text" placeholder="Nhập tiêu đề ngắn gọn và rõ ràng"
                                required>
                     </div>
                     <div class="field">
-                        <label for="category">Danh mục <span class="required">*</span></label>
-                        <select id="category" name="categoryId" required>
-                            <option value="" disabled selected>Chọn danh mục</option>
-                            <option value="1">Đề thi & Kiểm tra</option>
-                            <option value="2">Giáo trình & Bài giảng</option>
-                            <option value="3">Tài liệu tham khảo</option>
-                            <option value="4">Khác</option>
+                        <label for="category">Danh mục*</label>
+                        <select id="category" name="category" required>
+                            <option value="">Chọn danh mục</option>
+                            <option value="Giáo trình">Giáo trình</option>
+                            <option value="Tài liệu tham khảo">Tài liệu tham khảo</option>
                         </select>
                     </div>
                     <div class="field">
-                        <label for="subject">Môn học / Học phần <span class="required">*</span></label>
-                        <input type="text" id="subject" name="subject" placeholder="VD: Lập trình Web, Giải tích..."
-                               required>
+                        <label for="subject">Môn học*</label>
+                        <input id="subject" name="subject" type="text" placeholder="Nhập tên môn học" required>
                     </div>
-                    <!-- UC5.1.4: Nhập mô tả và chọn tệp -->
                     <div class="field full">
-                        <label for="description">Mô tả tài liệu</label>
+                        <label for="description">Mô tả</label>
                         <textarea id="description" name="description" rows="4"
-                                  placeholder="Chia sẻ thêm thông tin về tài liệu này..."></textarea>
+                                  placeholder="Mô tả nội dung tài liệu để người khác dễ dàng tìm kiếm..."></textarea>
                     </div>
                     <label class="terms full">
                         <input id="terms" name="terms" type="checkbox" required>
