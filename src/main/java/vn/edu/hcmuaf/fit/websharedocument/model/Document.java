@@ -244,6 +244,8 @@ public class Document {
     // 2. Hàm hỗ trợ hiển thị URL xem tài liệu (Xử lý đồng thời file SQL mẫu và file mới upload)
     public String getViewUrl() {
         if (this.filePath == null || this.filePath.isEmpty()) return "";
+        // Nếu là URL tuyệt đối (như Cloudinary: http://... hoặc https://...) thì trả về luôn
+        if (this.filePath.startsWith("http")) return this.filePath;
         if (this.filePath.startsWith("/")) return this.filePath;
         return "/document/uploads/" + this.filePath;
     }

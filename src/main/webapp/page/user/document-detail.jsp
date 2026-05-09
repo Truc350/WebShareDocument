@@ -27,7 +27,10 @@
     String ext = doc.getFileExtension() != null ? doc.getFileExtension().toUpperCase() : "FILE";
     String description = doc.getDescription() != null && !doc.getDescription().isEmpty()
             ? doc.getDescription() : "Chưa có mô tả.";
-    String fileUrl = request.getContextPath() + "/document/uploads/" + doc.getFilePath();
+    String fileUrl = doc.getFilePath();
+    if (fileUrl != null && !fileUrl.startsWith("http")) {
+        fileUrl = request.getContextPath() + "/document/uploads/" + fileUrl;
+    }
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -436,46 +439,5 @@
 </div>
 
 <jsp:include page="/common/footer.jsp"/>
-<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script>
-    if (window._docxUrl) {
-        fetch(window._docxUrl)
-            .then(r => r.arrayBuffer())
-            .then(buf => mammoth.convertToHtml({arrayBuffer: buf}))
-            .then(result => {
-                const viewer = document.getElementById('docxViewer');
-                if (viewer) viewer.innerHTML = result.value || '<p>Không thể đọc nội dung.</p>';
-            })
-            .catch(() => {
-                const viewer = document.getElementById('docxViewer');
-                if (viewer) viewer.innerHTML = '<p style="color:red;text-align:center">Không thể tải tài liệu. Vui lòng tải xuống để xem.</p>';
-            });
-    }
-    if (window._xlsxUrl) {
-        fetch(window._xlsxUrl)
-            .then(r => r.arrayBuffer())
-            .then(buf => {
-                const wb = XLSX.read(buf, {type: 'array'});
-                const ws = wb.Sheets[wb.SheetNames[0]];
-                const html = XLSX.utils.sheet_to_html(ws, {id: 'xlsxTable'});
-                const viewer = document.getElementById('xlsxViewer');
-                if (viewer) {
-                    viewer.innerHTML = html;
-                    const tbl = document.getElementById('xlsxTable');
-                    if (tbl) {
-                        tbl.style.cssText = 'border-collapse:collapse;width:100%;font-size:13px;';
-                        tbl.querySelectorAll('td,th').forEach(cell => {
-                            cell.style.cssText = 'border:1px solid #dde;padding:6px 10px;';
-                        });
-                    }
-                }
-            })
-            .catch(() => {
-                const viewer = document.getElementById('xlsxViewer');
-                if (viewer) viewer.innerHTML = '<p style="color:red;text-align:center">Không thể tải bảng tính. Vui lòng tải xuống để xem.</p>';
-            });
-    }
-</script>
 </body>
 </html>
