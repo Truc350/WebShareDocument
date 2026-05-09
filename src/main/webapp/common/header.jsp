@@ -68,4 +68,13 @@
             <span class="material-symbols-outlined">menu</span>
         </button>
     </div>
+    <%-- Tối ưu hóa: Warm-up upload servlet ngay khi người dùng vào bất kỳ trang nào có header --%>
+    <script>
+        (function() {
+            const upUrl = "${pageContext.request.contextPath}/upload";
+            if (window.fetch) {
+                fetch(upUrl, { method: 'HEAD' }).catch(() => {});
+            }
+        })();
+    </script>
 </header>
