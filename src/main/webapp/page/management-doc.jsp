@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 <!DOCTYPE html>
 
 <html class="light" lang="vi">
@@ -255,12 +256,12 @@
             <a class="whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors ${currentTab == -1 ? 'text-blue-700 border-b-2 border-blue-700' : 'text-slate-500 hover:text-slate-700'}"
                href="${pageContext.request.contextPath}/admin/management-doc?tab=-1">
                 Tất cả tài liệu
-                <span class="ml-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">${totalDocs}</span>
+                <span class="ml-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">${totalDocs != null ? totalDocs : 0}</span>
             </a>
-            <a class="px-4 py-2 text-sm font-medium transition-colors ${currentTab == 0 || empty currentTab ? 'text-blue-700 border-b-2 border-blue-700' : 'text-slate-500 hover:text-slate-700'}"
+            <a class="px-4 py-2 text-sm font-medium transition-colors ${currentTab == 0 ? 'text-blue-700 border-b-2 border-blue-700' : 'text-slate-500 hover:text-slate-700'}"
                href="${pageContext.request.contextPath}/admin/management-doc?tab=0">
                 Đang chờ duyệt
-                <span class="ml-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">${pendingDocs}</span>
+                <span class="ml-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">${pendingDocs != null ? pendingDocs : 0}</span>
             </a>
 
             <a class="px-4 py-2 text-sm font-medium transition-colors ${currentTab == 1 ? 'text-blue-700 border-b-2 border-blue-700' : 'text-slate-500 hover:text-slate-700'}"
@@ -391,16 +392,17 @@
                             </td>
                             <td class="p-4 text-sm text-slate-500 uppercase">${doc.fileExtension}</td>
                             <td class="p-4 text-sm text-slate-500">
-                                <fmt:formatNumber value="${doc.fileSize / 1048576}" maxFractionDigits="2"/> MB
+                                <fmt:formatNumber value="${doc.fileSize / 1048576.0}" maxFractionDigits="2"/> MB
                             </td>
                             <td class="p-4 text-sm text-slate-500">
-                                <fmt:formatDate value="${doc.createdAt}" pattern="HH:mm - dd/MM/yyyy"/>
+                                <fmt:formatDate value="${doc.createdAtDate}" pattern="HH:mm - dd/MM/yyyy"/>
                             </td>
                             <td class="p-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    <button class="px-3 py-1.5 text-xs font-bold text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors">
+                                    <a href="${pageContext.request.contextPath}${doc.viewUrl}" target="_blank"
+                                       class="px-3 py-1.5 text-xs font-bold text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors inline-block text-center">
                                         Xem
-                                    </button>
+                                    </a>
 
                                         <%-- Nút Duyệt: Biến thẻ <button> thành thẻ <a> để gọi Servlet Update --%>
                                     <c:if test="${doc.isActive == 0}">
@@ -431,7 +433,7 @@
                 <!-- Pagination Footer -->
                 <div class="px-6 py-4 bg-surface-bright border-t border-slate-200 flex items-center justify-between">
                     <p class="text-sm text-slate-500">Hiển thị <span class="font-bold text-slate-900">
-                        <c:out value="${empty listDocs ? 0 : 1}"/> - <c:out value="${listDocs.size()}"/>
+                        <c:out value="${empty listDocs ? 0 : 1}"/> - <c:out value="${fn:length(listDocs)}"/>
                     </span> trong số <span class="font-bold text-slate-900">${totalDocs != null ? totalDocs : 0}</span>
                         tài liệu</p>
                     <div class="flex items-center gap-2">

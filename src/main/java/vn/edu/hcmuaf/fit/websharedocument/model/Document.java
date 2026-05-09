@@ -183,10 +183,9 @@ public class Document {
         return isActive;
     }
 
-    public void setIsActive(int active) {
+    public void setIsActive(int isActive) {
         this.isActive = isActive;
     }
-
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
@@ -221,6 +220,18 @@ public class Document {
 
     public void setCategoryName(String categoryName) {
         this.categoryName = categoryName;
+    }
+
+    // 1. Hàm hỗ trợ JSTL hiển thị ngày tháng
+    public java.util.Date getCreatedAtDate() {
+        return this.createdAt != null ? java.sql.Timestamp.valueOf(this.createdAt) : null;
+    }
+
+    // 2. Hàm hỗ trợ hiển thị URL xem tài liệu (Xử lý đồng thời file SQL mẫu và file mới upload)
+    public String getViewUrl() {
+        if (this.filePath == null || this.filePath.isEmpty()) return "";
+        if (this.filePath.startsWith("/")) return this.filePath;
+        return "/document/uploads/" + this.filePath;
     }
 
 }
