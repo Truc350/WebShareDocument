@@ -6,6 +6,10 @@ import vn.edu.hcmuaf.fit.websharedocument.model.Document;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.ArrayList;
 import java.util.List;
 
 public class DocumentDAO {
@@ -335,9 +339,6 @@ public class DocumentDAO {
         return list;
     }
 
-    // =========================
-    // GET DOCUMENT BY ID
-    // =========================
     public Document getDocumentById(int id) {
 
         String sql = "SELECT d.*, u.full_name as uploader_name, c.name as category_name " +
@@ -354,45 +355,176 @@ public class DocumentDAO {
             try (ResultSet rs = ps.executeQuery()) {
 
                 if (rs.next()) {
-
-                    Document doc = new Document();
-
-                    doc.setId(rs.getInt("id"));
-                    doc.setUserId(rs.getInt("user_id"));
-                    doc.setTitle(rs.getString("title"));
-                    doc.setDescription(rs.getString("description"));
-                    doc.setFileName(rs.getString("file_name"));
-                    doc.setFilePath(rs.getString("file_path"));
-                    doc.setFileSize(rs.getLong("file_size"));
-                    doc.setFileType(rs.getString("file_type"));
-                    doc.setFileExtension(rs.getString("file_extension"));
-                    doc.setDownloadCount(rs.getInt("download_count"));
-                    doc.setViewCount(rs.getInt("view_count"));
-                    doc.setIsActive(rs.getInt("is_active"));
-
-                    Timestamp createdAt = rs.getTimestamp("created_at");
-
-                    if (createdAt != null) {
-                        doc.setCreatedAt(createdAt.toLocalDateTime());
-                    }
-
-                    doc.setUploaderName(rs.getString("uploader_name"));
-                    doc.setCategoryName(rs.getString("category_name"));
-
-                    return doc;
+                    return mapResultSetToDocument(rs);
                 }
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         return null;
     }
 
-    // =========================
-    // INCREMENT VIEW COUNT
-    // =========================
+    private Document mapResultSetToDocument(ResultSet rs) throws SQLException {
+        Document doc = new Document();
+        doc.setId(rs.getInt("id"));
+        doc.setUserId(rs.getInt("user_id"));
+        doc.setTitle(rs.getString("title"));
+        doc.setDescription(rs.getString("description"));
+        doc.setFileName(rs.getString("file_name"));
+        doc.setFilePath(rs.getString("file_path"));
+        doc.setFileSize(rs.getLong("file_size"));
+        doc.setFileType(rs.getString("file_type"));
+        doc.setFileExtension(rs.getString("file_extension"));
+        doc.setDownloadCount(rs.getInt("download_count"));
+        doc.setViewCount(rs.getInt("view_count"));
+        doc.setIsActive(rs.getInt("is_active"));
+        java.sql.Timestamp createdAt = rs.getTimestamp("created_at");
+        if (createdAt != null) doc.setCreatedAt(createdAt.toLocalDateTime());
+        doc.setUploaderName(rs.getString("uploader_name"));
+        doc.setCategoryName(rs.getString("category_name"));
+        return doc;
+    }
+
+    // UC11.1.2 getSuggestions(q)
+    public List<String> getSuggestions(String q) {
+        List<String> suggestions = new ArrayList<>();
+        String sql = "SELECT title as suggestion FROM documents WHERE title LIKE ? AND is_active = 1 " +
+                "UNION " +
+                "SELECT name as suggestion FROM categories WHERE name LIKE ? " +
+                "LIMIT 5";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            String likeQ = "%" + q + "%";
+            ps.setString(1, likeQ);
+            ps.setString(2, likeQ);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    suggestions.add(rs.getString("suggestion"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return suggestions;
+    }
+
+    // UC11.2.1.2 exactMatchQuery(q)
+    public List<Document> exactMatchQuery(String q) {
+        List<Document> list = new ArrayList<>();
+        String sql = "SELECT d.*, u.full_name as uploader_name, c.name as category_name " +
+                "FROM documents d " +
+                "LEFT JOIN users u ON d.user_id = u.id " +
+                "LEFT JOIN categories c ON d.category_id = c.id " +
+                "WHERE (c.name = ?) AND d.is_active = 1";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, q);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToDocument(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // UC11.2.1.2 fullTextQuery(q)
+    public List<Document> fullTextQuery(String q) {
+        List<Document> list = new ArrayList<>();
+        String sql = "SELECT d.*, u.full_name as uploader_name, c.name as category_name " +
+                "FROM documents d " +
+                "LEFT JOIN users u ON d.user_id = u.id " +
+                "LEFT JOIN categories c ON d.category_id = c.id " +
+                "WHERE (d.title LIKE ? OR d.description LIKE ? OR c.name LIKE ?) AND d.is_active = 1";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            String likeQ = "%" + q + "%";
+            ps.setString(1, likeQ);
+            ps.setString(2, likeQ);
+            ps.setString(3, likeQ);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToDocument(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // UC11.2.1.3 mergeAndPrioritize(results)
+    public List<Document> mergeAndPrioritize(List<Document> list1, List<Document> list2) {
+        List<Document> merged = new ArrayList<>(list1);
+        Set<Integer> existingIds = new HashSet<>();
+        for (Document doc : list1) {
+            existingIds.add(doc.getId());
+        }
+        for (Document doc : list2) {
+            if (!existingIds.contains(doc.getId())) {
+                merged.add(doc);
+                existingIds.add(doc.getId());
+            }
+        }
+        return merged;
+    }
+
+    // UC11.1.6 synonymSearch(q)
+    public List<Document> synonymSearch(String q) {
+        return new ArrayList<>(); // Basic implementation without DB synonyms
+    }
+
+    // UC11.1.6 sortByRelevanceScore(results)
+    public void sortByRelevanceScore(List<Document> results, String q) {
+        results.sort((d1, d2) -> {
+            int score1 = calculateRelevance(d1, q);
+            int score2 = calculateRelevance(d2, q);
+            return Integer.compare(score2, score1);
+        });
+    }
+
+    private int calculateRelevance(Document d, String q) {
+        int score = 0;
+        String lowerQ = q.toLowerCase();
+        if (d.getTitle() != null && d.getTitle().toLowerCase().contains(lowerQ)) score += 10;
+        if (d.getDescription() != null && d.getDescription().toLowerCase().contains(lowerQ)) score += 5;
+        if (d.getCategoryName() != null && d.getCategoryName().toLowerCase().contains(lowerQ)) score += 3;
+        return score;
+    }
+
+    // UC11.1.5 fullTextSearch(q)
+    public List<Document> fullTextSearch(String q) {
+        List<Document> exactMatches = exactMatchQuery(q);
+        List<Document> fullTextMatches = fullTextQuery(q);
+        List<Document> results = mergeAndPrioritize(exactMatches, fullTextMatches);
+        List<Document> synonyms = synonymSearch(q);
+        results = mergeAndPrioritize(results, synonyms);
+        sortByRelevanceScore(results, q);
+        return results;
+    }
+
+    // UC11.2.3.3 getFullDocumentList()
+    public List<Document> getFullDocumentList() {
+        List<Document> list = new ArrayList<>();
+        String sql = "SELECT d.*, u.full_name as uploader_name, c.name as category_name " +
+                "FROM documents d " +
+                "LEFT JOIN users u ON d.user_id = u.id " +
+                "LEFT JOIN categories c ON d.category_id = c.id " +
+                "WHERE d.is_active = 1";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(mapResultSetToDocument(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public void incrementViewCount(int documentId) {
 
         String sql = "UPDATE documents SET view_count = view_count + 1 WHERE id = ?";
@@ -408,4 +540,177 @@ public class DocumentDAO {
             e.printStackTrace();
         }
     }
+
+    /**
+     * UC15.1.2 – Kiểm tra userId có phải chủ sở hữu của documentId không.
+     * UC15.2.1.1: Nếu false → hệ thống từ chối quyền chỉnh sửa.
+     */
+    public boolean isOwner(int documentId, int userId) {
+        String sql = "SELECT 1 FROM documents WHERE id = ? AND user_id = ? AND is_active = 1";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, documentId);
+            ps.setInt(2, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Lỗi kiểm tra quyền sở hữu: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * UC15.1.7 – Cập nhật title, description, category_id, is_active vào CSDL.
+     * Đồng thời cập nhật bảng document_tags trong cùng transaction.
+     * UC15 Post-Condition: updated_at được ghi lại tự động.
+     * Trả về true nếu UPDATE thành công.
+     */
+    public boolean updateDocumentInfo(Document doc) {
+        String sql = """
+                UPDATE documents
+                SET title       = ?,
+                    description = ?,
+                    category_id = ?,
+                    is_active   = ?
+                WHERE id = ? AND user_id = ?
+                """;
+        try (Connection conn = DBConnect.getConnection()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                // UC15.1.7: các trường được phép chỉnh sửa (Assumption 1: không thay file)
+                ps.setString(1, doc.getTitle());
+                ps.setString(2, doc.getDescription());
+                if (doc.getCategoryId() != null) ps.setInt(3, doc.getCategoryId());
+                else ps.setNull(3, Types.INTEGER);
+                ps.setInt(4, doc.getIsActive() == 1 ? 1 : 0);
+                ps.setInt(5, doc.getId());
+                ps.setInt(6, doc.getUserId()); // UC15.1.2: double-check chủ sở hữu
+
+                int affected = ps.executeUpdate();
+                if (affected == 0) {
+                    conn.rollback();
+                    return false; // UC15 Exception 3: tài liệu không còn tồn tại
+                }
+
+                // UC15.1.7: cập nhật tags trong cùng transaction (xóa cũ → thêm mới)
+                updateDocumentTags(conn, doc.getId(), doc.getTags());
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            // UC15 Exception 1 – Lỗi kết nối hoặc ghi CSDL
+            throw new RuntimeException("Lỗi cập nhật tài liệu: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * UC15.1.7 – Xóa toàn bộ tags cũ rồi insert tags mới cho tài liệu.
+     * Nếu tag chưa có trong bảng tags thì tạo mới (upsert).
+     */
+    private void updateDocumentTags(Connection conn, int documentId, List<String> tagNames)
+            throws SQLException {
+
+        // Xóa tags cũ trong bảng trung gian document_tags
+        String deleteSql = "DELETE FROM document_tags WHERE document_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(deleteSql)) {
+            ps.setInt(1, documentId);
+            ps.executeUpdate();
+        }
+
+        if (tagNames == null || tagNames.isEmpty()) return;
+
+        for (String tagName : tagNames) {
+            String name = tagName.trim();
+            if (name.isEmpty()) continue;
+            String slug = toSlug(name);
+
+            // Upsert tag vào bảng tags (tạo mới hoặc lấy id hiện có)
+            String upsertTag = """
+                    INSERT INTO tags (name, slug)
+                    VALUES (?, ?)
+                    ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)
+                    """;
+            int tagId;
+            try (PreparedStatement ps = conn.prepareStatement(upsertTag,
+                    Statement.RETURN_GENERATED_KEYS)) {
+                ps.setString(1, name);
+                ps.setString(2, slug);
+                ps.executeUpdate();
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    rs.next();
+                    tagId = rs.getInt(1);
+                }
+            }
+
+            // Gán tag vào tài liệu qua bảng document_tags
+            String insertLink = "INSERT IGNORE INTO document_tags (document_id, tag_id) VALUES (?, ?)";
+            try (PreparedStatement ps = conn.prepareStatement(insertLink)) {
+                ps.setInt(1, documentId);
+                ps.setInt(2, tagId);
+                ps.executeUpdate();
+            }
+        }
+    }
+
+    /**
+     * UC15.1.3 – Lấy danh sách tên tags của tài liệu (dùng khi load form).
+     */
+    private List<String> getTagsByDocumentId(Connection conn, int documentId) throws SQLException {
+        String sql = """
+                SELECT t.name FROM tags t
+                INNER JOIN document_tags dt ON t.id = dt.tag_id
+                WHERE dt.document_id = ?
+                ORDER BY t.name
+                """;
+        List<String> tags = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, documentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) tags.add(rs.getString("name"));
+            }
+        }
+        return tags;
+    }
+
+    private Document mapRow(ResultSet rs) throws SQLException {
+        Document doc = new Document();
+        doc.setId(rs.getInt("id"));
+        doc.setUserId(rs.getInt("user_id"));
+        doc.setCategoryId(rs.getObject("category_id") != null ? rs.getInt("category_id") : null);
+        doc.setCategoryName(rs.getString("category_name"));
+        doc.setTitle(rs.getString("title"));
+        doc.setDescription(rs.getString("description"));
+        doc.setFileName(rs.getString("file_name"));
+        doc.setFilePath(rs.getString("file_path"));
+        doc.setFileSize(rs.getLong("file_size"));
+        doc.setFileType(rs.getString("file_type"));
+        doc.setFileExtension(rs.getString("file_extension"));
+        doc.setDownloadCount(rs.getInt("download_count"));
+        doc.setViewCount(rs.getInt("view_count"));
+        doc.setIsActive(rs.getInt("is_active"));
+        Timestamp created = rs.getTimestamp("created_at");
+        if (created != null) doc.setCreatedAt(created.toLocalDateTime());
+        Timestamp updated = rs.getTimestamp("updated_at");
+        if (updated != null) doc.setUpdatedAt(updated.toLocalDateTime());
+        return doc;
+    }
+
+    private String toSlug(String name) {
+        return name.toLowerCase()
+                .replaceAll("[àáạảãâầấậẩẫăằắặẳẵ]", "a")
+                .replaceAll("[èéẹẻẽêềếệểễ]", "e")
+                .replaceAll("[ìíịỉĩ]", "i")
+                .replaceAll("[òóọỏõôồốộổỗơờớợởỡ]", "o")
+                .replaceAll("[ùúụủũưừứựửữ]", "u")
+                .replaceAll("[ỳýỵỷỹ]", "y")
+                .replaceAll("[đ]", "d")
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("^-|-$", "");
+    }
+
+
 }

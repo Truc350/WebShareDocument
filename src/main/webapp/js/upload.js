@@ -372,11 +372,13 @@
         submitButton.innerHTML = '<span class="material-symbols-outlined">publish</span> Đăng tải ngay';
         setError(message);
     }
+    // Tối ưu hóa: "Đánh thức" server ngay khi trang vừa load xong
     (function () {
-        const homeUrl = cancelFormBtn ? cancelFormBtn.getAttribute("data-home") : "/";
-        fetch(window.location.href, {method: 'HEAD'}).then(() => {
-            console.log("Server warmed up and ready.");
-        }).catch(() => {
-        });
+        const contextPath = form.getAttribute("data-context") || "";
+        const uploadUrl = contextPath + "/upload";
+        // Gửi request HEAD nhẹ để khởi động Servlet và DB connection sẵn sàng
+        fetch(uploadUrl, {method: 'HEAD'}).then(() => {
+            console.log("Upload Servlet warmed up and ready.");
+        }).catch(() => {});
     })();
 })();

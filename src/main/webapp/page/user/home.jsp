@@ -19,14 +19,7 @@
             <h1>Chia sẻ tài liệu học tập dễ dàng</h1>
             <p class="hero-text">Tìm kiếm, tải về và chia sẻ hàng nghìn tài liệu miễn phí từ cộng đồng sinh viên và
                 giảng viên uy tín trên toàn quốc.</p>
-            <div class="search-container">
-                <form class="search-panel" id="homeSearch">
-                    <span class="material-symbols-outlined">search</span>
-                    <input id="searchInput" name="keyword" type="text"
-                           placeholder="Tìm kiếm tài liệu theo tên hoặc chủ đề...">
-                    <button class="btn btn-primary" type="submit">Tìm kiếm</button>
-                </form>
-            </div>
+
             <div class="quick-tags">
                 <button class="tag" type="button" data-topic="Giáo trình">Giáo trình</button>
                 <button class="tag" type="button" data-topic="Bài tập">Bài tập</button>

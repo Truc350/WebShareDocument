@@ -10,13 +10,15 @@ public class DBConnect {
     private static final String USER = "root";
     private static final String PASS = "";
 
-    public static Connection getConnection() throws SQLException {
+    static {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            return DriverManager.getConnection(URL, USER, PASS);
-        } catch (ClassNotFoundException | SQLException e) {
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
-            throw new SQLException("Database connection error");
         }
+    }
+
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(URL, USER, PASS);
     }
 }

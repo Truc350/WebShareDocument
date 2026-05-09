@@ -6,6 +6,9 @@
     boolean isCategoryPage = currentPath.endsWith("/page/user/category.jsp");
     boolean isUploadPage = currentPath.endsWith("/page/user/upload.jsp") || currentPath.endsWith("/upload");
 %>
+<script>
+    window.CONTEXT_PATH = '${pageContext.request.contextPath}';
+</script>
 <header class="site-header">
     <div class="container nav-wrap">
         <div class="header-left">
@@ -22,10 +25,13 @@
                    href="${pageContext.request.contextPath}/page/user/category.jsp">Danh mục</a>
             </nav>
         </div>
-        <form class="header-search" id="headerSearch">
+        <form class="header-search" id="headerSearch" style="position: relative;">
             <span class="material-symbols-outlined">search</span>
-            <input type="search" placeholder="Tìm kiếm tài liệu...">
+            <input type="search" name="q" autocomplete="off" placeholder="Tìm kiếm tài liệu...">
             <button class="btn btn-primary" type="submit">Tìm</button>
+            <div id="searchSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; border-radius: 4px; display: none; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 4px; max-height: 250px; overflow-y: auto;">
+                <ul style="list-style: none; padding: 0; margin: 0;"></ul>
+            </div>
         </form>
         <div class="auth-actions" style="display: flex; align-items: center; gap: 12px;">
             <%
@@ -68,4 +74,13 @@
             <span class="material-symbols-outlined">menu</span>
         </button>
     </div>
+    <%-- Tối ưu hóa: Warm-up upload servlet ngay khi người dùng vào bất kỳ trang nào có header --%>
+    <script>
+        (function() {
+            const upUrl = "${pageContext.request.contextPath}/upload";
+            if (window.fetch) {
+                fetch(upUrl, { method: 'HEAD' }).catch(() => {});
+            }
+        })();
+    </script>
 </header>
