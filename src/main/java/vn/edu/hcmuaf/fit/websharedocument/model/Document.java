@@ -31,7 +31,7 @@ public class Document {
     private String categoryName;
 
     public Document() {
-        this.isActive = 0;
+        this.isActive = 1;
     }
 
     public Document(int id,
@@ -184,7 +184,7 @@ public class Document {
     }
 
     public void setIsActive(int active) {
-        this.isActive = isActive;
+        this.isActive = active;
     }
 
 
