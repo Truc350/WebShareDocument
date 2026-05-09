@@ -257,27 +257,20 @@
         let lastResult = null;
 
         const startTime = Date.now();
-        const minDuration = 5000;
+        const minDuration = 3000;
 
         function animateProgress() {
             if (isCancelled) return;
             const elapsed = Date.now() - startTime;
-
             const timePercent = Math.min((elapsed / minDuration) * 100, 100);
             const visiblePercent = Math.max(progress, timePercent);
-
             progressBarFill.style.width = visiblePercent.toFixed(1) + "%";
             progressText.textContent = Math.round(visiblePercent) + "%";
 
-            if (visiblePercent < 100) {
+            if (visiblePercent < 100 || !uploadFinished) {
                 requestAnimationFrame(animateProgress);
             } else {
-                if (uploadFinished) {
-                    finalizeUploadUI(lastResult);
-                } else {
-                    progressBarFill.style.width = "100%";
-                    progressText.textContent = "100%";
-                }
+                finalizeUploadUI(lastResult);
             }
         }
 
@@ -289,7 +282,7 @@
             if (result && result.status === "success") {
                 sessionStorage.removeItem("uploadFormState");
                 const contextPath = form.getAttribute("data-context") || "";
-                const detailUrl = contextPath + "/document-detail?id=" + result.id;
+                const detailUrl = contextPath + "/page/user/profile.jsp";
                 showModal("Thành công ✓", "Đăng tải tài liệu thành công!", "success", function () {
                     window.location.href = detailUrl;
                 });
@@ -304,31 +297,6 @@
             }
         }
 
-        currentXhr.upload.addEventListener("progress", function (e) {
-            if (e.lengthComputable) {
-                progress = (e.loaded / e.total) * 100;
-            }
-        });
-        currentXhr.addEventListener("load", function () {
-            if (isCancelled) return;
-            uploadFinished = true;
-            try {
-                lastResult = JSON.parse(currentXhr.responseText);
-            } catch (e) {
-                if (currentXhr.status >= 200 && currentXhr.status < 300) {
-                    lastResult = {status: "reload"};
-                } else {
-                    lastResult = {status: "error", message: "Lỗi phản hồi hệ thống."};
-                }
-            }
-            const elapsed = Date.now() - startTime;
-            if (elapsed >= minDuration) {
-                finalizeUploadUI(lastResult);
-            }
-        });
-        currentXhr.addEventListener("error", function () {
-            handleUploadError("Mất kết nối mạng. Vui lòng kiểm tra lại đường truyền.");
-        });
         const cancelBtn = document.querySelector("#cancelUpload");
         cancelBtn.onclick = () => {
             isConfirmingCancel = true;
@@ -346,24 +314,95 @@
                     preview.hidden = false;
                 }
                 setTimeout(() => {
-                    showModal("Đã dừng tải lên", "Quá trình tải lên đã được dừng lại. Dữ liệu form và tệp đã chọn vẫn được giữ nguyên để bạn có thể chỉnh sửa hoặc thử lại.", "cancel-success");
+                    showModal("Đã dừng tải lên", "Quá trình tải lên đã được dừng lại.", "cancel-success");
                     setError("Đã hủy tải lên thành công.");
                 }, 300);
             }, function () {
                 isConfirmingCancel = false;
-                const elapsed = Date.now() - startTime;
-                if (uploadFinished && elapsed >= minDuration) {
-                    finalizeUploadUI(lastResult);
-                }
+                if (uploadFinished) finalizeUploadUI(lastResult);
             });
         };
+
         requestAnimationFrame(animateProgress);
-        currentXhr.open("POST", form.action, true);
-        currentXhr.timeout = 60000;
-        currentXhr.ontimeout = function () {
-            handleUploadError("Quá trình truyền tải bị gián đoạn do quá thời gian quy định. Vui lòng thử lại.");
-        };
-        currentXhr.send(formData);
+
+        const file = fileInput.files[0];
+        const contextPath = form.getAttribute("data-context") || "";
+
+        progressStatus.textContent = "Đang truyền tải lên Supabase Storage...";
+        
+        // Cấu hình Supabase
+        const supabaseUrl = "https://tlbznphszzpondlykmst.supabase.co";
+        const supabaseKey = "sb_publishable_3IaZByYoSWSHakJqFMOifQ_ud2mNCpg";
+        const bucketName = "documents"; // Lưu ý: Cần tạo bucket 'documents' (Public) trên Supabase
+        
+        // Tạo tên file an toàn
+        const safeFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+        const filePath = `uploads/${Date.now()}_${safeFileName}`;
+        const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucketName}/${filePath}`;
+
+        currentXhr.upload.addEventListener("progress", function (e) {
+            if (e.lengthComputable) {
+                progress = (e.loaded / e.total) * 100 * 0.85; // 85% cho quá trình lên Cloud
+            }
+        });
+
+        currentXhr.addEventListener("load", function () {
+            if (isCancelled) return;
+            if (currentXhr.status >= 200 && currentXhr.status < 300) {
+                progress = 90;
+                progressStatus.textContent = "Đang lưu dữ liệu vào hệ thống...";
+                
+                // Lấy URL Public từ Supabase
+                const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
+                
+                // Bước 2: Gửi URL lên Server nội bộ
+                const serverData = new FormData();
+                serverData.append("title", form.title.value);
+                serverData.append("category", form.category.value);
+                serverData.append("subject", form.subject.value);
+                serverData.append("description", form.description.value);
+                serverData.append("secureUrl", publicUrl);
+                serverData.append("fileName", file.name);
+                serverData.append("fileSize", file.size);
+                serverData.append("extension", getExtension(file.name));
+
+                fetch(form.action, {
+                    method: "POST",
+                    body: serverData
+                })
+                .then(r => r.json())
+                .then(serverResult => {
+                    if (isCancelled) return;
+                    progress = 100;
+                    uploadFinished = true;
+                    lastResult = serverResult;
+                })
+                .catch(e => {
+                    uploadFinished = true;
+                    lastResult = {status: "error", message: "Lỗi lưu DB: " + e.message};
+                });
+            } else {
+                uploadFinished = true;
+                let errorMsg = "Supabase error";
+                try {
+                    const result = JSON.parse(currentXhr.responseText);
+                    errorMsg += ": " + (result.message || result.error || currentXhr.status);
+                } catch(e) {}
+                lastResult = {status: "error", message: errorMsg};
+            }
+        });
+
+        currentXhr.addEventListener("error", function () {
+            if (isCancelled) return;
+            uploadFinished = true;
+            lastResult = {status: "error", message: "Lỗi kết nối mạng khi tải lên Supabase."};
+        });
+
+        currentXhr.open("POST", uploadUrl, true);
+        currentXhr.setRequestHeader("Authorization", "Bearer " + supabaseKey);
+        currentXhr.setRequestHeader("apikey", supabaseKey);
+        currentXhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+        currentXhr.send(file); // Gửi trực tiếp tệp nhị phân
     }
 
     function handleUploadError(message) {

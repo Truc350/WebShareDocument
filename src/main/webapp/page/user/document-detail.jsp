@@ -27,7 +27,10 @@
     String ext = doc.getFileExtension() != null ? doc.getFileExtension().toUpperCase() : "FILE";
     String description = doc.getDescription() != null && !doc.getDescription().isEmpty()
             ? doc.getDescription() : "Chưa có mô tả.";
-    String fileUrl = request.getContextPath() + "/document/uploads/" + doc.getFilePath();
+    String fileUrl = doc.getFilePath();
+    if (fileUrl != null && !fileUrl.startsWith("http")) {
+        fileUrl = request.getContextPath() + "/document/uploads/" + fileUrl;
+    }
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -337,40 +340,26 @@
             </div>
             <div class="doc-preview-area" id="previewArea">
                 <% if ("pdf".equalsIgnoreCase(doc.getFileExtension())) { %>
-                <iframe src="<%= fileUrl %>" title="Xem tài liệu PDF"
-                        style="width:100%;height:calc(85vh - 100px);min-height:540px;border:none;border-radius:8px;"></iframe>
+                <iframe src="https://docs.google.com/gview?url=<%= java.net.URLEncoder.encode(fileUrl, "UTF-8") %>&embedded=true" title="Xem tài liệu PDF"
+                        style="width:100%;height:calc(85vh - 100px);min-height:540px;border:none;border-radius:8px;background:#fff;"></iframe>
                 <% } else if (doc.getFileType() != null && doc.getFileType().startsWith("image/")) { %>
                 <img src="<%= fileUrl %>" alt="<%= doc.getTitle() %>"
                      style="max-width:100%;max-height:620px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.12);">
-                <% } else if ("docx".equalsIgnoreCase(doc.getFileExtension()) || "doc".equalsIgnoreCase(doc.getFileExtension())) { %>
-                <div id="docxViewer"
-                     style="width:100%;min-height:calc(85vh - 100px);background:#fff;border-radius:8px;padding:40px 48px;box-shadow:0 2px 12px rgba(0,0,0,.08);text-align:left;font-size:15px;line-height:1.9;overflow-y:auto;">
-                    <div style="text-align:center;padding:40px;color:#888;">
-                        <span class="material-symbols-outlined"
-                              style="font-size:48px;color:#0040ab;">hourglass_top</span>
-                        <p>Đang tải nội dung tài liệu...</p>
-                    </div>
-                </div>
-                <script>window._docxUrl = '<%= fileUrl %>';</script>
-                <% } else if ("xlsx".equalsIgnoreCase(doc.getFileExtension()) || "xls".equalsIgnoreCase(doc.getFileExtension())) { %>
-                <div id="xlsxViewer"
-                     style="width:100%;min-height:400px;overflow-x:auto;background:#fff;border-radius:8px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);">
-                    <div style="text-align:center;padding:40px;color:#888;">
-                        <span class="material-symbols-outlined"
-                              style="font-size:48px;color:#28a745;">hourglass_top</span>
-                        <p>Đang tải bảng tính...</p>
-                    </div>
-                </div>
-                <script>window._xlsxUrl = '<%= fileUrl %>';</script>
+                <% } else if ("doc".equalsIgnoreCase(doc.getFileExtension()) || "docx".equalsIgnoreCase(doc.getFileExtension()) || 
+                              "xls".equalsIgnoreCase(doc.getFileExtension()) || "xlsx".equalsIgnoreCase(doc.getFileExtension()) || 
+                              "ppt".equalsIgnoreCase(doc.getFileExtension()) || "pptx".equalsIgnoreCase(doc.getFileExtension())) { %>
+                <iframe src="https://view.officeapps.live.com/op/embed.aspx?src=<%= java.net.URLEncoder.encode(fileUrl, "UTF-8") %>" title="Xem tài liệu"
+                        style="width:100%;height:calc(85vh - 100px);min-height:540px;border:none;border-radius:8px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.08);"></iframe>
                 <% } else if ("txt".equalsIgnoreCase(doc.getFileExtension())) { %>
-                <iframe src="<%= fileUrl %>"
-                        style="width:100%;height:calc(85vh - 100px);min-height:540px;border:none;border-radius:8px;background:#fff;"></iframe>
+                <iframe src="<%= fileUrl %>" title="Xem tài liệu văn bản"
+                        style="width:100%;height:calc(85vh - 100px);min-height:540px;border:none;border-radius:8px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.08);"></iframe>
                 <% } else { %>
                 <div style="text-align:center;padding:48px;">
                     <span class="material-symbols-outlined" style="font-size:80px;color:#0040ab;">description</span>
                     <p style="color:#555;margin-top:12px;font-size:15px;">Định dạng <strong><%= ext %>
                     </strong> không hỗ trợ xem trực tiếp.</p>
-                    <a href="<%= fileUrl %>" download="<%= doc.getFileName() %>" class="btn-download"
+                    <a href="${pageContext.request.contextPath}/download?id=<%= doc.getId() %>" class="btn-download"
+                       onclick="let e = document.getElementById('dlCountVal'); if(e) e.innerText = parseInt(e.innerText) + 1;"
                        style="max-width:260px;margin:16px auto 0;text-decoration:none;">
                         <span class="material-symbols-outlined">download</span> Tải xuống để xem
                     </a>
@@ -391,7 +380,8 @@
     </div>
     <div class="sidebar">
         <div class="card">
-            <a href="<%= fileUrl %>" download="<%= doc.getFileName() %>" class="btn-download">
+            <a href="${pageContext.request.contextPath}/download?id=<%= doc.getId() %>" class="btn-download" 
+               onclick="let e = document.getElementById('dlCountVal'); if(e) e.innerText = parseInt(e.innerText) + 1;">
                 <span class="material-symbols-outlined">download</span>
                 Tải xuống ngay
             </a>
@@ -403,7 +393,7 @@
                 </div>
                 <div class="stat-item">
                     <span class="material-symbols-outlined">download</span>
-                    <span class="val"><%= doc.getDownloadCount() %></span>
+                    <span class="val" id="dlCountVal"><%= doc.getDownloadCount() %></span>
                     <span class="lbl">Lượt tải</span>
                 </div>
             </div>
@@ -436,46 +426,5 @@
 </div>
 
 <jsp:include page="/common/footer.jsp"/>
-<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script>
-    if (window._docxUrl) {
-        fetch(window._docxUrl)
-            .then(r => r.arrayBuffer())
-            .then(buf => mammoth.convertToHtml({arrayBuffer: buf}))
-            .then(result => {
-                const viewer = document.getElementById('docxViewer');
-                if (viewer) viewer.innerHTML = result.value || '<p>Không thể đọc nội dung.</p>';
-            })
-            .catch(() => {
-                const viewer = document.getElementById('docxViewer');
-                if (viewer) viewer.innerHTML = '<p style="color:red;text-align:center">Không thể tải tài liệu. Vui lòng tải xuống để xem.</p>';
-            });
-    }
-    if (window._xlsxUrl) {
-        fetch(window._xlsxUrl)
-            .then(r => r.arrayBuffer())
-            .then(buf => {
-                const wb = XLSX.read(buf, {type: 'array'});
-                const ws = wb.Sheets[wb.SheetNames[0]];
-                const html = XLSX.utils.sheet_to_html(ws, {id: 'xlsxTable'});
-                const viewer = document.getElementById('xlsxViewer');
-                if (viewer) {
-                    viewer.innerHTML = html;
-                    const tbl = document.getElementById('xlsxTable');
-                    if (tbl) {
-                        tbl.style.cssText = 'border-collapse:collapse;width:100%;font-size:13px;';
-                        tbl.querySelectorAll('td,th').forEach(cell => {
-                            cell.style.cssText = 'border:1px solid #dde;padding:6px 10px;';
-                        });
-                    }
-                }
-            })
-            .catch(() => {
-                const viewer = document.getElementById('xlsxViewer');
-                if (viewer) viewer.innerHTML = '<p style="color:red;text-align:center">Không thể tải bảng tính. Vui lòng tải xuống để xem.</p>';
-            });
-    }
-</script>
 </body>
 </html>

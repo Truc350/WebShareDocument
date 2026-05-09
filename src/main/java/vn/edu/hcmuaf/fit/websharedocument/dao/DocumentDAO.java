@@ -58,9 +58,7 @@ public class DocumentDAO {
         return false;
     }
 
-    // =========================
-    // GET ALL DOCUMENTS
-    // =========================
+    // UC17.1.2: Hiển thị trang danh sách tài liệu
     public List<Document> getAllDocument() {
         List<Document> list = new ArrayList<>();
 
@@ -250,6 +248,7 @@ public class DocumentDAO {
 
                     doc.setId(rs.getInt("id"));
                     doc.setFileName(rs.getString("file_name"));
+                    doc.setFilePath(rs.getString("file_path"));
                     doc.setFileSize(rs.getLong("file_size"));
                     doc.setFileExtension(rs.getString("file_extension"));
                     doc.setIsActive(rs.getInt("is_active"));
@@ -318,6 +317,7 @@ public class DocumentDAO {
 
                     doc.setId(rs.getInt("id"));
                     doc.setFileName(rs.getString("file_name"));
+                    doc.setFilePath(rs.getString("file_path"));
                     doc.setFileSize(rs.getLong("file_size"));
                     doc.setFileExtension(rs.getString("file_extension"));
                     doc.setIsActive(rs.getInt("is_active"));
@@ -819,6 +819,16 @@ public class DocumentDAO {
                 .replaceAll("[đ]", "d")
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("^-|-$", "");
+    }
+    public void incrementDownloadCount(int documentId) {
+        String sql = "UPDATE documents SET download_count = download_count + 1 WHERE id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, documentId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 

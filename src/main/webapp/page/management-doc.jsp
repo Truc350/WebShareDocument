@@ -258,10 +258,10 @@
                 Tất cả tài liệu
                 <span class="ml-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">${totalDocs != null ? totalDocs : 0}</span>
             </a>
-            <a class="px-4 py-2 text-sm font-medium transition-colors ${currentTab == 0 ? 'text-blue-700 border-b-2 border-blue-700' : 'text-slate-500 hover:text-slate-700'}"
+            <a class="px-4 py-2 text-sm font-medium transition-colors ${currentTab == 0 || empty currentTab ? 'text-blue-700 border-b-2 border-blue-700' : 'text-slate-500 hover:text-slate-700'}"
                href="${pageContext.request.contextPath}/admin/management-doc?tab=0">
                 Đang chờ duyệt
-                <span class="ml-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">${pendingDocs != null ? pendingDocs : 0}</span>
+                <span class="ml-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">${pendingDocs}</span>
             </a>
 
             <a class="px-4 py-2 text-sm font-medium transition-colors ${currentTab == 1 ? 'text-blue-700 border-b-2 border-blue-700' : 'text-slate-500 hover:text-slate-700'}"
@@ -399,7 +399,9 @@
                             </td>
                             <td class="p-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    <a href="${pageContext.request.contextPath}${doc.viewUrl}" target="_blank"
+                                    <c:set var="vUrl" value="${doc.viewUrl}" />
+                                    <a href="${vUrl.startsWith('http') ? vUrl : pageContext.request.contextPath.concat(vUrl)}"
+                                       target="_blank"
                                        class="px-3 py-1.5 text-xs font-bold text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors inline-block text-center">
                                         Xem
                                     </a>
@@ -408,7 +410,7 @@
                                     <c:if test="${doc.isActive == 0}">
                                         <a href="${pageContext.request.contextPath}/admin/update-doc-status?id=${doc.id}&status=1"
                                            class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg inline-block" title="Duyệt">
-                                            <span class="material-symbols-outlined" data-icon="done">done</span>
+                                            <span class="material-symbols-outlined">done</span>
                                         </a>
                                     </c:if>
 
