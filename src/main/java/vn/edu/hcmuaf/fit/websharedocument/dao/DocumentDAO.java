@@ -711,6 +711,16 @@ public class DocumentDAO {
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("^-|-$", "");
     }
+    public void incrementDownloadCount(int documentId) {
+        String sql = "UPDATE documents SET download_count = download_count + 1 WHERE id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, documentId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
 
 }
