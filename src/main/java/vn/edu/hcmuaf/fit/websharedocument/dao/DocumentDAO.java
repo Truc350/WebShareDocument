@@ -354,8 +354,41 @@ public class DocumentDAO {
 
             try (ResultSet rs = ps.executeQuery()) {
 
+//                if (rs.next()) {
+//                    return mapResultSetToDocument(rs);
+//                }
                 if (rs.next()) {
-                    return mapResultSetToDocument(rs);
+
+                    Document doc = new Document();
+
+                    doc.setId(rs.getInt("id"));
+                    doc.setUserId(rs.getInt("user_id"));
+                    doc.setTitle(rs.getString("title"));
+                    doc.setDescription(rs.getString("description"));
+
+                    doc.setCategoryId(
+                            rs.getObject("category_id") != null
+                                    ? rs.getInt("category_id")
+                                    : null
+                    );
+
+                    doc.setFileName(rs.getString("file_name"));
+                    doc.setFilePath(rs.getString("file_path"));
+                    doc.setFileSize(rs.getLong("file_size"));
+                    doc.setFileType(rs.getString("file_type"));
+                    doc.setFileExtension(rs.getString("file_extension"));
+
+                    doc.setDownloadCount(rs.getInt("download_count"));
+                    doc.setViewCount(rs.getInt("view_count"));
+                    doc.setIsActive(rs.getInt("is_active"));
+
+                    doc.setUploaderName(rs.getString("uploader_name"));
+                    doc.setCategoryName(rs.getString("category_name"));
+
+                    // LOAD TAGS
+                    doc.setTags(getTagsByDocumentId(conn, id));
+
+                    return doc;
                 }
             }
         } catch (SQLException e) {
@@ -382,6 +415,7 @@ public class DocumentDAO {
         if (createdAt != null) doc.setCreatedAt(createdAt.toLocalDateTime());
         doc.setUploaderName(rs.getString("uploader_name"));
         doc.setCategoryName(rs.getString("category_name"));
+//        doc.setTags(getTagsByDocumentId(DBConnect.getConnection(), doc.getId()));
         return doc;
     }
 
@@ -674,6 +708,81 @@ public class DocumentDAO {
             }
         }
         return tags;
+    }
+
+    public List<Document> getDocumentsByUserId(int userId) {
+        List<Document> list = new ArrayList<>();
+        String query = "SELECT d.*, u.full_name, c.name AS category_name " +
+                "FROM documents d " +
+                "LEFT JOIN users u ON d.user_id = u.id " +
+                "LEFT JOIN categories c ON d.category_id = c.id " +
+                "WHERE d.user_id = ? " +
+                "ORDER BY d.created_at DESC";
+
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+
+            ps.setInt(1, userId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Document doc = new Document();
+
+                    doc.setId(rs.getInt("id"));
+                    doc.setFileName(rs.getString("file_name"));
+                    doc.setFileSize(rs.getLong("file_size"));
+                    doc.setFileExtension(rs.getString("file_extension"));
+                    doc.setDownloadCount(rs.getInt("download_count"));
+                    doc.setViewCount(rs.getInt("view_count"));
+                    doc.setIsActive(rs.getInt("is_active"));
+                    Timestamp createdAt = rs.getTimestamp("created_at");
+                    if (createdAt != null) {
+                        doc.setCreatedAt(createdAt.toLocalDateTime());
+                    }
+                    doc.setUploaderName(rs.getString("full_name"));
+                    doc.setCategoryName(rs.getString("category_name"));
+
+                    list.add(doc);
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public int getTotalDocumentsByUserId(int userId) {
+        String query = "SELECT COUNT(*) FROM documents WHERE user_id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public int getTotalDownloadsByUserId(int userId) {
+        String query = "SELECT SUM(download_count) FROM documents WHERE user_id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     private Document mapRow(ResultSet rs) throws SQLException {

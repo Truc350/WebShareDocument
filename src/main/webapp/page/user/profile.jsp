@@ -1,4 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <!DOCTYPE html>
 <html lang="vi" class="light">
 <head>
@@ -25,21 +27,21 @@
                 <!-- Info -->
                 <div class="flex flex-col text-white pt-2 w-full md:w-auto text-center md:text-left">
                     <div class="flex items-center justify-center md:justify-start gap-3 mb-2">
-                        <h1 class="text-2xl font-semibold font-manrope">Nguyễn Minh Tuấn</h1>
-                        <span class="px-3 py-0.5 bg-white/20 text-white text-xs rounded-full border border-white/30">Sinh viên</span>
+                        <h1 class="text-2xl font-semibold font-manrope">${authUser.fullName}</h1>
+                        <span class="px-3 py-0.5 bg-white/20 text-white text-xs rounded-full border border-white/30">${authUser.role == 'admin' ? 'Quản trị viên' : 'Học viên'}</span>
                     </div>
                     <div class="flex flex-wrap justify-center md:justify-start items-center gap-x-6 gap-y-2 text-sm text-white/90 mb-6">
-                        <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">school</span> ĐH Nông Lâm TP.HCM</span>
-                        <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">calendar_today</span> Tham gia từ 03/2026</span>
+                        <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">calendar_today</span> Tham gia từ <fmt:formatDate value="${authUser.createdAt}" pattern="MM/yyyy" /></span>
+                        <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">mail</span> ${authUser.email}</span>
                     </div>
                     <div class="flex items-center justify-center md:justify-start gap-8">
                         <div>
-                            <span class="block text-2xl font-bold font-manrope">24</span>
+                            <span class="block text-2xl font-bold font-manrope">${totalDocuments != null ? totalDocuments : 0}</span>
                             <span class="text-[10px] text-white/80 uppercase tracking-wide">Tài liệu</span>
                         </div>
                         <div class="w-px h-8 bg-white/20"></div>
                         <div>
-                            <span class="block text-2xl font-bold font-manrope">1,234</span>
+                            <span class="block text-2xl font-bold font-manrope">${totalDownloads != null ? totalDownloads : 0}</span>
                             <span class="text-[10px] text-white/80 uppercase tracking-wide">Lượt tải</span>
                         </div>
                     </div>
@@ -65,60 +67,9 @@
 
     <!-- Main Content -->
     <main class="max-w-[1280px] mx-auto px-6 py-8 w-full flex-grow">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Left Column -->
-            <div id="personal-info-section" class="lg:col-span-1 space-y-6">
-                <!-- Giới thiệu -->
-                <div class="bg-white p-6 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-slate-100">
-                    <h3 class="text-base font-semibold text-slate-800 mb-4 font-manrope">Giới thiệu</h3>
-                    <p class="text-sm text-slate-600 mb-6 leading-relaxed">
-                        Sinh viên năm 3 khoa Công nghệ thông tin, đam mê chia sẻ kiến thức và tài liệu học tập hữu ích cho cộng đồng sinh viên Nông Lâm.
-                    </p>
-                    <div class="space-y-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#0555dd] shrink-0">
-                                <span class="material-symbols-outlined text-[20px]">mail</span>
-                            </div>
-                            <div>
-                                <p class="text-[11px] text-slate-400 font-medium uppercase tracking-wide">Email</p>
-                                <p class="text-sm font-medium text-slate-800">tuan.minh.nlu@gmail.com</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#0555dd] shrink-0">
-                                <span class="material-symbols-outlined text-[20px]">phone</span>
-                            </div>
-                            <div>
-                                <p class="text-[11px] text-slate-400 font-medium uppercase tracking-wide">Số điện thoại</p>
-                                <p class="text-sm font-medium text-slate-800">098 *** 4567</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#0555dd] shrink-0">
-                                <span class="material-symbols-outlined text-[20px]">location_on</span>
-                            </div>
-                            <div>
-                                <p class="text-[11px] text-slate-400 font-medium uppercase tracking-wide">Địa chỉ</p>
-                                <p class="text-sm font-medium text-slate-800">TP. Thủ Đức, Hồ Chí Minh</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Kỹ năng & Chuyên môn -->
-                <div class="bg-white p-6 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-slate-100">
-                    <h3 class="text-base font-semibold text-slate-800 mb-4 font-manrope">Kỹ năng & Chuyên môn</h3>
-                    <div class="flex flex-wrap gap-2">
-                        <span class="px-3 py-1.5 bg-slate-100 text-slate-700 text-[13px] rounded-full font-medium">Phân tích dữ liệu</span>
-                        <span class="px-3 py-1.5 bg-slate-100 text-slate-700 text-[13px] rounded-full font-medium">Python</span>
-                        <span class="px-3 py-1.5 bg-slate-100 text-slate-700 text-[13px] rounded-full font-medium">SQL</span>
-                        <span class="px-3 py-1.5 bg-slate-100 text-slate-700 text-[13px] rounded-full font-medium">Soạn thảo văn bản</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Column -->
-            <div id="my-documents-section" class="lg:col-span-2">
+        <div class="grid grid-cols-1 gap-6">
+            <!-- Main Column -->
+            <div id="my-documents-section" class="col-span-1">
                 <div class="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden">
                     <div class="p-6 border-b border-slate-100 flex justify-between items-center">
                         <h3 class="text-base font-semibold text-slate-800 font-manrope">Quản lý tài liệu</h3>
@@ -139,98 +90,53 @@
                             </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-3">
-                                        <span class="material-symbols-outlined text-[#0555dd]">description</span>
-                                        <span class="font-medium text-sm text-slate-800">Giao trinh SQL Can Ban.pdf</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-slate-500">12/03/2026</td>
-                                <td class="px-6 py-4 text-sm text-center text-slate-600">452</td>
-                                <td class="px-6 py-4 text-center">
-                                    <span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded uppercase tracking-wide">Công khai</span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-1">
-                                        <a href="edit-document.jsp" class="p-1.5 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0555dd] transition-colors block" title="Chỉnh sửa">
-                                            <span class="material-symbols-outlined text-[20px]">edit</span>
-                                        </a>
-                                        <button class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" title="Xóa">
-                                            <span class="material-symbols-outlined text-[20px]">delete</span>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-3">
-                                        <span class="material-symbols-outlined text-[#0555dd]">article</span>
-                                        <span class="font-medium text-sm text-slate-800">Bai tap Python nang cao.docx</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-slate-500">08/03/2026</td>
-                                <td class="px-6 py-4 text-sm text-center text-slate-600">128</td>
-                                <td class="px-6 py-4 text-center">
-                                    <span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded uppercase tracking-wide">Công khai</span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-1">
-                                        <a href="edit-document.jsp" class="p-1.5 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0555dd] transition-colors block" title="Chỉnh sửa">
-                                            <span class="material-symbols-outlined text-[20px]">edit</span>
-                                        </a>
-                                        <button class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" title="Xóa">
-                                            <span class="material-symbols-outlined text-[20px]">delete</span>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-3">
-                                        <span class="material-symbols-outlined text-[#0555dd]">table_chart</span>
-                                        <span class="font-medium text-sm text-slate-800">Data Analysis NLU 2025.xlsx</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-slate-500">01/03/2026</td>
-                                <td class="px-6 py-4 text-sm text-center text-slate-600">85</td>
-                                <td class="px-6 py-4 text-center">
-                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-[10px] font-bold rounded uppercase tracking-wide">Nháp</span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-1">
-                                        <a href="edit-document.jsp" class="p-1.5 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0555dd] transition-colors block" title="Chỉnh sửa">
-                                            <span class="material-symbols-outlined text-[20px]">edit</span>
-                                        </a>
-                                        <button class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" title="Xóa">
-                                            <span class="material-symbols-outlined text-[20px]">delete</span>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-3">
-                                        <span class="material-symbols-outlined text-[#0555dd]">present_to_all</span>
-                                        <span class="font-medium text-sm text-slate-800">Slide thuyet trinh Marketing.pptx</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-slate-500">25/02/2026</td>
-                                <td class="px-6 py-4 text-sm text-center text-slate-600">569</td>
-                                <td class="px-6 py-4 text-center">
-                                    <span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded uppercase tracking-wide">Công khai</span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-1">
-                                        <a href="edit-document.jsp" class="p-1.5 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0555dd] transition-colors block" title="Chỉnh sửa">
-                                            <span class="material-symbols-outlined text-[20px]">edit</span>
-                                        </a>
-                                        <button class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" title="Xóa">
-                                            <span class="material-symbols-outlined text-[20px]">delete</span>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                            <c:choose>
+                                <c:when test="${not empty myDocuments}">
+                                    <c:forEach var="doc" items="${myDocuments}">
+                                        <tr class="hover:bg-slate-50 transition-colors">
+                                            <td class="px-6 py-4">
+                                                <div class="flex items-center gap-3">
+                                                    <span class="material-symbols-outlined text-[#0555dd]">description</span>
+                                                    <span class="font-medium text-sm text-slate-800">${doc.fileName}</span>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 text-sm text-slate-500">
+                                                <c:if test="${doc.createdAt != null}">
+                                                    ${doc.createdAt.dayOfMonth}/${doc.createdAt.monthValue}/${doc.createdAt.year}
+                                                </c:if>
+                                            </td>
+                                            <td class="px-6 py-4 text-sm text-center text-slate-600">${doc.downloadCount}</td>
+                                            <td class="px-6 py-4 text-center">
+                                                <c:choose>
+                                                    <c:when test="${doc.isActive == 1}">
+                                                        <span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded uppercase tracking-wide">Công khai</span>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-[10px] font-bold rounded uppercase tracking-wide">Nháp</span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </td>
+                                            <td class="px-6 py-4 text-right">
+                                                <div class="flex items-center justify-end gap-1">
+                                                    <a href="${pageContext.request.contextPath}/edit-document?id=${doc.id}" class="p-1.5 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0555dd] transition-colors block" title="Chỉnh sửa">
+                                                        <span class="material-symbols-outlined text-[20px]">edit</span>
+                                                    </a>
+                                                    <button class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" title="Xóa">
+                                                        <span class="material-symbols-outlined text-[20px]">delete</span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
+                                </c:when>
+                                <c:otherwise>
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-8 text-center text-slate-500">
+                                            Chưa có tài liệu nào.
+                                        </td>
+                                    </tr>
+                                </c:otherwise>
+                            </c:choose>
                             </tbody>
                         </table>
                     </div>
