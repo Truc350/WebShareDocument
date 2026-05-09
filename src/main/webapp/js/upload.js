@@ -282,7 +282,7 @@
             if (result && result.status === "success") {
                 sessionStorage.removeItem("uploadFormState");
                 const contextPath = form.getAttribute("data-context") || "";
-                const detailUrl = contextPath + "/document-detail?id=" + result.id;
+                const detailUrl = contextPath + "/page/user/profile.jsp";
                 showModal("Thành công ✓", "Đăng tải tài liệu thành công!", "success", function () {
                     window.location.href = detailUrl;
                 });
