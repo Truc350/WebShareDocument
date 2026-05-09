@@ -197,13 +197,275 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            transition: transform .15s, opacity .15s;
+            transition: transform .15s, box-shadow .15s, opacity .15s;
             text-decoration: none;
+            box-shadow: 0 4px 16px rgba(0,64,171,.35);
         }
 
         .btn-download:hover {
             opacity: .92;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,64,171,.45);
+        }
+
+        .btn-download:disabled,
+        .btn-download.loading {
+            opacity: .7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* ===== DOWNLOAD MODAL SYSTEM ===== */
+        .dl-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10,11,20,.55);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 9000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .25s ease;
+        }
+
+        .dl-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .dl-modal {
+            background: #fff;
+            border-radius: 20px;
+            padding: 36px 32px 28px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 24px 64px rgba(0,0,0,.18), 0 4px 16px rgba(0,0,0,.1);
+            position: relative;
+            transform: scale(.88) translateY(20px);
+            transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .25s ease;
+            opacity: 0;
+        }
+
+        .dl-overlay.active .dl-modal {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+
+        .dl-modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: #f2f3f8;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #888;
+            transition: background .15s, color .15s;
+        }
+
+        .dl-modal-close:hover {
+            background: #e4e6f0;
+            color: #333;
+        }
+
+        .dl-modal-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 30px;
+        }
+
+        .dl-modal-icon.confirm { background: #eef2ff; color: #0040ab; }
+        .dl-modal-icon.success { background: #e8faf1; color: #0db36a; }
+        .dl-modal-icon.error   { background: #fff0f0; color: #e53e3e; }
+        .dl-modal-icon.loading-icon {
+            background: #eef2ff;
+        }
+
+        .dl-modal h2 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            color: #0a0b14;
+            text-align: center;
+            margin: 0 0 8px;
+        }
+
+        .dl-modal p {
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            line-height: 1.6;
+            margin: 0 0 28px;
+        }
+
+        .dl-modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .dl-modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: background .15s, transform .1s, box-shadow .15s;
+        }
+
+        .dl-modal-actions button:active { transform: scale(.97); }
+
+        .btn-cancel {
+            background: #f2f3f8;
+            color: #555;
+        }
+
+        .btn-cancel:hover { background: #e4e6f0; }
+
+        .btn-confirm {
+            background: linear-gradient(135deg, #0040ab, #0055e6);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(0,64,171,.4);
+        }
+
+        .btn-confirm:hover { box-shadow: 0 6px 20px rgba(0,64,171,.5); }
+
+        .btn-close-modal {
+            background: #f2f3f8;
+            color: #555;
+        }
+
+        .btn-close-modal:hover { background: #e4e6f0; }
+
+        .btn-retry {
+            background: linear-gradient(135deg, #e53e3e, #fc5c5c);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(229,62,62,.35);
+        }
+
+        .btn-retry:hover { box-shadow: 0 6px 20px rgba(229,62,62,.5); }
+
+        /* Spinner */
+        .dl-spinner {
+            width: 38px;
+            height: 38px;
+            border: 4px solid #c7d6ff;
+            border-top-color: #0040ab;
+            border-radius: 50%;
+            animation: dlSpin .75s linear infinite;
+        }
+
+        @keyframes dlSpin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Progress bar */
+        .dl-progress-wrap {
+            margin: 20px 0 8px;
+        }
+
+        .dl-progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .dl-progress-track {
+            width: 100%;
+            height: 8px;
+            background: #e4e8f5;
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .dl-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #0040ab, #5c8aff);
+            border-radius: 99px;
+            transition: width .3s ease;
+        }
+
+        .dl-progress-fill.indeterminate {
+            width: 40%;
+            animation: dlIndeterminate 1.4s ease-in-out infinite;
+        }
+
+        @keyframes dlIndeterminate {
+            0%   { margin-left: -40%; }
+            100% { margin-left: 100%; }
+        }
+
+        .btn-cancel-dl {
+            margin-top: 18px;
+            background: transparent;
+            border: 1.5px solid #e0e3f0;
+            color: #888;
+            border-radius: 10px;
+            padding: 9px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color .15s, color .15s, background .15s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-cancel-dl:hover {
+            border-color: #e53e3e;
+            color: #e53e3e;
+            background: #fff0f0;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .dl-progress-track { background: #2a3060; }
+            .dl-progress-label { color: #9097b8; }
+            .btn-cancel-dl { border-color: #2e3250; color: #9097b8; }
+            .btn-cancel-dl:hover { border-color: #e53e3e; color: #fc5c5c; background: #2e1010; }
+        }
+
+        /* Dark mode */
+        @media (prefers-color-scheme: dark) {
+            .dl-overlay { background: rgba(0,0,0,.7); }
+            .dl-modal {
+                background: #1a1d2e;
+                box-shadow: 0 24px 64px rgba(0,0,0,.5), 0 4px 16px rgba(0,0,0,.3);
+            }
+            .dl-modal h2 { color: #f0f1ff; }
+            .dl-modal p  { color: #9097b8; }
+            .dl-modal-close { background: #252840; color: #9097b8; }
+            .dl-modal-close:hover { background: #2e3250; color: #f0f1ff; }
+            .dl-modal-icon.confirm { background: #1a2a55; }
+            .dl-modal-icon.success { background: #0d2e1c; }
+            .dl-modal-icon.error   { background: #2e1010; }
+            .dl-modal-icon.loading-icon { background: #1a2a55; }
+            .btn-cancel  { background: #252840; color: #9097b8; }
+            .btn-cancel:hover { background: #2e3250; }
+            .btn-close-modal { background: #252840; color: #9097b8; }
+            .btn-close-modal:hover { background: #2e3250; }
+            .dl-spinner { border-color: #2e3a6e; border-top-color: #5c8aff; }
         }
 
         .stat-row {
@@ -358,11 +620,11 @@
                     <span class="material-symbols-outlined" style="font-size:80px;color:#0040ab;">description</span>
                     <p style="color:#555;margin-top:12px;font-size:15px;">Định dạng <strong><%= ext %>
                     </strong> không hỗ trợ xem trực tiếp.</p>
-                    <a href="${pageContext.request.contextPath}/download?id=<%= doc.getId() %>" class="btn-download"
-                       onclick="let e = document.getElementById('dlCountVal'); if(e) e.innerText = parseInt(e.innerText) + 1;"
-                       style="max-width:260px;margin:16px auto 0;text-decoration:none;">
+                    <button class="btn-download" id="btnDlAlt"
+                            onclick="openDownloadConfirm('<%= doc.getId() %>')"
+                            style="max-width:260px;margin:16px auto 0;">
                         <span class="material-symbols-outlined">download</span> Tải xuống để xem
-                    </a>
+                    </button>
                 </div>
                 <% } %>
             </div>
@@ -380,11 +642,11 @@
     </div>
     <div class="sidebar">
         <div class="card">
-            <a href="${pageContext.request.contextPath}/download?id=<%= doc.getId() %>" class="btn-download" 
-               onclick="let e = document.getElementById('dlCountVal'); if(e) e.innerText = parseInt(e.innerText) + 1;">
+            <button class="btn-download" id="btnDlMain"
+                    onclick="openDownloadConfirm('<%= doc.getId() %>')">
                 <span class="material-symbols-outlined">download</span>
                 Tải xuống ngay
-            </a>
+            </button>
             <div class="stat-row">
                 <div class="stat-item">
                     <span class="material-symbols-outlined">visibility</span>
@@ -424,6 +686,317 @@
         </div>
     </div>
 </div>
+
+<!-- ========== DOWNLOAD MODAL SYSTEM ========== -->
+
+<!-- 1. Confirm Modal -->
+<div class="dl-overlay" id="dlOverlayConfirm" role="dialog" aria-modal="true" aria-labelledby="dlConfirmTitle">
+    <div class="dl-modal" id="dlModalConfirm">
+        <button class="dl-modal-close" onclick="closeAllModals()" aria-label="Đóng">
+            <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+        </button>
+        <div class="dl-modal-icon confirm">
+            <span class="material-symbols-outlined">download</span>
+        </div>
+        <h2 id="dlConfirmTitle">Xác nhận tải xuống</h2>
+        <p>Bạn có chắc chắn muốn tải file này không?</p>
+        <div class="dl-modal-actions">
+            <button class="btn-cancel" onclick="closeAllModals()">Huỷ</button>
+            <button class="btn-confirm" id="btnConfirmDownload" onclick="startDownload()">Xác nhận tải</button>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Loading Modal -->
+<div class="dl-overlay" id="dlOverlayLoading" role="dialog" aria-modal="true" aria-labelledby="dlLoadingTitle">
+    <div class="dl-modal" style="text-align:center;">
+        <div class="dl-modal-icon loading-icon">
+            <div class="dl-spinner"></div>
+        </div>
+        <h2 id="dlLoadingTitle">Đang tải xuống...</h2>
+        <p id="dlProgressText" style="margin-bottom:0;font-size:13px;color:#888;">Đang chuẩn bị...</p>
+        <div class="dl-progress-wrap">
+            <div class="dl-progress-label">
+                <span id="dlProgressPct">0%</span>
+                <span id="dlProgressBytes"></span>
+            </div>
+            <div class="dl-progress-track">
+                <div class="dl-progress-fill indeterminate" id="dlProgressFill"></div>
+            </div>
+        </div>
+        <button class="btn-cancel-dl" id="btnCancelDownload" onclick="cancelDownload()">
+            <span class="material-symbols-outlined" style="font-size:16px;">cancel</span>
+            Huỷ tải xuống
+        </button>
+    </div>
+</div>
+
+<!-- 3. Success Modal -->
+<div class="dl-overlay" id="dlOverlaySuccess" role="dialog" aria-modal="true" aria-labelledby="dlSuccessTitle">
+    <div class="dl-modal">
+        <button class="dl-modal-close" onclick="closeAllModals()" aria-label="Đóng">
+            <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+        </button>
+        <div class="dl-modal-icon success">
+            <span class="material-symbols-outlined">check_circle</span>
+        </div>
+        <h2 id="dlSuccessTitle">Tải thành công</h2>
+        <p>File đã được tải xuống thành công.</p>
+        <div class="dl-modal-actions">
+            <button class="btn-close-modal" style="flex:1;" onclick="closeAllModals()">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<!-- 4. Error Modal -->
+<div class="dl-overlay" id="dlOverlayError" role="dialog" aria-modal="true" aria-labelledby="dlErrorTitle">
+    <div class="dl-modal">
+        <button class="dl-modal-close" onclick="closeAllModals()" aria-label="Đóng">
+            <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+        </button>
+        <div class="dl-modal-icon error">
+            <span class="material-symbols-outlined">error</span>
+        </div>
+        <h2 id="dlErrorTitle">Tải thất bại</h2>
+        <p>Tải thất bại, vui lòng thử lại.</p>
+        <div class="dl-modal-actions">
+            <button class="btn-cancel" onclick="closeAllModals()">Huỷ</button>
+            <button class="btn-retry" onclick="startDownload()">Thử lại</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        'use strict';
+
+        // ── State ─────────────────────────────────────────────────────────
+        var _docId         = null;
+        var _isDownloading = false;
+        var _successTimer  = null;
+        var _abortCtrl     = null;   // AbortController cho fetch hiện tại
+        var _downloadUrl   = '${pageContext.request.contextPath}/download?id=';
+
+        // ── DOM refs ──────────────────────────────────────────────────────
+        var elFill      = document.getElementById('dlProgressFill');
+        var elPct       = document.getElementById('dlProgressPct');
+        var elBytes     = document.getElementById('dlProgressBytes');
+        var elText      = document.getElementById('dlProgressText');
+        var elCancelBtn = document.getElementById('btnCancelDownload');
+
+        // ── Helpers ───────────────────────────────────────────────────────
+        // [Nội bộ] Ẩn tất cả overlay, hiển thị overlay được chỉ định
+        function showOverlay(id) {
+            ['dlOverlayConfirm','dlOverlayLoading','dlOverlaySuccess','dlOverlayError']
+                .forEach(function (oid) {
+                    var el = document.getElementById(oid);
+                    if (el) el.classList.remove('active');
+                });
+            var target = document.getElementById(id);
+            if (target) target.classList.add('active');
+        }
+
+        // [UC13.1.2 / UC13.2.1] Reset thanh tiến trình về trạng thái ban đầu
+        // → Gọi mỗi lần bắt đầu download mới (trước fetch)
+        // → File: document-detail.jsp (JS)
+        function resetProgressUI() {
+            if (elFill)  { elFill.style.width = '0%'; elFill.classList.add('indeterminate'); }
+            if (elPct)   elPct.innerText  = '0%';
+            if (elBytes) elBytes.innerText = '';
+            if (elText)  elText.innerText  = 'Đang chuẩn bị...';
+            if (elCancelBtn) elCancelBtn.disabled = false;
+        }
+
+        // [UC13.1.6] Cập nhật thanh tiến trình theo từng chunk nhận được
+        // → Gọi trong pump() mỗi khi reader.read() trả về chunk mới
+        // → File: document-detail.jsp (JS)
+        function setProgress(received, total) {
+            if (total > 0) {
+                var pct = Math.min(100, Math.round(received / total * 100));
+                if (elFill) {
+                    elFill.classList.remove('indeterminate');
+                    elFill.style.width = pct + '%';
+                }
+                if (elPct)  elPct.innerText  = pct + '%';
+                if (elText) elText.innerText  = 'Đang nhận dữ liệu...';
+            }
+            if (elBytes) elBytes.innerText = formatBytes(received) + (total > 0 ? ' / ' + formatBytes(total) : '');
+        }
+
+        // [Nội bộ] Định dạng byte → KB / MB để hiển thị
+        function formatBytes(bytes) {
+            if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + ' MB';
+            if (bytes >= 1024)    return (bytes / 1024).toFixed(1) + ' KB';
+            return bytes + ' B';
+        }
+
+        // [UC13.1.2 / UC13.2.x] Disable/enable nút "Tải xuống ngay" khi đang tải
+        // → Ngăn người dùng bấm nhiều lần (chống duplicate request)
+        // → File: document-detail.jsp (JS)
+        function setDownloadBtnsDisabled(disabled) {
+            ['btnDlMain', 'btnDlAlt'].forEach(function (id) {
+                var btn = document.getElementById(id);
+                if (!btn) return;
+                btn.disabled = disabled;
+                disabled ? btn.classList.add('loading') : btn.classList.remove('loading');
+            });
+        }
+
+        // [UC13.2.x.3/4] Dọn dẹp trạng thái sau khi download kết thúc (thành công hoặc thất bại)
+        // → _isDownloading=false, _abortCtrl=null, re-enable nút tải
+        // → File: document-detail.jsp (JS)
+        function onDownloadDone() {
+            _isDownloading = false;
+            _abortCtrl     = null;
+            setDownloadBtnsDisabled(false);
+        }
+
+        // ── Public API ────────────────────────────────────────────────────
+
+        // [UC13.1.2] Người dùng nhấn nút "Tải xuống ngay" → mở modal xác nhận
+        // → Sequence: User ->> UI: clickDownload(documentId)
+        // → File: document-detail.jsp (JS) | Nút: #btnDlMain, #btnDlAlt
+        window.openDownloadConfirm = function (docId) {
+            if (_isDownloading) return;
+            _docId = docId;
+            showOverlay('dlOverlayConfirm');
+        };
+
+        // [UC13.2.1.2] Đóng tất cả modal → trở về trạng thái ban đầu
+        // → Gọi khi: nhấn nút "Huỷ", nhấn X, click ngoài overlay, hoặc Escape
+        // → Không gửi bất kỳ request nào lên server (UC13.2.1.2)
+        // → File: document-detail.jsp (JS)
+        window.closeAllModals = function () {
+            if (_isDownloading) return;  // loading modal không thể đóng bằng ngoài
+            if (_successTimer) clearTimeout(_successTimer);
+            ['dlOverlayConfirm','dlOverlayLoading','dlOverlaySuccess','dlOverlayError']
+                .forEach(function (oid) {
+                    var el = document.getElementById(oid);
+                    if (el) el.classList.remove('active');
+                });
+        };
+
+        // [UC13.2.4.1] Người dùng nhấn "Huỷ tải xuống" trong khi đang stream
+        // → _abortCtrl.abort() kích hoạt AbortSignal trên fetch()
+        // → fetch().catch(AbortError) → onDownloadDone() → showErrorModal
+        // → File: document-detail.jsp (JS) | Nút: #btnCancelDownload
+        window.cancelDownload = function () {
+            if (!_isDownloading || !_abortCtrl) return;
+            if (elCancelBtn) elCancelBtn.disabled = true;  // UC13.2.4.1: tránh bấm 2 lần
+            _abortCtrl.abort();  // kích hoạt AbortSignal → fetch().catch()
+        };
+
+        // [UC13.1.2→UC13.1.8] Hàm chính điều phối toàn bộ luồng tải xuống
+        // → Gọi khi: người dùng nhấn "Xác nhận tải" (modal confirm)
+        //            hoặc nhấn "Thử lại" (modal error)
+        // → File: document-detail.jsp (JS) | Nút: #btnConfirmDownload, .btn-retry
+        window.startDownload = function () {
+            if (_isDownloading || !_docId) return;
+            _isDownloading = true;
+
+            // [UC13.1.2] Chuẩn bị UI trước khi gửi request
+            resetProgressUI();
+            setDownloadBtnsDisabled(true);
+            showOverlay('dlOverlayLoading');
+
+            // [UC13.2.4.1] Khởi tạo AbortController để hỗ trợ hủy giữa chừng
+            _abortCtrl = new AbortController();
+            var signal = _abortCtrl.signal;
+
+            // [UC13.1.3] Gửi GET /download?id= lên DownloadDocumentServlet
+            // → signal liên kết với AbortController để có thể hủy
+            fetch(_downloadUrl + _docId, { method: 'GET', credentials: 'same-origin', signal: signal })
+                .then(function (res) {
+                    // [UC13.2.2 / UC13.2.3] HTTP 403/404 → ném Error → xuống .catch()
+                    if (!res.ok) throw new Error('HTTP_' + res.status);
+
+                    // [UC13.1.6] Đọc Content-Length để tính % tiến trình
+                    // → Nếu server không trả → dùng animation indeterminate
+                    var contentLength = res.headers.get('Content-Length');
+                    var total = contentLength ? parseInt(contentLength, 10) : 0;
+                    var received = 0;
+                    var chunks  = [];
+
+                    if (!total && elFill) elFill.classList.add('indeterminate');
+
+                    // [UC13.1.6] Lấy ReadableStream reader để đọc từng chunk
+                    var reader = res.body.getReader();
+
+                    // [UC13.1.6] pump() – đệ quy đọc từng Uint8Array chunk
+                    // → Mỗi chunk: cộng dồn received, gọi setProgress()
+                    // → Khi AbortController.abort() → reader.read() ném AbortError
+                    function pump() {
+                        return reader.read().then(function (result) {
+                            if (result.done) return;  // stream kết thúc
+                            var chunk = result.value;   // Uint8Array
+                            chunks.push(chunk);
+                            received += chunk.length;
+                            setProgress(received, total);  // [UC13.1.6] cập nhật thanh %
+                            return pump();
+                        });
+                    }
+
+                    return pump().then(function () {
+                        // [UC13.1.7] Ghép tất cả chunks thành 1 Blob
+                        return new Blob(chunks);
+                    });
+                })
+                .then(function (blob) {
+                    // [UC13.1.7] Hiển thị 100% trước khi mở save dialog
+                    if (elFill)  { elFill.classList.remove('indeterminate'); elFill.style.width = '100%'; }
+                    if (elPct)   elPct.innerText  = '100%';
+                    if (elText)  elText.innerText  = 'Hoàn tất! Đang mở hộp thoại lưu...';
+
+                    // [UC13.1.7] Tạo Blob URL và kích hoạt browser save dialog
+                    var url = URL.createObjectURL(blob);
+                    var a   = document.createElement('a');
+                    a.href  = url;
+                    a.download = '';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+
+                    // [UC13.1.8] Cập nhật số lượt tải hiển thị trên giao diện
+                    // → download_count thực sự đã tăng ở DMS.writeAuditLog() phía server
+                    var counter = document.getElementById('dlCountVal');
+                    if (counter) counter.innerText = parseInt(counter.innerText || '0') + 1;
+
+                    // [UC13.1.8] Dọn dẹp state và hiển thị modal thành công
+                    onDownloadDone();
+                    showOverlay('dlOverlaySuccess');
+
+                    // [UC13.1.8] Tự động đóng modal sau 4 giây
+                    _successTimer = setTimeout(function () {
+                        var el = document.getElementById('dlOverlaySuccess');
+                        if (el) el.classList.remove('active');
+                    }, 4000);
+                })
+                .catch(function (err) {
+                    // [UC13.2.4.2] AbortError: người dùng chủ động hủy → showErrorModal
+                    // [UC13.2.2]   HTTP 403: không có quyền   → showErrorModal
+                    // [UC13.2.3]   HTTP 404: file không tồn tại → showErrorModal
+                    // [UC13.2.5]   IOException/network lỗi    → showErrorModal
+                    onDownloadDone();  // UC13.2.x.4: resetState
+                    showOverlay('dlOverlayError');
+                });
+        };
+
+        // Click ngoài overlay để đóng (chỉ confirm / success / error)
+        ['dlOverlayConfirm','dlOverlaySuccess','dlOverlayError'].forEach(function (oid) {
+            var el = document.getElementById(oid);
+            if (!el) return;
+            el.addEventListener('click', function (e) {
+                if (e.target === el) window.closeAllModals();
+            });
+        });
+
+        // Phím Escape để đóng
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') window.closeAllModals();
+        });
+    })();
+</script>
 
 <jsp:include page="/common/footer.jsp"/>
 </body>

@@ -339,6 +339,13 @@ public class DocumentDAO {
         return list;
     }
 
+    /**
+     * [UC13.1.4] Lấy thông tin thi chi tiết tài liệu theo ID (chỉ lấy bản ghi is_active = 1).
+     * → Gọi bởi: FileStorage.fetchFile(documentId)
+     * → null → FileStorage throw FileNotFoundException → UC13.2.3 (tệp không tìm thấy)
+     * → Document → tiếp tục kiểm tra filePath (remote/local)
+     * → File: DocumentDAO.java
+     */
     public Document getDocumentById(int id) {
 
         String sql = "SELECT d.*, u.full_name as uploader_name, c.name as category_name " +
@@ -820,6 +827,12 @@ public class DocumentDAO {
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("^-|-$", "");
     }
+    /**
+     * [UC13.1.8] Tăng số lượt tải xuống của tài liệu lên 1.
+     * → Gọi bởi: DMS.writeAuditLog() ngay sau khi stream tệp thành công
+     * → SQL: UPDATE documents SET download_count = download_count + 1 WHERE id = ?
+     * → File: DocumentDAO.java
+     */
     public void incrementDownloadCount(int documentId) {
         String sql = "UPDATE documents SET download_count = download_count + 1 WHERE id = ?";
         try (Connection conn = DBConnect.getConnection();
