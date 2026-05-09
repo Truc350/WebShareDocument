@@ -152,6 +152,7 @@ public class UploadDocumentServlet extends HttpServlet {
             doc.setUserId(authUser.getId());
             doc.setViewCount(0);
             doc.setDownloadCount(0);
+            doc.setIsActive(1); // UC5.1.10: Luôn đặt là hoạt động khi mới tải lên
             boolean saved = documentDAO.saveDocument(doc);
             if (saved) {
                 // UC5.1.11: Trả về JSON thành công để AJAX xử lý chuyển hướng
