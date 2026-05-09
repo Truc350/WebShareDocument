@@ -916,6 +916,7 @@
                     var total = contentLength ? parseInt(contentLength, 10) : 0;
                     var received = 0;
                     var chunks  = [];
+                    var contentType = res.headers.get('Content-Type') || 'application/octet-stream';
 
                     if (!total && elFill) elFill.classList.add('indeterminate');
 
@@ -938,7 +939,7 @@
 
                     return pump().then(function () {
                         // [UC13.1.7] Ghép tất cả chunks thành 1 Blob
-                        return new Blob(chunks);
+                        return new Blob(chunks, { type: contentType });
                     });
                 })
                 .then(function (blob) {
@@ -951,7 +952,7 @@
                     var url = URL.createObjectURL(blob);
                     var a   = document.createElement('a');
                     a.href  = url;
-                    a.download = '';
+                    a.download = '<%= doc.getFileName() != null ? doc.getFileName().replace("'", "\\'").replace("\"", "\\\"") : "document" %>';
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
