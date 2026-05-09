@@ -23,6 +23,12 @@ public class DocumentDetailServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+            
+        // User ->> UI ++: UC13.1.1 navigateToDocumentPage()
+        navigateToDocumentPage();
+        
+        // UI -->> User: renderDocumentList() (hoặc renderDocumentDetail)
+        renderDocumentList();
         String idParam = request.getParameter("id");
         if (idParam == null || idParam.trim().isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/");
@@ -46,5 +52,17 @@ public class DocumentDetailServlet extends HttpServlet {
         }
         request.setAttribute("document", document);
         request.getRequestDispatcher("/page/user/document-detail.jsp").forward(request, response);
+    }
+    
+    // ====================================================================
+    // CÁC HÀM TIỆN ÍCH CỦA UI MÔ PHỎNG SEQUENCE DIAGRAM (UC-13)
+    // ====================================================================
+    
+    private void navigateToDocumentPage() {
+        System.out.println("User ->> UI: UC13.1.1 navigateToDocumentPage()");
+    }
+    
+    private void renderDocumentList() {
+        System.out.println("UI -->> User: renderDocumentList()");
     }
 }
