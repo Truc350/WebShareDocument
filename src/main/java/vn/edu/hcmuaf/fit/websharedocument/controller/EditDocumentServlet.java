@@ -22,14 +22,22 @@ public class EditDocumentServlet extends HttpServlet {
                          HttpServletResponse response)
             throws ServletException, IOException {
 
-        HttpSession session = request.getSession(false);
+        HttpSession session = request.getSession();
 
-        if (session == null || session.getAttribute("user") == null) {
-            response.sendRedirect("login");
+        User authUser = (User) session.getAttribute("authUser");
+        if (authUser == null) {
+            authUser = (User) session.getAttribute("adminUser");
+        }
+
+        if (authUser == null) {
+            String queryString = request.getQueryString();
+            String fullUrl = request.getRequestURL().toString() + (queryString != null ? "?" + queryString : "");
+            session.setAttribute("redirectAfterLogin", fullUrl);
+            response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
-        User user = (User) session.getAttribute("user");
+        User user = authUser;
 
         String idRaw = request.getParameter("id");
 
@@ -45,12 +53,12 @@ public class EditDocumentServlet extends HttpServlet {
             return;
         }
 
-        Document doc = documentDAO.getDocumentById(documentId);
+        Document doc = documentDAO.getDocumentByIdForEdit(documentId);
 
         request.setAttribute("document", doc);
         request.setAttribute("categories", documentDAO.getAllCategories());
 
-        request.getRequestDispatcher("/edit-document.jsp")
+        request.getRequestDispatcher("/page/user/edit-document.jsp")
                 .forward(request, response);
     }
 
@@ -61,14 +69,19 @@ public class EditDocumentServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
 
-        HttpSession session = request.getSession(false);
+        HttpSession session = request.getSession();
 
-        if (session == null || session.getAttribute("user") == null) {
-            response.sendRedirect("login");
+        User authUser = (User) session.getAttribute("authUser");
+        if (authUser == null) {
+            authUser = (User) session.getAttribute("adminUser");
+        }
+
+        if (authUser == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
-        User user = (User) session.getAttribute("user");
+        User user = authUser;
 
         int documentId = Integer.parseInt(request.getParameter("documentId"));
 
@@ -82,6 +95,12 @@ public class EditDocumentServlet extends HttpServlet {
         String categoryIdRaw = request.getParameter("categoryId");
         String privacy = request.getParameter("privacy");
         String tagsRaw = request.getParameter("tags");
+        
+        // Handle file replacement if any
+        String secureUrl = request.getParameter("secureUrl");
+        String newFileName = request.getParameter("newFileName");
+        String newFileSizeRaw = request.getParameter("newFileSize");
+        String newExtension = request.getParameter("newExtension");
 
         Integer categoryId = null;
 
@@ -112,6 +131,22 @@ public class EditDocumentServlet extends HttpServlet {
         doc.setIsActive(isActive);
 
         doc.setTags(tags);
+        
+        // Update file info if a new file was uploaded
+        if (secureUrl != null && !secureUrl.isBlank() && newFileName != null && !newFileName.isBlank()) {
+            doc.setFilePath(secureUrl.trim());
+            doc.setFileName(newFileName.trim());
+            doc.setFileType("application/" + newExtension);
+            doc.setFileExtension(newExtension != null ? newExtension.trim() : "");
+            
+            if (newFileSizeRaw != null && !newFileSizeRaw.isBlank()) {
+                try {
+                    doc.setFileSize(Long.parseLong(newFileSizeRaw.trim()));
+                } catch (NumberFormatException e) {
+                    doc.setFileSize(0L);
+                }
+            }
+        }
 
         boolean success = documentDAO.updateDocumentInfo(doc);
 
@@ -137,7 +172,7 @@ public class EditDocumentServlet extends HttpServlet {
 
             request.setAttribute("document", doc);
 
-            request.getRequestDispatcher("/edit-document.jsp")
+            request.getRequestDispatcher("/page/user/edit-document.jsp")
                     .forward(request, response);
         }
     }

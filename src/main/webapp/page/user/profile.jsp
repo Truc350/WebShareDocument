@@ -26,13 +26,9 @@
                 </div>
                 <!-- Info -->
                 <div class="flex flex-col text-white pt-2 w-full md:w-auto text-center md:text-left">
-                    <div class="flex items-center justify-center md:justify-start gap-3 mb-2">
+                    <div class="flex items-center justify-center md:justify-start gap-3 mb-6">
                         <h1 class="text-2xl font-semibold font-manrope">${authUser.fullName}</h1>
                         <span class="px-3 py-0.5 bg-white/20 text-white text-xs rounded-full border border-white/30">${authUser.role == 'admin' ? 'Quản trị viên' : 'Học viên'}</span>
-                    </div>
-                    <div class="flex flex-wrap justify-center md:justify-start items-center gap-x-6 gap-y-2 text-sm text-white/90 mb-6">
-                        <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">calendar_today</span> Tham gia từ <fmt:formatDate value="${authUser.createdAt}" pattern="MM/yyyy" /></span>
-                        <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">mail</span> ${authUser.email}</span>
                     </div>
                     <div class="flex items-center justify-center md:justify-start gap-8">
                         <div>
@@ -67,9 +63,36 @@
 
     <!-- Main Content -->
     <main class="max-w-[1280px] mx-auto px-6 py-8 w-full flex-grow">
-        <div class="grid grid-cols-1 gap-6">
-            <!-- Main Column -->
-            <div id="my-documents-section" class="col-span-1">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column -->
+            <div id="personal-info-section" class="lg:col-span-1 space-y-6">
+                <div class="bg-white p-6 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-slate-100">
+                    <h3 class="text-base font-semibold text-slate-800 mb-4 font-manrope">Thông tin cá nhân</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#0555dd] shrink-0">
+                                <span class="material-symbols-outlined text-[20px]">mail</span>
+                            </div>
+                            <div>
+                                <p class="text-[11px] text-slate-400 font-medium uppercase tracking-wide">Email</p>
+                                <p class="text-sm font-medium text-slate-800">${authUser.email}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#0555dd] shrink-0">
+                                <span class="material-symbols-outlined text-[20px]">calendar_today</span>
+                            </div>
+                            <div>
+                                <p class="text-[11px] text-slate-400 font-medium uppercase tracking-wide">Ngày tham gia</p>
+                                <p class="text-sm font-medium text-slate-800"><fmt:formatDate value="${authUser.createdAt}" pattern="dd/MM/yyyy" /></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div id="my-documents-section" class="lg:col-span-2">
                 <div class="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-slate-100 overflow-hidden">
                     <div class="p-6 border-b border-slate-100 flex justify-between items-center">
                         <h3 class="text-base font-semibold text-slate-800 font-manrope">Quản lý tài liệu</h3>
@@ -97,7 +120,7 @@
                                             <td class="px-6 py-4">
                                                 <div class="flex items-center gap-3">
                                                     <span class="material-symbols-outlined text-[#0555dd]">description</span>
-                                                    <span class="font-medium text-sm text-slate-800">${doc.fileName}</span>
+                                                    <span class="font-medium text-sm text-slate-800">${doc.title}</span>
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 text-sm text-slate-500">
@@ -121,8 +144,8 @@
                                                     <a href="${pageContext.request.contextPath}/edit-document?id=${doc.id}" class="p-1.5 rounded hover:bg-blue-50 text-slate-400 hover:text-[#0555dd] transition-colors block" title="Chỉnh sửa">
                                                         <span class="material-symbols-outlined text-[20px]">edit</span>
                                                     </a>
-                                                    <button class="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" title="Xóa">
-                                                        <span class="material-symbols-outlined text-[20px]">delete</span>
+                                                    <button class="btn-delete-doc p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" data-id="${doc.id}" title="Xóa">
+                                                        <span class="material-symbols-outlined text-[20px] pointer-events-none">delete</span>
                                                     </button>
                                                 </div>
                                             </td>
@@ -149,6 +172,29 @@
     </main>
 
     <jsp:include page="/common/footer.jsp" />
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 transform transition-all scale-95 opacity-0" id="deleteModalContent">
+            <div class="flex items-center gap-3 text-red-600 mb-4">
+                <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-2xl">delete_forever</span>
+                </div>
+                <h3 class="text-lg font-bold font-manrope">Xác nhận xóa</h3>
+            </div>
+            <p class="text-slate-600 text-sm mb-6">Bạn có chắc chắn muốn xóa tài liệu này không? File trên hệ thống cũng sẽ bị xóa vĩnh viễn và không thể hoàn tác.</p>
+            <div class="flex items-center justify-end gap-3">
+                <button type="button" id="btnCancelDelete" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Hủy</button>
+                <button type="button" id="btnConfirmDelete" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px] animate-spin hidden" id="deleteSpinner">sync</span>
+                    <span id="deleteBtnText">Xóa tài liệu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden element to pass context path to JS -->
+    <input type="hidden" id="contextPath" value="${pageContext.request.contextPath}">
 
     <script src="${pageContext.request.contextPath}/js/profile.js"></script>
 </body>

@@ -244,7 +244,7 @@
                         Trạng thái hiển thị
                     </label>
                     <c:set var="currentPrivacy"
-                           value="${not empty inputPrivacy ? inputPrivacy : (document.active ? 'public' : 'draft')}"/>
+                           value="${not empty inputPrivacy ? inputPrivacy : (document.isActive == 1 ? 'public' : 'draft')}"/>
                     <div class="flex gap-6">
                         <label class="flex items-center gap-3 cursor-pointer group">
                             <input type="radio" name="privacy" value="public"
@@ -269,61 +269,82 @@
                     </div>
                 </div>
 
-                <%-- ── UC15 Assumption 1: Hiển thị file hiện tại (không thay thế) ─ --%>
-                <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center
-                                    border border-slate-200 shrink-0">
-                                <c:choose>
-                                    <c:when test="${document.fileExtension == 'pdf'}">
-                                        <span class="material-symbols-outlined text-red-500 text-3xl">picture_as_pdf</span>
-                                    </c:when>
-                                    <c:when test="${document.fileExtension == 'docx' or document.fileExtension == 'doc'}">
-                                        <span class="material-symbols-outlined text-blue-600 text-3xl">article</span>
-                                    </c:when>
-                                    <c:when test="${document.fileExtension == 'xlsx' or document.fileExtension == 'xls'}">
-                                        <span class="material-symbols-outlined text-green-600 text-3xl">table_chart</span>
-                                    </c:when>
-                                    <c:when test="${document.fileExtension == 'pptx' or document.fileExtension == 'ppt'}">
-                                        <span class="material-symbols-outlined text-orange-500 text-3xl">present_to_all</span>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <span class="material-symbols-outlined text-slate-500 text-3xl">description</span>
-                                    </c:otherwise>
-                                </c:choose>
+                <%-- ── File Thay Thế (Tùy chọn) ─────────────────── --%>
+                <div class="space-y-1.5">
+                    <label class="block text-sm font-medium text-slate-700">
+                        Tệp tài liệu
+                    </label>
+                    <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 mb-3" id="currentFileBox">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-slate-200 shrink-0">
+                                    <span class="material-symbols-outlined text-blue-600 text-3xl">description</span>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-slate-700">Tệp hiện tại</p>
+                                    <p class="text-sm text-slate-500 truncate max-w-[200px] sm:max-w-xs">
+                                        <c:choose>
+                                            <c:when test="${not empty document.fileName}">
+                                                ${document.fileName}
+                                            </c:when>
+                                            <c:otherwise>
+                                                Tài liệu chưa có tệp
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </p>
+                                    <c:if test="${document.fileSize > 0}">
+                                        <p class="text-xs text-slate-400 mt-0.5">
+                                            <c:choose>
+                                                <c:when test="${document.fileSize >= 1048576}">
+                                                    <fmt:formatNumber value="${document.fileSize / 1048576.0}" maxFractionDigits="1"/> MB
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <fmt:formatNumber value="${document.fileSize / 1024.0}" maxFractionDigits="0"/> KB
+                                                </c:otherwise>
+                                            </c:choose>
+                                            · .${document.fileExtension}
+                                        </p>
+                                    </c:if>
+                                </div>
                             </div>
-                            <div>
-                                <p class="text-sm font-medium text-slate-700">Tệp hiện tại</p>
-                                <p class="text-sm text-slate-500 truncate max-w-[200px] sm:max-w-xs">
-                                    ${document.fileName}
-                                </p>
-                                <p class="text-xs text-slate-400 mt-0.5">
-                                    <%-- File size: hiển thị KB/MB --%>
-                                    <c:choose>
-                                        <c:when test="${document.fileSize >= 1048576}">
-                                            <fmt:formatNumber
-                                                    value="${document.fileSize / 1048576.0}"
-                                                    maxFractionDigits="1"/> MB
-                                        </c:when>
-                                        <c:otherwise>
-                                            <fmt:formatNumber
-                                                    value="${document.fileSize / 1024.0}"
-                                                    maxFractionDigits="0"/> KB
-                                        </c:otherwise>
-                                    </c:choose>
-                                    · .${document.fileExtension}
-                                </p>
-                            </div>
+                            <button type="button" id="btnReplaceFile" class="text-sm font-medium px-3 py-1.5 bg-blue-50 text-[#0555dd] rounded hover:bg-blue-100 transition-colors">
+                                Thay thế tệp khác
+                            </button>
                         </div>
-                        <%-- Assumption 1: Không thay thế file đã tải lên --%>
-                        <div class="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg
-                                text-xs text-slate-500 font-medium">
-                            <span class="material-symbols-outlined text-[16px]">lock</span>
-                            Không thể thay đổi tệp
+                    </div>
+
+                    <%-- Dropzone (Ẩn đi cho đến khi click "Thay thế") --%>
+                    <div id="newFileSection" class="hidden">
+                        <label class="block w-full border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer hover:border-[#0555dd] hover:bg-slate-50 transition-all" id="dropzone" for="documentFile">
+                            <input id="documentFile" name="documentFile" type="file" class="hidden" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.png,.jpg,.jpeg">
+                            <span class="material-symbols-outlined text-[#0555dd] text-3xl mb-2">cloud_upload</span>
+                            <strong class="block text-sm font-semibold text-slate-700">Kéo thả file vào đây hoặc <span class="text-[#0555dd]">Chọn file</span></strong>
+                            <small class="block text-xs text-slate-500 mt-1">Hỗ trợ: PDF, DOC, PPT, XLS, TXT, PNG, JPG · Tối đa 50MB</small>
+                        </label>
+                        <div class="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg mt-3 hidden" id="filePreview">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-[#0555dd]">draft</span>
+                                <div>
+                                    <strong id="newFileNameDisplay" class="block text-sm text-slate-800">Tên file</strong>
+                                    <p id="newFileMetaDisplay" class="text-xs text-slate-500">0 MB</p>
+                                </div>
+                            </div>
+                            <button id="removeFile" type="button" class="text-slate-400 hover:text-red-500 transition-colors" title="Xóa file">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between mt-2">
+                            <p class="text-xs text-slate-500"><span class="text-orange-500 font-medium">Lưu ý:</span> Tệp mới sẽ ghi đè lên tệp cũ sau khi lưu.</p>
+                            <button type="button" id="btnCancelReplace" class="text-xs font-medium text-slate-500 hover:text-slate-700 hover:underline">Hủy thay thế</button>
                         </div>
                     </div>
                 </div>
+
+                <%-- Hidden inputs for new file upload --%>
+                <input type="hidden" name="secureUrl" id="secureUrl" value="">
+                <input type="hidden" name="newFileName" id="newFileNameInput" value="">
+                <input type="hidden" name="newFileSize" id="newFileSizeInput" value="">
+                <input type="hidden" name="newExtension" id="newExtensionInput" value="">
 
                 <%-- ── UC15.2.3 / UC15.1.5: Action Buttons ──────────────── --%>
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
@@ -351,6 +372,22 @@
 </main>
 
 <jsp:include page="/common/footer.jsp"/>
+
+<!-- Progress Modal -->
+<div id="progressContainer" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
+        <div class="w-16 h-16 mx-auto bg-blue-50 rounded-full flex items-center justify-center mb-4 text-[#0555dd]">
+            <span class="material-symbols-outlined text-3xl animate-spin" style="animation-duration: 2s;">sync</span>
+        </div>
+        <h2 class="text-lg font-bold text-slate-800 mb-1">Đang truyền tải tài liệu</h2>
+        <p id="progressStatus" class="text-sm text-slate-500 mb-6">Đang tải tệp lên hệ thống...</p>
+        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
+            <div id="progressBarFill" class="h-full bg-[#0555dd] rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <div id="progressText" class="text-xs font-semibold text-slate-700 mb-6">0%</div>
+        <button type="button" id="cancelUpload" class="px-5 py-2 rounded-lg border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50 transition-colors w-full">Hủy tải lên</button>
+    </div>
+</div>
 
 <script src="${pageContext.request.contextPath}/js/edit-document.js"></script>
 </body>
