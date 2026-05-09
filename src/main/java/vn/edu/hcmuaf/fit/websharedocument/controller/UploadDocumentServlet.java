@@ -102,7 +102,7 @@ public class UploadDocumentServlet extends HttpServlet {
                 }
             }
             doc.setCategoryId(resolvedCategoryId);
-            doc.setIsActive(1);
+            doc.setIsActive(0);
             
             boolean saved = documentDAO.saveDocument(doc);
             if (saved) {
