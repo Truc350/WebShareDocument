@@ -399,7 +399,9 @@
                             </td>
                             <td class="p-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    <a href="${pageContext.request.contextPath}${doc.viewUrl}" target="_blank"
+                                    <c:set var="vUrl" value="${doc.viewUrl}" />
+                                    <a href="${vUrl.startsWith('http') ? vUrl : pageContext.request.contextPath.concat(vUrl)}"
+                                       target="_blank"
                                        class="px-3 py-1.5 text-xs font-bold text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors inline-block text-center">
                                         Xem
                                     </a>
