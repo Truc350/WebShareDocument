@@ -1,6 +1,7 @@
 package vn.edu.hcmuaf.fit.websharedocument.model;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class Document {
 
@@ -29,6 +30,7 @@ public class Document {
 
     private String uploaderName;
     private String categoryName;
+    private List<String> tags;
 
     public Document() {
         this.isActive = 1;
@@ -69,6 +71,13 @@ public class Document {
         this.updatedAt = updatedAt;
         this.uploaderName = uploaderName;
         this.categoryName = categoryName;
+    }
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
     }
 
     public int getId() {
@@ -221,6 +230,11 @@ public class Document {
 
     public void setCategoryName(String categoryName) {
         this.categoryName = categoryName;
+    }
+    /** UC15.1.3 – Trả về chuỗi tags cách nhau bằng dấu phẩy để pre-fill form */
+    public String getTagsAsString() {
+        if (tags == null || tags.isEmpty()) return "";
+        return String.join(", ", tags);
     }
 
 }
