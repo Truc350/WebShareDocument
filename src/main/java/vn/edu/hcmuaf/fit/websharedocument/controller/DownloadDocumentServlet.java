@@ -86,8 +86,25 @@ public class DownloadDocumentServlet extends HttpServlet {
             // UC13.1.6 showSaveDialog(fileName, fileSize, signedUrl)
             showSaveDialog(response, fileData.getFileName(), fileData.getFileSize(), signedUrl);
 
-            // UC13.1.7 confirmSave(signedUrl, savePath)
-            confirmSave(request, response, documentId, userId, signedUrl, fileData);
+            // Mô phỏng: alt UC13.2.3 Người dùng hủy tải xuống
+            boolean isUserCancelled = false; // Trong thực tế HTTP khó bắt được sự kiện này, nhưng làm chuẩn theo diagram
+            if (isUserCancelled) {
+                // UC13.2.3.1 cancelDownload()
+                cancelDownload();
+                
+                // UC13.2.3.2 abortDownload()
+                abortDownload();
+                
+                // UC13.2.3.3 skipAuditLog()
+                skipAuditLog();
+                
+                // UC13.2.3.4 resetToInitialState()
+                resetToInitialState();
+            } else {
+                // Người dùng xác nhận lưu tệp
+                // UC13.1.7 confirmSave(signedUrl, savePath)
+                confirmSave(request, response, documentId, userId, signedUrl, fileData);
+            }
 
         } catch (FileStorage.FileNotFoundException e) {
             // UC13.2.2 Tệp không tìm thấy hoặc lỗi Storage
@@ -190,6 +207,18 @@ public class DownloadDocumentServlet extends HttpServlet {
     }
     
     private void skipAuditLog() {
-        System.out.println("UI: UC13.2.4.4 skipAuditLog() - Use case kết thúc");
+        System.out.println("UI: UC13.2.3.3 / UC13.2.4.4 skipAuditLog() - Use case kết thúc");
+    }
+    
+    private void cancelDownload() {
+        System.out.println("User ->> UI: UC13.2.3.1 cancelDownload()");
+    }
+    
+    private void abortDownload() {
+        System.out.println("UI -->> User: UC13.2.3.2 abortDownload()");
+    }
+    
+    private void resetToInitialState() {
+        System.out.println("UI -->> User: UC13.2.3.4 resetToInitialState()");
     }
 }
