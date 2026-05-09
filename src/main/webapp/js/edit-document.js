@@ -1,26 +1,47 @@
 /**
- * edit-document.js – UC-15: Chỉnh sửa thông tin tài liệu
- * Xử lý client-side: character counter, validation, UX.
+ * edit-document.js – Chỉnh sửa thông tin và thay thế file tài liệu
  */
 (function () {
     'use strict';
 
-    // ── UC15.1.3: Khởi tạo counter ký tự khi form load ─────────────────────
+    const form         = document.getElementById('editDocumentForm');
+    const btnSave      = document.getElementById('btnSave');
+    const btnCancel    = document.getElementById('btnCancel');
+    
+    // Counter elements
     const titleInput   = document.getElementById('title');
     const titleLen     = document.getElementById('titleLen');
     const descInput    = document.getElementById('description');
     const descLen      = document.getElementById('descLen');
-    const form         = document.getElementById('editDocumentForm');
-    const btnSave      = document.getElementById('btnSave');
-    const btnSaveIcon  = document.getElementById('btnSaveIcon');
-    const btnSaveText  = document.getElementById('btnSaveText');
-    const btnCancel    = document.getElementById('btnCancel');
 
-    // ── UC15.1.3: Counter ký tự – phản hồi tức thì ──────────────────────────
+    // Replace File UI elements
+    const currentFileBox = document.getElementById('currentFileBox');
+    const newFileSection = document.getElementById('newFileSection');
+    const btnReplaceFile = document.getElementById('btnReplaceFile');
+    const btnCancelReplace = document.getElementById('btnCancelReplace');
+    
+    const fileInput = document.getElementById('documentFile');
+    const dropzone = document.getElementById('dropzone');
+    const filePreview = document.getElementById('filePreview');
+    const newFileNameDisplay = document.getElementById('newFileNameDisplay');
+    const newFileMetaDisplay = document.getElementById('newFileMetaDisplay');
+    const removeFileBtn = document.getElementById('removeFile');
+
+    // Progress elements
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const progressText = document.getElementById('progressText');
+    const progressStatus = document.getElementById('progressStatus');
+    const cancelUploadBtn = document.getElementById('cancelUpload');
+
+    const maxSize = 50 * 1024 * 1024;
+    const allowedExtensions = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "txt", "png", "jpg", "jpeg"];
+    let currentXhr = null;
+
+    // ── Counters ────────────────────────────────────────────────────────
     function updateCounter(input, display, max) {
         const len = input.value.length;
         display.textContent = len;
-        // Đổi màu khi gần giới hạn (> 90%)
         display.className = len > max * 0.9 ? 'text-red-500 font-medium' : '';
     }
 
@@ -33,68 +54,221 @@
         descInput.addEventListener('input', () => updateCounter(descInput, descLen, 2000));
     }
 
-    // ── UC15.2.2: Client-side validation trước khi submit ───────────────────
-    // (Bổ sung cho server-side UC15.1.6 – không thay thế)
-    if (form) {
-        form.addEventListener('submit', function (e) {
-            clearErrors();
-            const title = titleInput ? titleInput.value.trim() : '';
-            const desc  = descInput  ? descInput.value.trim()  : '';
-            const tags  = document.getElementById('tags');
-            const tagsVal = tags ? tags.value.trim() : '';
-            let hasError  = false;
-
-            // UC15.1.6 – Tên tài liệu không được để trống (Special Req 1)
-            if (!title) {
-                showError('title', 'Tên tài liệu không được để trống.');
-                hasError = true;
-            } else if (title.length > 255) {
-                // UC15.1.6 – Không vượt quá 255 ký tự
-                showError('title', 'Tên tài liệu không được vượt quá 255 ký tự.');
-                hasError = true;
-            }
-
-            // UC15.1.6 – Mô tả không vượt quá 2000 ký tự (Special Req 2)
-            if (desc.length > 2000) {
-                showError('description', 'Mô tả không được vượt quá 2000 ký tự.');
-                hasError = true;
-            }
-
-            // UC15.1.6 – Định dạng tags hợp lệ
-            if (tagsVal && !/^[\p{L}\p{N}\s,._-]+$/u.test(tagsVal)) {
-                showError('tags', 'Tags chỉ được chứa chữ cái, số và dấu phẩy.');
-                hasError = true;
-            }
-
-            if (hasError) {
-                e.preventDefault();
-                // UC15.2.2.1: Scroll đến lỗi đầu tiên
-                const firstError = form.querySelector('.field-error');
-                if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                return;
-            }
-
-            // UC15.1.5: Loading state khi submit
-            setLoadingState(true);
+    // ── Replace File UI Logic ───────────────────────────────────────────
+    if (btnReplaceFile) {
+        btnReplaceFile.addEventListener('click', () => {
+            currentFileBox.classList.add('hidden');
+            newFileSection.classList.remove('hidden');
         });
     }
 
-    // ── UC15.2.3: Nút Huỷ – quay về trang trước ─────────────────────────────
-    // UC15.2.3.1: User nhấp "Huỷ" trước khi lưu
-    // UC15.2.3.2: Không lưu thay đổi, quay về trang chi tiết
+    if (btnCancelReplace) {
+        btnCancelReplace.addEventListener('click', () => {
+            newFileSection.classList.add('hidden');
+            currentFileBox.classList.remove('hidden');
+            clearNewFile();
+        });
+    }
+
+    function clearNewFile() {
+        if (fileInput) fileInput.value = '';
+        if (filePreview) filePreview.classList.add('hidden');
+        if (dropzone) dropzone.classList.remove('hidden');
+        clearErrors();
+    }
+
+    if (removeFileBtn) {
+        removeFileBtn.addEventListener('click', clearNewFile);
+    }
+
+    function getExtension(name) {
+        const parts = name.split(".");
+        return parts.length > 1 ? parts.pop().toLowerCase() : "";
+    }
+
+    function formatSize(bytes) {
+        if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+        return (bytes / 1024).toFixed(1) + " KB";
+    }
+
+    function showFile(file) {
+        clearErrors();
+        const extension = getExtension(file.name);
+        if (!allowedExtensions.includes(extension)) {
+            alert("Định dạng tệp không được hỗ trợ.");
+            clearNewFile();
+            return;
+        }
+        if (file.size > maxSize) {
+            alert("Tệp vượt quá kích thước 50MB.");
+            clearNewFile();
+            return;
+        }
+        dropzone.classList.add('hidden');
+        filePreview.classList.remove('hidden');
+        newFileNameDisplay.textContent = file.name;
+        newFileMetaDisplay.textContent = formatSize(file.size) + " · " + extension.toUpperCase();
+    }
+
+    if (dropzone && fileInput) {
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, e => {
+                e.preventDefault();
+                dropzone.classList.add('border-[#0555dd]', 'bg-blue-50');
+            });
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, e => {
+                e.preventDefault();
+                dropzone.classList.remove('border-[#0555dd]', 'bg-blue-50');
+            });
+        });
+        dropzone.addEventListener('drop', e => {
+            const file = e.dataTransfer.files[0];
+            if (!file) return;
+            const transfer = new DataTransfer();
+            transfer.items.add(file);
+            fileInput.files = transfer.files;
+            showFile(file);
+        });
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) showFile(fileInput.files[0]);
+        });
+    }
+
+    // ── Form Submit ─────────────────────────────────────────────────────
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            clearErrors();
+            
+            const title = titleInput ? titleInput.value.trim() : '';
+            if (!title) {
+                showError('title', 'Tên tài liệu không được để trống.');
+                return;
+            }
+
+            const fileToUpload = fileInput && fileInput.files.length > 0 ? fileInput.files[0] : null;
+            
+            // Nếu có file mới, upload lên Supabase trước
+            if (fileToUpload && !newFileSection.classList.contains('hidden')) {
+                uploadToSupabaseAndSubmit(fileToUpload);
+            } else {
+                // Nếu không có file mới, submit form bình thường
+                setLoadingState(true);
+                form.submit();
+            }
+        });
+    }
+
+    function uploadToSupabaseAndSubmit(file) {
+        currentXhr = new XMLHttpRequest();
+        progressContainer.classList.remove('hidden');
+        progressContainer.classList.add('flex');
+        setLoadingState(true);
+
+        const supabaseUrl = "https://tlbznphszzpondlykmst.supabase.co";
+        const supabaseKey = "sb_publishable_3IaZByYoSWSHakJqFMOifQ_ud2mNCpg";
+        const bucketName = "documents"; 
+        
+        const safeFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+        const filePath = `uploads/${Date.now()}_${safeFileName}`;
+        const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucketName}/${filePath}`;
+
+        currentXhr.upload.addEventListener("progress", function (e) {
+            if (e.lengthComputable) {
+                let percent = (e.loaded / e.total) * 100 * 0.9;
+                progressBarFill.style.width = percent + "%";
+                progressText.textContent = Math.round(percent) + "%";
+            }
+        });
+
+        currentXhr.addEventListener("load", function () {
+            if (currentXhr.status >= 200 && currentXhr.status < 300) {
+                progressStatus.textContent = "Đang lưu thông tin...";
+                progressBarFill.style.width = "100%";
+                progressText.textContent = "100%";
+
+                const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
+                
+                // Set hidden inputs
+                document.getElementById('secureUrl').value = publicUrl;
+                document.getElementById('newFileNameInput').value = file.name;
+                document.getElementById('newFileSizeInput').value = file.size;
+                document.getElementById('newExtensionInput').value = getExtension(file.name);
+                
+                // Submit form
+                form.submit();
+            } else {
+                alert("Lỗi tải lên: " + currentXhr.responseText);
+                cancelUpload();
+            }
+        });
+
+        currentXhr.addEventListener("error", function () {
+            alert("Lỗi kết nối khi tải tệp.");
+            cancelUpload();
+        });
+
+        currentXhr.open("POST", uploadUrl, true);
+        currentXhr.setRequestHeader("Authorization", "Bearer " + supabaseKey);
+        currentXhr.setRequestHeader("apikey", supabaseKey);
+        currentXhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+        currentXhr.send(file);
+    }
+
+    if (cancelUploadBtn) {
+        cancelUploadBtn.addEventListener('click', cancelUpload);
+    }
+
+    function cancelUpload() {
+        if (currentXhr) {
+            currentXhr.abort();
+            currentXhr = null;
+        }
+        progressContainer.classList.add('hidden');
+        progressContainer.classList.remove('flex');
+        setLoadingState(false);
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
     if (btnCancel) {
         btnCancel.addEventListener('click', function () {
-            if (isFormDirty()) {
-                const confirmed = confirm(
-                    'Bạn có thay đổi chưa được lưu. Bạn có chắc muốn rời khỏi trang này không?'
-                );
-                if (!confirmed) return;
-            }
             history.back();
         });
     }
 
-    // ── UC15.1.8: Auto-dismiss flash messages sau 5 giây ───────────────────
+    function showError(fieldId, message) {
+        const input = document.getElementById(fieldId);
+        if (!input) return;
+        input.classList.add('field-error');
+        const parent = input.closest('.space-y-1\\.5') || input.parentElement;
+        let errP = parent.querySelector('.js-error');
+        if (!errP) {
+            errP = document.createElement('p');
+            errP.className = 'error-msg flex items-center gap-1 js-error text-red-500 text-xs mt-1';
+            errP.innerHTML = `<span class="material-symbols-outlined text-[14px]">error</span> ${message}`;
+            input.insertAdjacentElement('afterend', errP);
+        } else {
+            errP.innerHTML = `<span class="material-symbols-outlined text-[14px]">error</span> ${message}`;
+        }
+        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function clearErrors() {
+        form.querySelectorAll('.js-error').forEach(el => el.remove());
+        form.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+    }
+
+    function setLoadingState(loading) {
+        if (!btnSave) return;
+        btnSave.disabled = loading;
+        const btnSaveIcon = document.getElementById('btnSaveIcon');
+        const btnSaveText = document.getElementById('btnSaveText');
+        if (btnSaveIcon) btnSaveIcon.textContent = loading ? 'hourglass_empty' : 'save';
+        if (btnSaveText) btnSaveText.textContent  = loading ? 'Đang lưu...' : 'Lưu thay đổi';
+    }
+
     setTimeout(() => {
         ['flash-success', 'flash-error'].forEach(id => {
             const el = document.getElementById(id);
@@ -105,55 +279,4 @@
             }
         });
     }, 5000);
-
-    // ── Helpers ─────────────────────────────────────────────────────────────
-
-    /** UC15.2.2.2: Hiển thị thông báo lỗi ngay bên dưới trường nhập liệu */
-    function showError(fieldId, message) {
-        const input = document.getElementById(fieldId);
-        if (!input) return;
-        input.classList.add('field-error');
-
-        // Kiểm tra đã có error-msg chưa (từ server-side)
-        const parent = input.closest('.space-y-1\\.5') || input.parentElement;
-        let errP = parent.querySelector('.error-msg.js-error');
-        if (!errP) {
-            errP = document.createElement('p');
-            errP.className = 'error-msg flex items-center gap-1 js-error';
-            errP.innerHTML = `<span class="material-symbols-outlined text-[14px]">error</span> ${message}`;
-            input.insertAdjacentElement('afterend', errP);
-        } else {
-            errP.querySelector('span:last-child') ?
-                (errP.lastChild.textContent = ' ' + message) :
-                (errP.textContent = message);
-        }
-    }
-
-    /** Xóa tất cả lỗi client-side trước khi validate lại */
-    function clearErrors() {
-        form.querySelectorAll('.js-error').forEach(el => el.remove());
-        form.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
-    }
-
-    /** UC15 Special Req 4: Hiển thị loading khi đang lưu (≤3 giây) */
-    function setLoadingState(loading) {
-        if (!btnSave) return;
-        btnSave.disabled = loading;
-        if (btnSaveIcon) btnSaveIcon.textContent = loading ? 'hourglass_empty' : 'save';
-        if (btnSaveText) btnSaveText.textContent  = loading ? 'Đang lưu...'    : 'Lưu thay đổi';
-    }
-
-    /** UC15.2.3: Kiểm tra form có bị thay đổi không (dirty check) */
-    function isFormDirty() {
-        const inputs = form.querySelectorAll('input:not([type=hidden]):not([type=radio]), textarea, select');
-        for (const input of inputs) {
-            if (input.type === 'radio') continue;
-            if (input.value !== input.defaultValue) return true;
-        }
-        const radios = form.querySelectorAll('input[type=radio]');
-        for (const radio of radios) {
-            if (radio.checked !== radio.defaultChecked) return true;
-        }
-        return false;
-    }
 })();

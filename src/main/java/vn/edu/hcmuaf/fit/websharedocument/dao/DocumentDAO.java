@@ -76,6 +76,7 @@ public class DocumentDAO {
                 Document doc = new Document();
 
                 doc.setId(rs.getInt("id"));
+                doc.setTitle(rs.getString("title"));
                 doc.setFileName(rs.getString("file_name"));
                 doc.setFilePath(rs.getString("file_path"));
                 doc.setFileSize(rs.getLong("file_size"));
@@ -247,6 +248,7 @@ public class DocumentDAO {
                     Document doc = new Document();
 
                     doc.setId(rs.getInt("id"));
+                    doc.setTitle(rs.getString("title"));
                     doc.setFileName(rs.getString("file_name"));
                     doc.setFilePath(rs.getString("file_path"));
                     doc.setFileSize(rs.getLong("file_size"));
@@ -316,6 +318,7 @@ public class DocumentDAO {
                     Document doc = new Document();
 
                     doc.setId(rs.getInt("id"));
+                    doc.setTitle(rs.getString("title"));
                     doc.setFileName(rs.getString("file_name"));
                     doc.setFilePath(rs.getString("file_path"));
                     doc.setFileSize(rs.getLong("file_size"));
@@ -357,6 +360,61 @@ public class DocumentDAO {
 //                if (rs.next()) {
 //                    return mapResultSetToDocument(rs);
 //                }
+                if (rs.next()) {
+
+                    Document doc = new Document();
+
+                    doc.setId(rs.getInt("id"));
+                    doc.setUserId(rs.getInt("user_id"));
+                    doc.setTitle(rs.getString("title"));
+                    doc.setDescription(rs.getString("description"));
+
+                    doc.setCategoryId(
+                            rs.getObject("category_id") != null
+                                    ? rs.getInt("category_id")
+                                    : null
+                    );
+
+                    doc.setFileName(rs.getString("file_name"));
+                    doc.setFilePath(rs.getString("file_path"));
+                    doc.setFileSize(rs.getLong("file_size"));
+                    doc.setFileType(rs.getString("file_type"));
+                    doc.setFileExtension(rs.getString("file_extension"));
+
+                    doc.setDownloadCount(rs.getInt("download_count"));
+                    doc.setViewCount(rs.getInt("view_count"));
+                    doc.setIsActive(rs.getInt("is_active"));
+
+                    doc.setUploaderName(rs.getString("uploader_name"));
+                    doc.setCategoryName(rs.getString("category_name"));
+
+                    // LOAD TAGS
+                    doc.setTags(getTagsByDocumentId(conn, id));
+
+                    return doc;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Document getDocumentByIdForEdit(int id) {
+
+        String sql = "SELECT d.*, u.full_name as uploader_name, c.name as category_name " +
+                "FROM documents d " +
+                "LEFT JOIN users u ON d.user_id = u.id " +
+                "LEFT JOIN categories c ON d.category_id = c.id " +
+                "WHERE d.id = ?";
+
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+
                 if (rs.next()) {
 
                     Document doc = new Document();
@@ -580,7 +638,7 @@ public class DocumentDAO {
      * UC15.2.1.1: Nếu false → hệ thống từ chối quyền chỉnh sửa.
      */
     public boolean isOwner(int documentId, int userId) {
-        String sql = "SELECT 1 FROM documents WHERE id = ? AND user_id = ? AND is_active = 1";
+        String sql = "SELECT 1 FROM documents WHERE id = ? AND user_id = ?";
         try (Connection conn = DBConnect.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, documentId);
@@ -600,33 +658,49 @@ public class DocumentDAO {
      * Trả về true nếu UPDATE thành công.
      */
     public boolean updateDocumentInfo(Document doc) {
-        String sql = """
+        boolean updateFile = doc.getFileName() != null && !doc.getFileName().isEmpty();
+        
+        StringBuilder sql = new StringBuilder("""
                 UPDATE documents
                 SET title       = ?,
                     description = ?,
                     category_id = ?,
                     is_active   = ?
-                WHERE id = ? AND user_id = ?
-                """;
+                """);
+        
+        if (updateFile) {
+            sql.append(", file_name = ?, file_path = ?, file_size = ?, file_type = ?, file_extension = ? \n");
+        }
+        
+        sql.append("WHERE id = ? AND user_id = ?");
+
         try (Connection conn = DBConnect.getConnection()) {
             conn.setAutoCommit(false);
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                // UC15.1.7: các trường được phép chỉnh sửa (Assumption 1: không thay file)
+            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
                 ps.setString(1, doc.getTitle());
                 ps.setString(2, doc.getDescription());
                 if (doc.getCategoryId() != null) ps.setInt(3, doc.getCategoryId());
                 else ps.setNull(3, Types.INTEGER);
                 ps.setInt(4, doc.getIsActive() == 1 ? 1 : 0);
-                ps.setInt(5, doc.getId());
-                ps.setInt(6, doc.getUserId()); // UC15.1.2: double-check chủ sở hữu
+                
+                int paramIndex = 5;
+                if (updateFile) {
+                    ps.setString(paramIndex++, doc.getFileName());
+                    ps.setString(paramIndex++, doc.getFilePath());
+                    ps.setLong(paramIndex++, doc.getFileSize());
+                    ps.setString(paramIndex++, doc.getFileType());
+                    ps.setString(paramIndex++, doc.getFileExtension());
+                }
+                
+                ps.setInt(paramIndex++, doc.getId());
+                ps.setInt(paramIndex++, doc.getUserId()); 
 
                 int affected = ps.executeUpdate();
                 if (affected == 0) {
                     conn.rollback();
-                    return false; // UC15 Exception 3: tài liệu không còn tồn tại
+                    return false; 
                 }
 
-                // UC15.1.7: cập nhật tags trong cùng transaction (xóa cũ → thêm mới)
                 updateDocumentTags(conn, doc.getId(), doc.getTags());
 
                 conn.commit();
@@ -636,7 +710,6 @@ public class DocumentDAO {
                 throw e;
             }
         } catch (SQLException e) {
-            // UC15 Exception 1 – Lỗi kết nối hoặc ghi CSDL
             throw new RuntimeException("Lỗi cập nhật tài liệu: " + e.getMessage(), e);
         }
     }
@@ -729,6 +802,7 @@ public class DocumentDAO {
                     Document doc = new Document();
 
                     doc.setId(rs.getInt("id"));
+                    doc.setTitle(rs.getString("title"));
                     doc.setFileName(rs.getString("file_name"));
                     doc.setFileSize(rs.getLong("file_size"));
                     doc.setFileExtension(rs.getString("file_extension"));
@@ -831,5 +905,39 @@ public class DocumentDAO {
         }
     }
 
-
+    public boolean deleteDocument(int documentId, int userId) {
+        String deleteTagsSql = "DELETE FROM document_tags WHERE document_id = ?";
+        String deleteDocSql = "DELETE FROM documents WHERE id = ? AND user_id = ?";
+        
+        try (Connection conn = DBConnect.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement psTags = conn.prepareStatement(deleteTagsSql)) {
+                    psTags.setInt(1, documentId);
+                    psTags.executeUpdate();
+                }
+                
+                int affectedRows = 0;
+                try (PreparedStatement psDoc = conn.prepareStatement(deleteDocSql)) {
+                    psDoc.setInt(1, documentId);
+                    psDoc.setInt(2, userId);
+                    affectedRows = psDoc.executeUpdate();
+                }
+                
+                if (affectedRows > 0) {
+                    conn.commit();
+                    return true;
+                } else {
+                    conn.rollback();
+                    return false;
+                }
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
