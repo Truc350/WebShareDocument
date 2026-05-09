@@ -1,307 +1,481 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="vn.edu.hcmuaf.fit.websharedocument.model.Document" %>
+<%
+    Document doc = (Document) request.getAttribute("document");
+    if (doc == null) {
+        response.sendRedirect(request.getContextPath() + "/");
+        return;
+    }
+    // Tiện ích format kích thước file
+    String sizeDisplay;
+    double sizeMB = doc.getFileSize() / (1024.0 * 1024.0);
+    if (sizeMB >= 1) {
+        sizeDisplay = String.format("%.2f MB", sizeMB);
+    } else {
+        sizeDisplay = String.format("%.1f KB", doc.getFileSize() / 1024.0);
+    }
+    // Format ngày đăng tải
+    String uploadDate = "";
+    if (doc.getCreatedAt() != null) {
+        uploadDate = String.format("%02d/%02d/%d",
+                doc.getCreatedAt().getDayOfMonth(),
+                doc.getCreatedAt().getMonthValue(),
+                doc.getCreatedAt().getYear());
+    }
+    String categoryName = doc.getCategoryName() != null ? doc.getCategoryName() : "Chưa phân loại";
+    String uploaderName = doc.getUploaderName() != null ? doc.getUploaderName() : "Ẩn danh";
+    String ext = doc.getFileExtension() != null ? doc.getFileExtension().toUpperCase() : "FILE";
+    String description = doc.getDescription() != null && !doc.getDescription().isEmpty()
+            ? doc.getDescription() : "Chưa có mô tả.";
+    String fileUrl = request.getContextPath() + "/document/uploads/" + doc.getFilePath();
+%>
 <!DOCTYPE html>
-<html class="light" lang="vi">
+<html lang="vi">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Chi tiết tài liệu - DocShare</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= doc.getTitle() %> - DocShare</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap"
+          rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+          rel="stylesheet">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/home.css">
-    <script id="tailwind-config">
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            "colors": {
-                    "error": "#ba1a1a",
-                    "tertiary": "#862700",
-                    "surface": "#faf8ff",
-                    "surface-dim": "#d9d9e5",
-                    "primary-fixed-dim": "#b4c5ff",
-                    "primary-container": "#0555dd",
-                    "tertiary-container": "#af3600",
-                    "background": "#faf8ff",
-                    "secondary-container": "#d0e1fb",
-                    "outline": "#737686",
-                    "inverse-surface": "#2e3039",
-                    "on-primary-container": "#d1daff",
-                    "on-primary": "#ffffff",
-                    "surface-container-high": "#e7e7f3",
-                    "surface-bright": "#faf8ff",
-                    "surface-tint": "#0053da",
-                    "surface-variant": "#e1e2ed",
-                    "surface-container-low": "#f3f3fe",
-                    "on-error": "#ffffff",
-                    "on-tertiary-fixed-variant": "#832600",
-                    "on-surface-variant": "#434655",
-                    "on-secondary-container": "#54647a",
-                    "primary": "#0040ab",
-                    "surface-container-lowest": "#ffffff",
-                    "on-primary-fixed": "#00174b",
-                    "primary-fixed": "#dbe1ff",
-                    "on-tertiary-fixed": "#390c00",
-                    "on-secondary-fixed-variant": "#38485d",
-                    "error-container": "#ffdad6",
-                    "inverse-on-surface": "#f0f0fb",
-                    "secondary-fixed": "#d3e4fe",
-                    "on-surface": "#191b23",
-                    "on-primary-fixed-variant": "#003ea7",
-                    "on-background": "#191b23",
-                    "secondary-fixed-dim": "#b7c8e1",
-                    "tertiary-fixed": "#ffdbd0",
-                    "secondary": "#505f76",
-                    "on-tertiary": "#ffffff",
-                    "on-error-container": "#93000a",
-                    "surface-container": "#ededf9",
-                    "on-secondary": "#ffffff",
-                    "tertiary-fixed-dim": "#ffb59d",
-                    "outline-variant": "#c3c6d7",
-                    "on-tertiary-container": "#ffd2c4",
-                    "on-secondary-fixed": "#0b1c30"
-            },
-            "borderRadius": {
-                    "DEFAULT": "0.25rem",
-                    "lg": "0.5rem",
-                    "xl": "0.75rem",
-                    "full": "9999px"
-            },
-            "spacing": {
-                    "gutter": "24px",
-                    "stack-md": "16px",
-                    "margin-mobile": "16px",
-                    "stack-lg": "24px",
-                    "margin-desktop": "32px",
-                    "unit": "4px",
-                    "stack-sm": "8px",
-                    "container-max-width": "1280px"
-            },
-            "fontFamily": {
-                    "body-md": ["Inter"],
-                    "label-md": ["Inter"],
-                    "body-lg": ["Inter"],
-                    "headline-lg": ["Manrope"],
-                    "error-text": ["Inter"],
-                    "headline-md": ["Manrope"],
-                    "headline-sm": ["Manrope"],
-                    "label-sm": ["Inter"],
-                    "body-sm": ["Inter"]
-            },
-            "fontSize": {
-                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
-                    "label-md": ["14px", {"lineHeight": "16px", "fontWeight": "500"}],
-                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
-                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
-                    "error-text": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
-                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
-                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
-                    "label-sm": ["12px", {"lineHeight": "14px", "fontWeight": "500"}],
-                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
-            }
-          },
-        },
-      }
-    </script>
     <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        body {
+            background: #f8f9ff;
+            font-family: 'Inter', sans-serif;
+            color: #1a1b23;
         }
-        .page-shadow {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+
+        .detail-container {
+            max-width: 1280px;
+            margin: 90px auto 60px;
+            padding: 0 24px;
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 24px;
+        }
+
+        @media (max-width: 860px) {
+            .detail-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .doc-viewer {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, .07);
+            overflow: hidden;
+        }
+
+        .viewer-toolbar {
+            background: #f5f6fa;
+            border-bottom: 1px solid #eaeaf0;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .viewer-toolbar .ext-badge {
+            background: #0040ab;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 6px;
+            letter-spacing: .5px;
+        }
+
+        .viewer-toolbar .doc-title-bar {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .doc-preview-area {
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            background: #f0f2f8;
+        }
+
+        .doc-preview-area iframe {
+            width: 100%;
+            height: calc(85vh - 100px);
+            min-height: 540px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .12);
+        }
+
+        .file-icon-preview {
+            text-align: center;
+        }
+
+        .file-icon-preview .material-symbols-outlined {
+            font-size: 96px;
+            color: #0040ab;
+        }
+
+        .file-icon-preview p {
+            color: #555;
+            margin-top: 12px;
+            font-size: 15px;
+        }
+
+        .doc-meta-section {
+            padding: 28px;
+        }
+
+        .doc-meta-section h1 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            color: #0a0b14;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .tag-chip {
+            background: #eef2ff;
+            color: #0040ab;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .description-text {
+            color: #555;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, .07);
+            padding: 24px;
+        }
+
+        .btn-download {
+            width: 100%;
+            background: linear-gradient(135deg, #0040ab, #0055e6);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 20px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: transform .15s, opacity .15s;
+            text-decoration: none;
+        }
+
+        .btn-download:hover {
+            opacity: .92;
+            transform: translateY(-1px);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 16px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-item .material-symbols-outlined {
+            font-size: 20px;
+            color: #888;
+        }
+
+        .stat-item span.val {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .stat-item span.lbl {
+            display: block;
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        .info-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .info-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f2f2f8;
+            font-size: 14px;
+        }
+
+        .info-list li:last-child {
+            border-bottom: none;
+        }
+
+        .info-list li .lbl {
+            color: #888;
+        }
+
+        .info-list li .val {
+            font-weight: 600;
+            color: #222;
+        }
+
+        .ext-val {
+            background: #eef2ff;
+            color: #0040ab;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .uploader-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0040ab, #5c8aff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .uploader-name {
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .uploader-sub {
+            color: #888;
+            font-size: 13px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a {
+            color: #0040ab;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
-<body class="bg-surface font-body-md text-on-background min-h-screen flex flex-col">
-    <jsp:include page="/common/header.jsp" />
-<!-- Main Content -->
-<main class="mt-16 flex-grow">
-    <div class="max-w-[1280px] mx-auto px-6 lg:px-8 py-8">
-        <!-- Breadcrumbs -->
-        <nav class="flex items-center gap-2 text-label-sm text-secondary mb-6">
-            <a class="hover:text-primary" href="${pageContext.request.contextPath}/page/user/home.jsp">Trang chủ</a>
-            <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-            <a class="hover:text-primary" href="${pageContext.request.contextPath}/page/user/documents.jsp">Tài liệu học tập</a>
-            <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-            <span class="text-on-surface font-medium">Giáo trình Kinh tế học vi mô</span>
+<body>
+<jsp:include page="/common/header.jsp"/>
+<div class="detail-container">
+    <div style="grid-column: 1 / -1;">
+        <nav class="breadcrumb">
+            <a href="${pageContext.request.contextPath}/">Trang chủ</a>
+            <span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span>
+            <a href="${pageContext.request.contextPath}/page/user/documents.jsp">Tài liệu</a>
+            <span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span>
+            <span><%= doc.getTitle() %></span>
         </nav>
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
-            <!-- Left Column: PDF Viewer -->
-            <div class="lg:col-span-8">
-                <div class="bg-white rounded-xl page-shadow overflow-hidden flex flex-col h-[850px] border border-slate-100">
-                    <!-- Viewer Toolbar -->
-                    <div class="h-12 bg-slate-50 border-b border-slate-100 flex items-center justify-between px-4">
-                        <div class="flex items-center gap-4">
-                            <span class="text-label-md font-semibold text-slate-700">Trang 1 / 154</span>
-                            <div class="h-4 w-[1px] bg-slate-300"></div>
-                            <div class="flex items-center gap-2">
-                                <button class="p-1 hover:bg-slate-200 rounded transition-colors"><span class="material-symbols-outlined text-[20px]">zoom_out</span></button>
-                                <span class="text-label-sm">100%</span>
-                                <button class="p-1 hover:bg-slate-200 rounded transition-colors"><span class="material-symbols-outlined text-[20px]">zoom_in</span></button>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button class="p-1 hover:bg-slate-200 rounded transition-colors"><span class="material-symbols-outlined text-[20px]">print</span></button>
-                            <button class="p-1 hover:bg-slate-200 rounded transition-colors"><span class="material-symbols-outlined text-[20px]">fullscreen</span></button>
-                        </div>
+    </div>
+    <div>
+        <div class="doc-viewer">
+            <div class="viewer-toolbar">
+                <span class="ext-badge"><%= ext %></span>
+                <span class="doc-title-bar"><%= doc.getTitle() %></span>
+            </div>
+            <div class="doc-preview-area" id="previewArea">
+                <% if ("pdf".equalsIgnoreCase(doc.getFileExtension())) { %>
+                <iframe src="<%= fileUrl %>" title="Xem tài liệu PDF"
+                        style="width:100%;height:calc(85vh - 100px);min-height:540px;border:none;border-radius:8px;"></iframe>
+                <% } else if (doc.getFileType() != null && doc.getFileType().startsWith("image/")) { %>
+                <img src="<%= fileUrl %>" alt="<%= doc.getTitle() %>"
+                     style="max-width:100%;max-height:620px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.12);">
+                <% } else if ("docx".equalsIgnoreCase(doc.getFileExtension()) || "doc".equalsIgnoreCase(doc.getFileExtension())) { %>
+                <div id="docxViewer"
+                     style="width:100%;min-height:calc(85vh - 100px);background:#fff;border-radius:8px;padding:40px 48px;box-shadow:0 2px 12px rgba(0,0,0,.08);text-align:left;font-size:15px;line-height:1.9;overflow-y:auto;">
+                    <div style="text-align:center;padding:40px;color:#888;">
+                        <span class="material-symbols-outlined"
+                              style="font-size:48px;color:#0040ab;">hourglass_top</span>
+                        <p>Đang tải nội dung tài liệu...</p>
                     </div>
-                    <!-- Viewer Canvas -->
-                    <div class="flex-grow bg-slate-200 overflow-y-auto p-8 flex flex-col items-center space-y-8">
-                        <!-- Page 1 -->
-                        <div class="w-full max-w-[720px] aspect-[1/1.414] bg-white shadow-lg p-12 relative">
-                            <div class="absolute top-0 left-0 w-full h-1 bg-primary"></div>
-                            <div class="mb-12">
-                                <h1 class="font-headline-lg text-slate-900 mb-4 uppercase tracking-wide">Giáo trình Kinh tế học vi mô</h1>
-                                <div class="h-1 w-24 bg-primary mb-6"></div>
-                                <p class="text-body-lg text-slate-600 font-medium italic">Tái bản lần thứ 5, có sửa đổi và bổ sung</p>
-                            </div>
-                            <div class="space-y-6">
-                                <h2 class="font-headline-sm text-primary">CHƯƠNG 1: TỔNG QUAN VỀ KINH TẾ HỌC VI MÔ</h2>
-                                <div class="space-y-4">
-                                    <h3 class="font-label-md text-slate-800 uppercase font-bold">1.1. Khái niệm và đối tượng nghiên cứu</h3>
-                                    <p class="text-body-md text-slate-700 leading-relaxed">
-                                        Kinh tế học vi mô là một phân ngành chính của kinh tế học, tập trung nghiên cứu hành vi của các thực thể kinh tế riêng lẻ như người tiêu dùng, hộ gia đình và doanh nghiệp trong việc đưa ra các quyết định phân bổ nguồn lực khan hiếm.
-                                    </p>
-                                    <div class="bg-slate-50 p-6 rounded-lg border-l-4 border-primary">
-                                        <p class="text-body-md font-semibold text-slate-800 mb-2">Từ khóa quan trọng:</p>
-                                        <ul class="list-disc ml-5 text-body-sm text-slate-600 space-y-1">
-                                            <li>Sự khan hiếm (Scarcity)</li>
-                                            <li>Chi phí cơ hội (Opportunity Cost)</li>
-                                            <li>Quy luật cung cầu (Law of Supply and Demand)</li>
-                                            <li>Tối đa hóa lợi ích (Utility Maximization)</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div class="pt-8">
-                                    <img alt="Economic Chart" class="w-full rounded-lg border border-slate-100 shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlUO7XAs4wZ72ejRgtCXNw97m16N4kV7Y1_nLE-jGR7-j9m7TJuP533xN0C2efvSKQWNcf41FxHjEW_QNG4JarC-qw2grbJfsAdbr7AbvKr19H5L5U1_gU0w1AFmqvvdbty1FKbVgbd0NkhA5oBUX9Gh8JtxjLJIZCXFFJRFazfQ4OhMaGhyehLNaBjSNUkk3BCfpbewLLtbuhCxcemYJHqMNvbIEHkEKnkoXgcsADHX1-n5Bbjj8FDmuMSKTn0q_gIGiGNZAfr4hV"/>
-                                    <p class="text-center text-label-sm text-slate-500 mt-2 italic text-body-sm">Hình 1.1: Mô hình đường giới hạn khả năng sản xuất (PPF)</p>
-                                </div>
-                            </div>
-                            <div class="absolute bottom-8 right-12 text-label-sm text-slate-400">1</div>
-                        </div>
-                        <!-- Page 2 (Sneak Peak) -->
-                        <div class="w-full max-w-[720px] aspect-[1/1.414] bg-white shadow-lg p-12 opacity-95">
-                            <div class="space-y-6">
-                                <h3 class="font-label-md text-slate-800 uppercase font-bold">1.2. Ba vấn đề cơ bản của tổ chức kinh tế</h3>
-                                <p class="text-body-md text-slate-700 leading-relaxed">
-                                    Mọi nền kinh tế, dù ở trình độ phát triển nào, cũng đều phải đối mặt với ba câu hỏi cơ bản nảy sinh từ sự khan hiếm nguồn lực...
-                                </p>
-                                <div class="grid grid-cols-3 gap-4 py-4">
-                                    <div class="p-4 bg-blue-50 rounded-lg text-center">
-                                        <p class="font-bold text-primary">CÁI GÌ?</p>
-                                        <p class="text-xs text-slate-500 mt-1">Sản xuất sản phẩm nào?</p>
-                                    </div>
-                                    <div class="p-4 bg-blue-50 rounded-lg text-center">
-                                        <p class="font-bold text-primary">THẾ NÀO?</p>
-                                        <p class="text-xs text-slate-500 mt-1">Công nghệ sản xuất?</p>
-                                    </div>
-                                    <div class="p-4 bg-blue-50 rounded-lg text-center">
-                                        <p class="font-bold text-primary">CHO AI?</p>
-                                        <p class="text-xs text-slate-500 mt-1">Đối tượng thụ hưởng?</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="absolute bottom-8 right-12 text-label-sm text-slate-400">2</div>
-                        </div>
+                </div>
+                <script>window._docxUrl = '<%= fileUrl %>';</script>
+                <% } else if ("xlsx".equalsIgnoreCase(doc.getFileExtension()) || "xls".equalsIgnoreCase(doc.getFileExtension())) { %>
+                <div id="xlsxViewer"
+                     style="width:100%;min-height:400px;overflow-x:auto;background:#fff;border-radius:8px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);">
+                    <div style="text-align:center;padding:40px;color:#888;">
+                        <span class="material-symbols-outlined"
+                              style="font-size:48px;color:#28a745;">hourglass_top</span>
+                        <p>Đang tải bảng tính...</p>
                     </div>
+                </div>
+                <script>window._xlsxUrl = '<%= fileUrl %>';</script>
+                <% } else if ("txt".equalsIgnoreCase(doc.getFileExtension())) { %>
+                <iframe src="<%= fileUrl %>"
+                        style="width:100%;height:calc(85vh - 100px);min-height:540px;border:none;border-radius:8px;background:#fff;"></iframe>
+                <% } else { %>
+                <div style="text-align:center;padding:48px;">
+                    <span class="material-symbols-outlined" style="font-size:80px;color:#0040ab;">description</span>
+                    <p style="color:#555;margin-top:12px;font-size:15px;">Định dạng <strong><%= ext %>
+                    </strong> không hỗ trợ xem trực tiếp.</p>
+                    <a href="<%= fileUrl %>" download="<%= doc.getFileName() %>" class="btn-download"
+                       style="max-width:260px;margin:16px auto 0;text-decoration:none;">
+                        <span class="material-symbols-outlined">download</span> Tải xuống để xem
+                    </a>
+                </div>
+                <% } %>
+            </div>
+            <div class="doc-meta-section">
+                <h1><%= doc.getTitle() %>
+                </h1>
+                <div class="tag-row">
+                    <span class="tag-chip"><%= categoryName %></span>
+                    <span class="tag-chip"><%= ext %></span>
+                </div>
+                <p class="description-text"><%= description %>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="sidebar">
+        <div class="card">
+            <a href="<%= fileUrl %>" download="<%= doc.getFileName() %>" class="btn-download">
+                <span class="material-symbols-outlined">download</span>
+                Tải xuống ngay
+            </a>
+            <div class="stat-row">
+                <div class="stat-item">
+                    <span class="material-symbols-outlined">visibility</span>
+                    <span class="val"><%= doc.getViewCount() %></span>
+                    <span class="lbl">Lượt xem</span>
+                </div>
+                <div class="stat-item">
+                    <span class="material-symbols-outlined">download</span>
+                    <span class="val"><%= doc.getDownloadCount() %></span>
+                    <span class="lbl">Lượt tải</span>
                 </div>
             </div>
-            <!-- Right Column: Sidebar -->
-            <div class="lg:col-span-4 space-y-gutter">
-                <!-- Download Action Card -->
-                <div class="bg-white p-stack-lg rounded-xl page-shadow border border-slate-100">
-                    <button class="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-4 px-6 rounded-lg flex items-center justify-center gap-3 active:scale-[0.98] transition-all">
-                        <span class="material-symbols-outlined">download</span>
-                        Tải xuống ngay
-                    </button>
-                    <div class="mt-4 flex items-center justify-center gap-6 text-label-sm text-secondary">
-                        <div class="flex items-center gap-1">
-                            <span class="material-symbols-outlined text-[18px]">visibility</span>
-                            12.4k
-                        </div>
-                        <div class="flex items-center gap-1">
-                            <span class="material-symbols-outlined text-[18px]">download</span>
-                            3.2k
-                        </div>
-                        <div class="flex items-center gap-1">
-                            <span class="material-symbols-outlined text-[18px]">share</span>
-                            Chia sẻ
-                        </div>
-                    </div>
+        </div>
+        <div class="card">
+            <h3 style="font-family:'Manrope',sans-serif;font-size:16px;font-weight:700;margin:0 0 16px;">Thông tin tệp
+                tin</h3>
+            <ul class="info-list">
+                <li><span class="lbl">Định dạng</span> <span class="ext-val"><%= ext %></span></li>
+                <li><span class="lbl">Kích thước</span> <span class="val"><%= sizeDisplay %></span></li>
+                <li><span class="lbl">Danh mục</span> <span class="val"><%= categoryName %></span></li>
+                <li><span class="lbl">Ngày đăng</span> <span class="val"><%= uploadDate %></span></li>
+                <li><span class="lbl">Tên tệp</span> <span class="val"
+                                                           style="font-size:12px;word-break:break-all;"><%= doc.getFileName() %></span>
+                </li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="uploader-card">
+                <div class="avatar"><%= uploaderName.charAt(0) %>
                 </div>
-                <!-- File Info Card -->
-                <div class="bg-white p-stack-lg rounded-xl page-shadow border border-slate-100">
-                    <h3 class="font-headline-sm text-on-surface mb-4">Thông tin tệp tin</h3>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-start border-b border-slate-50 pb-3">
-                            <span class="text-body-sm text-secondary">Định dạng</span>
-                            <span class="text-label-md font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">PDF</span>
-                        </div>
-                        <div class="flex justify-between items-start border-b border-slate-50 pb-3">
-                            <span class="text-body-sm text-secondary">Kích thước</span>
-                            <span class="text-label-md font-semibold text-on-surface">15.4 MB</span>
-                        </div>
-                        <div class="flex justify-between items-start border-b border-slate-50 pb-3">
-                            <span class="text-body-sm text-secondary">Số trang</span>
-                            <span class="text-label-md font-semibold text-on-surface">154 trang</span>
-                        </div>
-                        <div class="flex justify-between items-start border-b border-slate-50 pb-3">
-                            <span class="text-body-sm text-secondary">Ngôn ngữ</span>
-                            <span class="text-label-md font-semibold text-on-surface">Tiếng Việt</span>
-                        </div>
-                        <div class="flex justify-between items-start border-b border-slate-50 pb-3">
-                            <span class="text-body-sm text-secondary">Ngày đăng</span>
-                            <span class="text-label-md font-semibold text-on-surface">15 Th05, 2024</span>
-                        </div>
-                        <div class="flex flex-col gap-2 pt-2">
-                            <span class="text-body-sm text-secondary">Tags</span>
-                            <div class="flex flex-wrap gap-2">
-                                <span class="text-[11px] font-semibold bg-slate-100 text-slate-600 px-2 py-1 rounded-full uppercase">Kinh tế học</span>
-                                <span class="text-[11px] font-semibold bg-slate-100 text-slate-600 px-2 py-1 rounded-full uppercase">Đại học</span>
-                                <span class="text-[11px] font-semibold bg-slate-100 text-slate-600 px-2 py-1 rounded-full uppercase">Vi mô</span>
-                            </div>
-                        </div>
+                <div>
+                    <div class="uploader-name"><%= uploaderName %>
                     </div>
-                </div>
-                <!-- Uploader Profile -->
-                <div class="bg-white p-stack-lg rounded-xl page-shadow border border-slate-100 flex items-center gap-4">
-                    <img alt="Uploader" class="w-12 h-12 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1UHHcXxvULxHZOoHxOHQTntwLLl0h3ZQBGuiZn6CDydd-e26MJ0X0HPS_r6Xc23gq3t03eJMLAtyF1207zDMsA3GULMqn6ykEnlk5w_RX1Q3_KKGoxged2_YLN0y6EBHvHl4JicedZYreuFUZ2lwbsAhrAFgpXiGFFW_lgkpQcmf-PBUFouzRHCZF4tRPb8F0MN4zLjQzhjS8kCjtczQNNK6WJjxRzkxfkafLVMadj5lLX_RI9k-hZSPPYP5GweFPGMlFtvdx2eYX"/>
-                    <div class="flex-grow">
-                        <p class="text-label-md font-bold text-on-surface">PGS.TS Nguyễn Thu Hà</p>
-                        <p class="text-body-sm text-secondary">Đã đăng 45 tài liệu</p>
-                    </div>
-                    <button class="p-2 text-primary hover:bg-primary/5 rounded-full transition-colors">
-                        <span class="material-symbols-outlined">person_add</span>
-                    </button>
-                </div>
-                <!-- Recommended List Card -->
-                <div class="bg-white p-stack-lg rounded-xl page-shadow border border-slate-100">
-                    <h3 class="font-headline-sm text-on-surface mb-4">Tài liệu liên quan</h3>
-                    <div class="space-y-4">
-                        <div class="flex gap-3 group cursor-pointer">
-                            <div class="w-12 h-16 bg-slate-100 rounded flex-shrink-0 overflow-hidden">
-                                <img alt="Doc 1" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD90jxvU1Myww4NDlb07HkV8_yA2dncfA4jaidQBvayJuU4m0h7jEWnwytBbby8evCtIW4biN3iHtTyuZkymRR7YEre9CBW08NhOWwA1WHRufj7-eaNczWfcq-wgFeB8edHb7kpsss-d0R3TJVxRNJM29gfGU-0ba60ECR7A7uQPRGMqNqRCjVaILOciyTxxue9NEUAHT60QAbaXlUtFr_2x_wnTuDSk2RJPKeGKbeJHvOq8fo8MQUb1vZJ3Hein1_Sobo1uO4Kc-0J"/>
-                            </div>
-                            <div>
-                                <p class="text-label-sm font-semibold text-on-surface group-hover:text-primary transition-colors line-clamp-2">Bài tập Kinh tế học vi mô có lời giải</p>
-                                <p class="text-body-sm text-secondary">1.2 MB • 45 trang</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-3 group cursor-pointer">
-                            <div class="w-12 h-16 bg-slate-100 rounded flex-shrink-0 overflow-hidden">
-                                <img alt="Doc 2" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAX3VfaPYODeVCUZPq6L80nt7nu9Ok2WqnEERHkJkqcRGArayh1CXAfRsSf87TzVT4RqDtpAL4Tkn5u4vu0OGPEcIrV_mk_uVs5Lr9X03JprYtNR9L4SmYKJwd_qDv8JRCZsABg8KT_7K2ppK0U7a7XGHqoZuHLEFrcvdnYX5Cg6p07e2GtKDQZaOR8ENDWHONeu7P3JLy0trTSgIbCUvV9j_52a0NiYLn5ttt1gWN6ZrzNRusKd4Xbu8fy_oY-CcIcaEXo4GTiWX4f"/>
-                            </div>
-                            <div>
-                                <p class="text-label-sm font-semibold text-on-surface group-hover:text-primary transition-colors line-clamp-2">Tóm tắt công thức Kinh tế vi mô</p>
-                                <p class="text-body-sm text-secondary">0.5 MB • 8 trang</p>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="uploader-sub">Người đăng tải</div>
                 </div>
             </div>
         </div>
     </div>
-</main>
-    <jsp:include page="/common/footer.jsp" />
+</div>
+
+<jsp:include page="/common/footer.jsp"/>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+    if (window._docxUrl) {
+        fetch(window._docxUrl)
+            .then(r => r.arrayBuffer())
+            .then(buf => mammoth.convertToHtml({arrayBuffer: buf}))
+            .then(result => {
+                const viewer = document.getElementById('docxViewer');
+                if (viewer) viewer.innerHTML = result.value || '<p>Không thể đọc nội dung.</p>';
+            })
+            .catch(() => {
+                const viewer = document.getElementById('docxViewer');
+                if (viewer) viewer.innerHTML = '<p style="color:red;text-align:center">Không thể tải tài liệu. Vui lòng tải xuống để xem.</p>';
+            });
+    }
+    if (window._xlsxUrl) {
+        fetch(window._xlsxUrl)
+            .then(r => r.arrayBuffer())
+            .then(buf => {
+                const wb = XLSX.read(buf, {type: 'array'});
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                const html = XLSX.utils.sheet_to_html(ws, {id: 'xlsxTable'});
+                const viewer = document.getElementById('xlsxViewer');
+                if (viewer) {
+                    viewer.innerHTML = html;
+                    const tbl = document.getElementById('xlsxTable');
+                    if (tbl) {
+                        tbl.style.cssText = 'border-collapse:collapse;width:100%;font-size:13px;';
+                        tbl.querySelectorAll('td,th').forEach(cell => {
+                            cell.style.cssText = 'border:1px solid #dde;padding:6px 10px;';
+                        });
+                    }
+                }
+            })
+            .catch(() => {
+                const viewer = document.getElementById('xlsxViewer');
+                if (viewer) viewer.innerHTML = '<p style="color:red;text-align:center">Không thể tải bảng tính. Vui lòng tải xuống để xem.</p>';
+            });
+    }
+</script>
 </body>
 </html>

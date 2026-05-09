@@ -14,7 +14,6 @@ import java.io.IOException;
 
 @WebServlet(name = "LoginServlet", value = "/login")
 public class LoginServlet extends HttpServlet {
-
     private UserDAO userDAO;
 
     @Override
@@ -52,12 +51,18 @@ public class LoginServlet extends HttpServlet {
 
         HttpSession session = request.getSession();
         session.setAttribute("authUser", user); // Lưu authUser dùng chung
-        
         if ("admin".equals(user.getRole())) {
             session.setAttribute("adminUser", user); // Phục vụ cho AdminFilter
             response.sendRedirect(request.getContextPath() + "/page/overview.jsp");
         } else {
-            response.sendRedirect(request.getContextPath() + "/page/user/home.jsp");
+            // UC5.2.1.4: Chuyển hướng lại trang Upload nếu trước đó bị chặn
+            String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
+            if (redirectUrl != null) {
+                session.removeAttribute("redirectAfterLogin");
+                response.sendRedirect(redirectUrl);
+            } else {
+                response.sendRedirect(request.getContextPath() + "/page/user/home.jsp");
+            }
         }
     }
 }
