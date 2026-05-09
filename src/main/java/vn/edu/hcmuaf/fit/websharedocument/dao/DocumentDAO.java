@@ -79,6 +79,7 @@ public class DocumentDAO {
 
                 doc.setId(rs.getInt("id"));
                 doc.setFileName(rs.getString("file_name"));
+                doc.setFilePath(rs.getString("file_path"));
                 doc.setFileSize(rs.getLong("file_size"));
                 doc.setFileExtension(rs.getString("file_extension"));
                 doc.setIsActive(rs.getInt("is_active"));
