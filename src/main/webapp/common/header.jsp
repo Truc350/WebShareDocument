@@ -13,7 +13,6 @@
                 <span class="material-symbols-outlined">description</span>
                 <strong>DocShare</strong>
             </a>
-
             <nav class="main-nav">
                 <a class="<%= isHomePage ? "active" : "" %>"
                    href="${pageContext.request.contextPath}/page/user/home.jsp">Trang chủ</a>
@@ -23,13 +22,11 @@
                    href="${pageContext.request.contextPath}/page/user/category.jsp">Danh mục</a>
             </nav>
         </div>
-
         <form class="header-search" id="headerSearch">
             <span class="material-symbols-outlined">search</span>
             <input type="search" placeholder="Tìm kiếm tài liệu...">
             <button class="btn btn-primary" type="submit">Tìm</button>
         </form>
-
         <div class="auth-actions" style="display: flex; align-items: center; gap: 12px;">
             <%
                 Object loggedInUser = session.getAttribute("authUser");
@@ -58,7 +55,7 @@
                 <span class="material-symbols-outlined">logout</span>
             </a>
             <% } else { %>
-            <!-- UC5.1.1: Truy cập trang Đăng tải tài liệu (Khách) -->
+            <!-- UC5.1.1: Truy cập trang Đăng tải tài liệu (Guest) -->
             <% if (!isUploadPage) { %>
             <a class="btn btn-ghost" href="${pageContext.request.contextPath}/upload" style="font-size: 14px;">Đăng
                 tải</a>
@@ -67,7 +64,6 @@
             <a class="btn btn-primary" href="${pageContext.request.contextPath}/register">Đăng ký</a>
             <% } %>
         </div>
-
         <button class="menu-toggle" type="button">
             <span class="material-symbols-outlined">menu</span>
         </button>

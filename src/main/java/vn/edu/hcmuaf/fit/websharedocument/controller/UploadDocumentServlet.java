@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -35,15 +36,20 @@ public class UploadDocumentServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // UC5.1.2: Xác thực phiên đăng nhập
-        User authUser = (User) request.getSession().getAttribute("authUser");
+        // UC5.1.2: Hệ thống xác thực phiên đăng nhập
+        HttpSession session = request.getSession();
+        User authUser = (User) session.getAttribute("authUser");
         if (authUser == null) {
             // UC5.2.1.2: Lưu URL, chuyển hướng Login
-            request.getSession().setAttribute("redirectAfterLogin", request.getContextPath() + "/upload");
+            String currentUrl = request.getRequestURI();
+            if (request.getQueryString() != null) {
+                currentUrl += "?" + request.getQueryString();
+            }
+            session.setAttribute("redirectAfterLogin", currentUrl);
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
-        // UC5.1.2 (Đã đăng nhập): Hiển thị form đăng tải
+        // UC5.1.2: Hiển thị form đăng tải
         request.getRequestDispatcher("/page/user/upload.jsp").forward(request, response);
     }
 
@@ -93,12 +99,14 @@ public class UploadDocumentServlet extends HttpServlet {
                 forwardError(request, response, "Tệp không an toàn và đã bị từ chối.");
                 return;
             }
+            // UC5.1.10: Hệ thống lưu tệp vào File Storage System
             Path uploadDir = resolveUploadDir();
             Files.createDirectories(uploadDir);
             String storedFileName = buildStoredFileName(originalFileName, extension);
-            // UC5.1.9: Quét virus/malware và Lưu tệp vào Storage
-            filePart.write(uploadDir.toString() + java.io.File.separator + storedFileName);
-            // UC5.1.10: Ghi metadata vào CSDL
+            Path targetFile = uploadDir.resolve(storedFileName);
+            // UC5.1.10: Lưu tệp vào File Storage System
+            Files.copy(filePart.getInputStream(), targetFile, StandardCopyOption.REPLACE_EXISTING);
+            // UC5.1.10: Hệ thống ghi metadata vào cơ sở dữ liệu
             Document doc = new Document();
             doc.setTitle(title);
             doc.setDescription(description);
@@ -165,7 +173,7 @@ public class UploadDocumentServlet extends HttpServlet {
     }
 
     private void forwardError(HttpServletRequest request, HttpServletResponse response, String message) throws ServletException, IOException {
-        // UC5.1.11 Dữ liệu người dùng đã nhập trong form vẫn được giữ nguyên
+        // UC5.1.11 Dữ liệu người dùng đã nhập trong form
         request.setAttribute("errorMessage", message);
         request.getRequestDispatcher("/page/user/upload.jsp").forward(request, response);
     }

@@ -4,7 +4,6 @@
      */
     const maxSize = 50 * 1024 * 1024;
     const allowedExtensions = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "txt", "png", "jpg", "jpeg"];
-
     const form = document.querySelector("#uploadForm");
     const dropzone = document.querySelector("#dropzone");
     const fileInput = document.querySelector("#documentFile");
@@ -14,14 +13,13 @@
     const removeFile = document.querySelector("#removeFile");
     const formError = document.querySelector("#formError");
     const submitButton = document.querySelector("#submitUpload");
-    // Các phần tử hiển thị tiến trình
+    // Các phần tử hiển thị tiến trình (UC5.1.8)
     const progressContainer = document.querySelector("#progressContainer");
     const progressBarFill = document.querySelector("#progressBarFill");
     const progressText = document.querySelector("#progressText");
     const cancelUploadBtn = document.querySelector("#cancelUpload");
     const cancelFormBtn = document.querySelector("#cancelForm");
-    let currentXhr = null;
-
+    let currentXhr = null; // Để xử lý UC5.2.3 (Hủy trong khi đang tải lên)
     function setError(message) {
         if (formError) {
             formError.textContent = message || "";
@@ -132,7 +130,7 @@
     }
 
     /**
-     * UC5.1.5: Hệ thống kiểm tra sơ bộ phía client
+     * UCS 1.5: Hệ thống kiểm tra sơ bộ phía client
      */
     function validateFile(file) {
         if (!file) {
@@ -203,28 +201,25 @@
             setError("");
         });
     }
-
     /**
      * UC5.2.2: Người dùng nhấn nút 'Hủy' khi đang điền form
      */
     if (cancelFormBtn) {
         cancelFormBtn.addEventListener("click", function () {
             const homeUrl = cancelFormBtn.getAttribute("data-home") || "/";
-            // UC5.2.2.2: Hệ thống hiển thị hộp thoại xác nhận
+            // UC5.2.2.2: Hệ thống hiển thị hộp thoại xác nhận (
             showModal("Hủy đăng tải?", "Bạn có chắc chắn muốn hủy quá trình đăng tải? Mọi thông tin đã nhập sẽ bị mất.", 'confirm', function () {
                 // UC5.2.2.4: Chuyển người dùng về trang chủ
                 window.location.href = homeUrl;
             });
         });
     }
-
     /**
      * UC5.1.6: Người dùng nhấn nút 'Đăng tải'
      */
     if (form) {
         form.addEventListener("submit", function (event) {
             event.preventDefault(); // UC5.1.8: Ngăn chặn reload trang
-
             try {
                 setError("");
                 // UC5.1.7: Hệ thống kiểm tra tính hợp lệ của toàn bộ form
@@ -239,7 +234,7 @@
                     form.reportValidity();
                     return;
                 }
-                // UC5.1.8: Bắt đầu quá trình tải lên
+                // Bắt đầu quá trình tải lên
                 uploadFile(new FormData(form));
             } catch (e) {
                 setError("Lỗi khởi tạo tải lên. Dữ liệu form vẫn được giữ nguyên.");
@@ -248,32 +243,63 @@
     }
 
     /**
-     * UCS 1.8: Hệ thống hiển thị thanh tiến trình  thời gian thực và bắt đầu truyền tệp lên Storage
+     * UC5.1.8: Hệ thống hiển thị thanh tiến trình thời gian thực và bắt đầu truyền tệp lên File Storage System
      */
     function uploadFile(formData) {
         currentXhr = new XMLHttpRequest();
-        // Trạng thái giao diện: đang tải
         setError("");
         submitButton.innerHTML = '<span class="material-symbols-outlined rotating">sync</span> Đang chuẩn bị...';
         progressContainer.hidden = false;
         let progress = 0;
         let isCancelled = false;
-        const startTime = Date.now();
-        const minDuration = 90000;
+        let isConfirmingCancel = false;
+        let uploadFinished = false;
+        let lastResult = null;
 
-        // UC5.1.8: Mô phỏng thanh tiến trình
+        const startTime = Date.now();
+        const minDuration = 5000;
+
         function animateProgress() {
             if (isCancelled) return;
             const elapsed = Date.now() - startTime;
-            const timePercent = Math.min((elapsed / minDuration) * 100, 100);
+
+            // Simulation goes up to 99% quickly, then waits for real finish
+            const timePercent = Math.min((elapsed / minDuration) * 99, 99);
             const visiblePercent = Math.max(progress, timePercent);
+
             progressBarFill.style.width = visiblePercent.toFixed(1) + "%";
             progressText.textContent = Math.round(visiblePercent) + "%";
-            if (visiblePercent < 100 && progress < 100) {
+
+            if (visiblePercent < 100) {
                 requestAnimationFrame(animateProgress);
             } else {
-                progressBarFill.style.width = "100%";
-                progressText.textContent = "100%";
+                // If it reached 100% (either by simulation cap or real progress)
+                if (uploadFinished) {
+                    finalizeUploadUI(lastResult);
+                }
+            }
+        }
+
+        function finalizeUploadUI(result) {
+            if (isCancelled || isConfirmingCancel) return;
+            progressContainer.hidden = true;
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<span class="material-symbols-outlined">publish</span> Đăng tải ngay';
+            if (result && result.status === "success") {
+                sessionStorage.removeItem("uploadFormState");
+                const contextPath = form.getAttribute("data-context") || "";
+                const detailUrl = contextPath + "/document-detail?id=" + result.id;
+                showModal("Thành công ✓", "Đăng tải tài liệu thành công!", "success", function () {
+                    window.location.href = detailUrl;
+                });
+            } else if (result && result.status === "reload") {
+                sessionStorage.removeItem("uploadFormState");
+                showModal("Thành công", "Đăng tải tài liệu thành công!", "success", function () {
+                    window.location.reload();
+                });
+            } else {
+                const msg = (result && result.message) ? result.message : "Có lỗi xảy ra. Vui lòng thử lại.";
+                setError(msg);
             }
         }
 
@@ -284,63 +310,50 @@
         });
         currentXhr.addEventListener("load", function () {
             if (isCancelled) return;
-            progressContainer.hidden = true;
-            submitButton.disabled = false;
-            submitButton.innerHTML = '<span class="material-symbols-outlined">publish</span> Đăng tải ngay';
-            // UC5.1.9: Đọc JSON response từ server
-            let result = null;
+            uploadFinished = true;
             try {
-                result = JSON.parse(currentXhr.responseText);
+                lastResult = JSON.parse(currentXhr.responseText);
             } catch (e) {
                 if (currentXhr.status >= 200 && currentXhr.status < 300) {
-                    sessionStorage.removeItem("uploadFormState");
-                    showModal("Thành công", "Đăng tải tài liệu thành công! Nhấn để xem chi tiết.", "success", function () {
-                        window.location.reload();
-                    });
+                    lastResult = {status: "reload"};
                 } else {
-                    setError("Lỗi không xác định từ hệ thống. Vui lòng thử lại sau.");
+                    lastResult = {status: "error", message: "Lỗi phản hồi hệ thống."};
                 }
-                return;
             }
-            if (result && result.status === "success") {
-                // UC5.1.11: Đăng tải thành công , hiện thông báo rồi chuyển trang
-                sessionStorage.removeItem("uploadFormState");
-                const contextPath = form.getAttribute("data-context") || "";
-                const detailUrl = contextPath + "/document-detail?id=" + result.id;
-                showModal("Thành công ✓", "Đăng tải tài liệu thành công!", "success", function () {
-                    window.location.href = detailUrl;
-                });
-            } else {
-                // Server trả về lỗi rõ ràng
-                const msg = (result && result.message) ? result.message : "Có lỗi xảy ra. Vui lòng thử lại.";
-                setError(msg);
+            const elapsed = Date.now() - startTime;
+            if (elapsed >= minDuration) {
+                finalizeUploadUI(lastResult);
             }
         });
         currentXhr.addEventListener("error", function () {
-            // Mất kết nối Internet
             handleUploadError("Mất kết nối mạng. Vui lòng kiểm tra lại đường truyền.");
         });
         const cancelBtn = document.querySelector("#cancelUpload");
-        // UC5.2.3.2: Hệ thống dừng quá trình truyền tệp
         cancelBtn.onclick = () => {
+            isConfirmingCancel = true;
             showModal("Dừng tải lên?", "Bạn có chắc chắn muốn dừng quá trình tải tài liệu lên hệ thống? Dữ liệu đã nhập sẽ được giữ lại hoàn toàn.", 'confirm', function () {
+                isConfirmingCancel = false;
                 isCancelled = true;
                 if (currentXhr) {
                     currentXhr.abort();
                     currentXhr = null;
                 }
-                // UC5.2.3.2: Hệ thống xác nhận hủy thành công; reset form
                 progressContainer.hidden = true;
                 submitButton.disabled = false;
                 submitButton.innerHTML = '<span class="material-symbols-outlined">publish</span> Đăng tải ngay';
                 if (fileInput.files.length > 0) {
                     preview.hidden = false;
                 }
-                // UC5.2.3.3: Thông báo hủy thành công
                 setTimeout(() => {
                     showModal("Đã dừng tải lên", "Quá trình tải lên đã được dừng lại. Dữ liệu form và tệp đã chọn vẫn được giữ nguyên để bạn có thể chỉnh sửa hoặc thử lại.", "cancel-success");
                     setError("Đã hủy tải lên thành công.");
                 }, 300);
+            }, function () {
+                isConfirmingCancel = false;
+                const elapsed = Date.now() - startTime;
+                if (uploadFinished && elapsed >= minDuration) {
+                    finalizeUploadUI(lastResult);
+                }
             });
         };
         requestAnimationFrame(animateProgress);
