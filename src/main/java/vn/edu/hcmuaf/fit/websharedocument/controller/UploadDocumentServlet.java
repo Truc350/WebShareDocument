@@ -73,51 +73,23 @@ public class UploadDocumentServlet extends HttpServlet {
             String category = trim(request.getParameter("category"));
             String subject = trim(request.getParameter("subject"));
             String description = trim(request.getParameter("description"));
-            Part filePart = request.getPart("documentFile");
+            String secureUrl = trim(request.getParameter("secureUrl"));
+            String originalFileName = trim(request.getParameter("fileName"));
+            long fileSize = Long.parseLong(trim(request.getParameter("fileSize")));
+            String extension = trim(request.getParameter("extension"));
 
-            if (title.isEmpty() || category.isEmpty() || subject.isEmpty()) {
-                forwardError(request, response, "Vui lòng nhập đầy đủ thông tin bắt buộc: Tiêu đề, Danh mục và Môn học.");
+            if (secureUrl.isEmpty() || originalFileName.isEmpty()) {
+                forwardError(request, response, "Lỗi: Không nhận được thông tin file từ trình duyệt.");
                 return;
             }
-            if (filePart == null || filePart.getSize() == 0) {
-                forwardError(request, response, "Vui lòng chọn file tài liệu.");
-                return;
-            }
-            if (filePart.getSize() > 50 * 1024 * 1024) {
-                forwardError(request, response, "Tệp vượt quá kích thước tối đa cho phép (50MB). Vui lòng chọn tệp nhỏ hơn.");
-                return;
-            }
-
-            String originalFileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
-            String extension = getExtension(originalFileName);
-            if (!ALLOWED_EXTENSIONS.contains(extension)) {
-                forwardError(request, response, "Định dạng tệp không được hỗ trợ.");
-                return;
-            }
-
-            boolean isSafe = simulateVirusScan(filePart);
-            if (!isSafe) {
-                forwardError(request, response, "Tệp không an toàn và đã bị từ chối.");
-                return;
-            }
-
-            // UC5.1.10: Tải tệp lên Cloudinary
-            java.util.Map<?, ?> uploadResult = vn.edu.hcmuaf.fit.websharedocument.util.CloudinaryUtil.getCloudinary().uploader().upload(
-                    filePart.getInputStream().readAllBytes(),
-                    com.cloudinary.utils.ObjectUtils.asMap(
-                            "resource_type", "auto",
-                            "public_id", "websharedoc_" + System.currentTimeMillis() + "_" + originalFileName.replaceAll("[^a-zA-Z0-9]", "_")
-                    )
-            );
-            String secureUrl = (String) uploadResult.get("secure_url");
 
             Document doc = new Document();
             doc.setTitle(title);
             doc.setDescription(description);
             doc.setFilePath(secureUrl); 
             doc.setFileName(originalFileName);
-            doc.setFileSize(filePart.getSize());
-            doc.setFileType(filePart.getContentType() != null ? filePart.getContentType() : "application/octet-stream");
+            doc.setFileSize(fileSize);
+            doc.setFileType("application/" + extension);
             doc.setFileExtension(extension);
             doc.setUserId(authUser.getId());
 
