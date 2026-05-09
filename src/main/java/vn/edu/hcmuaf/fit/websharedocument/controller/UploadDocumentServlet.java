@@ -13,14 +13,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Set;
+import vn.edu.hcmuaf.fit.websharedocument.db.DBConnect;
 
-@WebServlet(name = "UploadDocumentServlet", value = "/upload")
+@WebServlet(name = "UploadDocumentServlet", value = "/upload", loadOnStartup = 1)
 @MultipartConfig(
-        fileSizeThreshold = 1024 * 1024,
+        fileSizeThreshold = 10 * 1024 * 1024,
         maxFileSize = 50L * 1024L * 1024L,
         maxRequestSize = 60L * 1024L * 1024L
 )
@@ -28,10 +31,28 @@ public class UploadDocumentServlet extends HttpServlet {
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "txt", "png", "jpg", "jpeg");
     private static final DateTimeFormatter FILE_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
     private DocumentDAO documentDAO;
+    private Path uploadDirPath;
 
     @Override
     public void init() throws ServletException {
         documentDAO = new DocumentDAO();
+        // UC5.1.10: Khởi tạo đường dẫn lưu trữ ngay khi server khởi động để tăng tốc độ cho lần gọi đầu tiên
+        this.uploadDirPath = resolveUploadDir();
+        try {
+            Files.createDirectories(this.uploadDirPath);
+        } catch (IOException e) {
+            getServletContext().log("Could not create upload directory: " + this.uploadDirPath, e);
+        }
+        try (Connection conn = DBConnect.getConnection()) {
+            if (conn != null) {
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.executeQuery("SELECT 1");
+                }
+            }
+            getServletContext().log("UploadDocumentServlet: Database warm-up successful.");
+        } catch (Exception e) {
+            getServletContext().log("UploadDocumentServlet: Database warm-up failed.", e);
+        }
     }
 
     @Override
@@ -99,11 +120,9 @@ public class UploadDocumentServlet extends HttpServlet {
                 forwardError(request, response, "Tệp không an toàn và đã bị từ chối.");
                 return;
             }
-            // UC5.1.10: Hệ thống lưu tệp vào File Storage System
-            Path uploadDir = resolveUploadDir();
-            Files.createDirectories(uploadDir);
+            // UC5.1.10: Sử dụng đường dẫn đã được khởi động sẵn (Pre-initialized)
             String storedFileName = buildStoredFileName(originalFileName, extension);
-            Path targetFile = uploadDir.resolve(storedFileName);
+            Path targetFile = this.uploadDirPath.resolve(storedFileName);
             // UC5.1.10: Lưu tệp vào File Storage System
             Files.copy(filePart.getInputStream(), targetFile, StandardCopyOption.REPLACE_EXISTING);
             // UC5.1.10: Hệ thống ghi metadata vào cơ sở dữ liệu
