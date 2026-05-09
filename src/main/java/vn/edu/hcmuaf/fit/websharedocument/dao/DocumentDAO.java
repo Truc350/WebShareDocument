@@ -37,7 +37,7 @@ public class DocumentDAO {
             ps.setString(9, document.getFileExtension());
             ps.setInt(10, document.getDownloadCount());
             ps.setInt(11, document.getViewCount());
-            ps.setBoolean(12, document.isActive());
+            ps.setInt(12, document.getIsActive());
 
             int affectedRows = ps.executeUpdate();
 
@@ -78,7 +78,10 @@ public class DocumentDAO {
                 doc.setFileSize(rs.getLong("file_size"));
                 doc.setFileExtension(rs.getString("file_extension"));
                 doc.setIsActive(rs.getInt("is_active"));
-                doc.setCreatedAt(rs.getTimestamp("created_at"));
+                Timestamp createdAt = rs.getTimestamp("created_at");
+                if (createdAt != null) {
+                    doc.setCreatedAt(createdAt.toLocalDateTime());
+                }
                 doc.setUploaderName(rs.getString("full_name"));
                 doc.setCategoryName(rs.getString("category_name"));
 
@@ -245,7 +248,10 @@ public class DocumentDAO {
                     doc.setFileSize(rs.getLong("file_size"));
                     doc.setFileExtension(rs.getString("file_extension"));
                     doc.setIsActive(rs.getInt("is_active"));
-                    doc.setCreatedAt(rs.getTimestamp("created_at"));
+                    Timestamp createdAt = rs.getTimestamp("created_at");
+                    if (createdAt != null) {
+                        doc.setCreatedAt(createdAt.toLocalDateTime());
+                    }
                     doc.setUploaderName(rs.getString("full_name"));
                     doc.setCategoryName(rs.getString("category_name"));
 
@@ -310,7 +316,10 @@ public class DocumentDAO {
                     doc.setFileSize(rs.getLong("file_size"));
                     doc.setFileExtension(rs.getString("file_extension"));
                     doc.setIsActive(rs.getInt("is_active"));
-                    doc.setCreatedAt(rs.getTimestamp("created_at"));
+                    Timestamp createdAt = rs.getTimestamp("created_at");
+                    if (createdAt != null) {
+                        doc.setCreatedAt(createdAt.toLocalDateTime());
+                    }
                     doc.setUploaderName(rs.getString("full_name"));
                     doc.setCategoryName(rs.getString("category_name"));
 
@@ -358,7 +367,7 @@ public class DocumentDAO {
                     doc.setFileExtension(rs.getString("file_extension"));
                     doc.setDownloadCount(rs.getInt("download_count"));
                     doc.setViewCount(rs.getInt("view_count"));
-                    doc.setActive(rs.getBoolean("is_active"));
+                    doc.setIsActive(rs.getInt("is_active"));
 
                     Timestamp createdAt = rs.getTimestamp("created_at");
 

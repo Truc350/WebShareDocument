@@ -22,7 +22,7 @@ public class Document {
     private int downloadCount;
     private int viewCount;
 
-    private boolean isActive;
+    private int isActive;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -31,7 +31,7 @@ public class Document {
     private String categoryName;
 
     public Document() {
-        this.isActive = true;
+        this.isActive = 0;
     }
 
     public Document(int id,
@@ -46,7 +46,7 @@ public class Document {
                     String fileExtension,
                     int downloadCount,
                     int viewCount,
-                    boolean isActive,
+                    int isActive,
                     LocalDateTime createdAt,
                     LocalDateTime updatedAt,
                     String uploaderName,
@@ -179,12 +179,12 @@ public class Document {
     }
 
 
-    public boolean isActive() {
+    public int getIsActive() {
         return isActive;
     }
 
-    public void setActive(boolean active) {
-        isActive = active;
+    public void setIsActive(int active) {
+        this.isActive = isActive;
     }
 
 
@@ -222,4 +222,5 @@ public class Document {
     public void setCategoryName(String categoryName) {
         this.categoryName = categoryName;
     }
+
 }
