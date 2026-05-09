@@ -130,7 +130,7 @@
     }
 
     /**
-     * UCS 1.5: Hệ thống kiểm tra sơ bộ phía client
+     * UC5.1.5: Hệ thống kiểm tra sơ bộ phía client
      */
     function validateFile(file) {
         if (!file) {
@@ -207,7 +207,7 @@
     if (cancelFormBtn) {
         cancelFormBtn.addEventListener("click", function () {
             const homeUrl = cancelFormBtn.getAttribute("data-home") || "/";
-            // UC5.2.2.2: Hệ thống hiển thị hộp thoại xác nhận (
+            // UC5.2.2.2: Hệ thống hiển thị hộp thoại xác nhận
             showModal("Hủy đăng tải?", "Bạn có chắc chắn muốn hủy quá trình đăng tải? Mọi thông tin đã nhập sẽ bị mất.", 'confirm', function () {
                 // UC5.2.2.4: Chuyển người dùng về trang chủ
                 window.location.href = homeUrl;
@@ -263,8 +263,7 @@
             if (isCancelled) return;
             const elapsed = Date.now() - startTime;
 
-            // Simulation goes up to 99% quickly, then waits for real finish
-            const timePercent = Math.min((elapsed / minDuration) * 99, 99);
+            const timePercent = Math.min((elapsed / minDuration) * 100, 100);
             const visiblePercent = Math.max(progress, timePercent);
 
             progressBarFill.style.width = visiblePercent.toFixed(1) + "%";
@@ -273,9 +272,11 @@
             if (visiblePercent < 100) {
                 requestAnimationFrame(animateProgress);
             } else {
-                // If it reached 100% (either by simulation cap or real progress)
                 if (uploadFinished) {
                     finalizeUploadUI(lastResult);
+                } else {
+                    progressBarFill.style.width = "100%";
+                    progressText.textContent = "100%";
                 }
             }
         }
@@ -371,4 +372,11 @@
         submitButton.innerHTML = '<span class="material-symbols-outlined">publish</span> Đăng tải ngay';
         setError(message);
     }
+    (function () {
+        const homeUrl = cancelFormBtn ? cancelFormBtn.getAttribute("data-home") : "/";
+        fetch(window.location.href, {method: 'HEAD'}).then(() => {
+            console.log("Server warmed up and ready.");
+        }).catch(() => {
+        });
+    })();
 })();
