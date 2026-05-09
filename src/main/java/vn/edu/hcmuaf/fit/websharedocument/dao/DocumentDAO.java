@@ -379,7 +379,7 @@ public class DocumentDAO {
         doc.setFileExtension(rs.getString("file_extension"));
         doc.setDownloadCount(rs.getInt("download_count"));
         doc.setViewCount(rs.getInt("view_count"));
-        doc.setActive(rs.getBoolean("is_active"));
+        doc.setIsActive(rs.getInt("is_active"));
         java.sql.Timestamp createdAt = rs.getTimestamp("created_at");
         if (createdAt != null) doc.setCreatedAt(createdAt.toLocalDateTime());
         doc.setUploaderName(rs.getString("uploader_name"));
@@ -402,35 +402,8 @@ public class DocumentDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     suggestions.add(rs.getString("suggestion"));
-
-                    Document doc = new Document();
-
-                    doc.setId(rs.getInt("id"));
-                    doc.setUserId(rs.getInt("user_id"));
-                    doc.setTitle(rs.getString("title"));
-                    doc.setDescription(rs.getString("description"));
-                    doc.setFileName(rs.getString("file_name"));
-                    doc.setFilePath(rs.getString("file_path"));
-                    doc.setFileSize(rs.getLong("file_size"));
-                    doc.setFileType(rs.getString("file_type"));
-                    doc.setFileExtension(rs.getString("file_extension"));
-                    doc.setDownloadCount(rs.getInt("download_count"));
-                    doc.setViewCount(rs.getInt("view_count"));
-                    doc.setIsActive(rs.getInt("is_active"));
-
-                    Timestamp createdAt = rs.getTimestamp("created_at");
-
-                    if (createdAt != null) {
-                        doc.setCreatedAt(createdAt.toLocalDateTime());
-                    }
-
-                    doc.setUploaderName(rs.getString("uploader_name"));
-                    doc.setCategoryName(rs.getString("category_name"));
-
-                    return doc;
                 }
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -552,8 +525,6 @@ public class DocumentDAO {
             e.printStackTrace();
         }
         return list;
-
-        return null;
     }
 
     // =========================
