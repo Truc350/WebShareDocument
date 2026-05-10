@@ -17,6 +17,9 @@ WORKDIR /usr/local/tomcat
 # Xóa app mặc định của Tomcat
 RUN rm -rf webapps/*
 
+# Tắt cổng shutdown của Tomcat (8005) để tránh Render gửi nhầm HTTP health check vào cổng này
+RUN sed -i 's/port="8005"/port="-1"/g' conf/server.xml
+
 # Copy file WAR đã được build từ Stage 1 sang Stage 2
 COPY --from=build /app/target/*.war webapps/ROOT.war
 
