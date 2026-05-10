@@ -84,7 +84,7 @@
                     <!-- Danh sách tài liệu sẽ được render bằng JS tại đây -->
                 </div>
 
-                <p class="empty-state" id="emptyState" style="display: none;">Đang tìm kiếm...</p>
+                <p class="empty-state" id="emptyState">Đang tìm kiếm...</p>
 
                 <div class="pagination" aria-label="Phân trang">
                     <button type="button"><span class="material-symbols-outlined">chevron_left</span></button>
