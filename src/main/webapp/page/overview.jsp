@@ -22,6 +22,7 @@
       <span class="material-symbols-outlined mr-3 text-white">dashboard</span>
       <span>Tổng quan</span>
     </a>
+    <%--UC17.1.1: Chọn quản lý tài liệu--%>
     <a class="flex items-center px-6 py-3 text-slate-600 transition-all duration-200 hover:bg-slate-50 hover:pl-8 active:scale-[0.98]" href="${pageContext.request.contextPath}/admin/management-doc">
       <span class="material-symbols-outlined mr-3">description</span>
       <span>Quản lý Tài liệu</span>
