@@ -173,6 +173,6 @@
 <button class="back-to-top" type="button" aria-label="Lên đầu trang">
     <span class="material-symbols-outlined">arrow_upward</span>
 </button>
-<script src="${pageContext.request.contextPath}/js/home.js"></script>
+<script src="${pageContext.request.contextPath}/js/home.js?v=${System.currentTimeMillis()}"></script>
 </body>
 </html>

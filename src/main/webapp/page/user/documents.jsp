@@ -170,7 +170,7 @@
 
 <jsp:include page="/common/footer.jsp" />
 
-<script src="${pageContext.request.contextPath}/js/home.js"></script>
-<script src="${pageContext.request.contextPath}/js/documents.js"></script>
+<script src="${pageContext.request.contextPath}/js/home.js?v=${System.currentTimeMillis()}"></script>
+<script src="${pageContext.request.contextPath}/js/documents.js?v=${System.currentTimeMillis()}"></script>
 </body>
 </html>
