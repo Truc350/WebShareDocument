@@ -512,9 +512,8 @@
     animation: shake 0.4s ease-in-out;
 }
 
-/* Custom Modal (Premium UI) */
 #customModal {
-    z-index: 1100; /* Đảm bảo cao hơn progress modal (1000) */
+    z-index: 1100;
 }
 
 .modal-overlay {
