@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%
     String currentPath = request.getRequestURI();
-    boolean isHomePage = currentPath.endsWith("/page/user/home.jsp") || currentPath.endsWith("/index.jsp") || currentPath.endsWith("/");
+    boolean isHomePage = currentPath.endsWith("/home") || currentPath.endsWith("/index.jsp") || currentPath.endsWith("/");
     boolean isDocumentsPage = currentPath.endsWith("/page/user/documents.jsp");
     boolean isCategoryPage = currentPath.endsWith("/page/user/category.jsp");
     boolean isUploadPage = currentPath.endsWith("/page/user/upload.jsp") || currentPath.endsWith("/upload");
@@ -12,13 +12,13 @@
 <header class="site-header">
     <div class="container nav-wrap">
         <div class="header-left">
-            <a class="brand" href="${pageContext.request.contextPath}/page/user/home.jsp">
+            <a class="brand" href="${pageContext.request.contextPath}/home">
                 <span class="material-symbols-outlined">description</span>
                 <strong>DocShare</strong>
             </a>
             <nav class="main-nav">
                 <a class="<%= isHomePage ? "active" : "" %>"
-                   href="${pageContext.request.contextPath}/page/user/home.jsp">Trang chủ</a>
+                   href="${pageContext.request.contextPath}/home">Trang chủ</a>
                 <a class="<%= isDocumentsPage ? "active" : "" %>"
                    href="${pageContext.request.contextPath}/page/user/documents.jsp">Tài liệu</a>
                 <a class="<%= isCategoryPage ? "active" : "" %>"

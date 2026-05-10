@@ -61,10 +61,12 @@
         }
     }
 
+    // UC5.2.5: Hệ thống khôi phục dữ liệu từ bản nháp (Auto-save Recovery)
     persistentFields.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener("input", saveFormState);
     });
+    // UC5.2.5.2 - UC5.2.5.3: Kiểm tra và điền lại dữ liệu nháp
     loadFormState();
 
     function showModal(title, message, type = 'confirm', onConfirm = null) {
@@ -191,11 +193,11 @@
         });
     }
     /**
-     * UC5.2.4: Người dùng chọn lại tệp
+     * UC5.2.4: Người dùng chọn lại tệp tài liệu
      */
     if (removeFile && fileInput) {
         removeFile.addEventListener("click", function () {
-            // UC5.2.4.2: Hệ thống xóa tệp đã chọn trước đó
+            // UC5.2.4.2: Hệ thống xóa tệp đã chọn trước đó, ẩn Preview
             fileInput.value = "";
             preview.hidden = true;
             setError("");
@@ -280,9 +282,11 @@
             submitButton.disabled = false;
             submitButton.innerHTML = '<span class="material-symbols-outlined">publish</span> Đăng tải ngay';
             if (result && result.status === "success") {
+                // UC5.1.11: Đăng tải thành công, xóa dữ liệu nháp
                 sessionStorage.removeItem("uploadFormState");
                 const contextPath = form.getAttribute("data-context") || "";
                 const detailUrl = contextPath + "/page/user/profile.jsp";
+                // UC5.1.11: Hiển thị thông báo và điều hướng về Trang cá nhân
                 showModal("Thành công ✓", "Đăng tải tài liệu thành công!", "success", function () {
                     window.location.href = detailUrl;
                 });
@@ -300,10 +304,12 @@
         const cancelBtn = document.querySelector("#cancelUpload");
         cancelBtn.onclick = () => {
             isConfirmingCancel = true;
+            // UC5.2.3.2: Hiển thị Modal xác nhận dừng tải lên
             showModal("Dừng tải lên?", "Bạn có chắc chắn muốn dừng quá trình tải tài liệu lên hệ thống? Dữ liệu đã nhập sẽ được giữ lại hoàn toàn.", 'confirm', function () {
                 isConfirmingCancel = false;
                 isCancelled = true;
                 if (currentXhr) {
+                    // UC5.2.3.4: Gọi lệnh currentXhr.abort() để ngắt luồng truyền tải
                     currentXhr.abort();
                     currentXhr = null;
                 }
@@ -314,6 +320,7 @@
                     preview.hidden = false;
                 }
                 setTimeout(() => {
+                    // UC5.2.3.5: Hiển thị thông báo "Đã dừng tải lên"
                     showModal("Đã dừng tải lên", "Quá trình tải lên đã được dừng lại.", "cancel-success");
                     setError("Đã hủy tải lên thành công.");
                 }, 300);
@@ -372,6 +379,7 @@
                 })
                 .then(r => r.json())
                 .then(serverResult => {
+                    // UC5.1.10: Hệ thống nhận URL và Metadata sau khi backend lưu DB thành công
                     if (isCancelled) return;
                     progress = 100;
                     uploadFinished = true;

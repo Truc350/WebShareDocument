@@ -1,4 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -9,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
           rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/home.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/home.css?v=${System.currentTimeMillis()}">
 </head>
 <body>
 <jsp:include page="/common/header.jsp"/>
@@ -22,20 +25,20 @@
 
             <div class="quick-tags">
                 <button class="tag" type="button" data-topic="Giáo trình">Giáo trình</button>
-                <button class="tag" type="button" data-topic="Bài tập">Bài tập</button>
+                <button class="tag" type="button" data-topic="Tai lieu tham khao">Tài liệu tham khảo</button>
                 <button class="tag active" type="button" data-topic="all">Tất cả</button>
             </div>
             <div class="hero-stats">
                 <div class="stat-item">
-                    <strong>10,000+</strong>
+                    <strong><fmt:formatNumber value="${stats.totalDocuments != null ? stats.totalDocuments : 0}" type="number"/>+</strong>
                     <span>Tài liệu</span>
                 </div>
                 <div class="stat-item">
-                    <strong>5,000+</strong>
+                    <strong><fmt:formatNumber value="${stats.totalUsers != null ? stats.totalUsers : 0}" type="number"/>+</strong>
                     <span>Sinh viên</span>
                 </div>
                 <div class="stat-item">
-                    <strong>500+</strong>
+                    <strong><fmt:formatNumber value="${stats.totalCategories != null ? stats.totalCategories : 0}" type="number"/>+</strong>
                     <span>Môn học</span>
                 </div>
             </div>
@@ -54,71 +57,87 @@
                 </a>
             </div>
             <div class="featured-grid" id="documentGrid">
-                <article class="main-featured-card document-card" style="cursor: pointer;"
-                         onclick="window.location.href='${pageContext.request.contextPath}/page/user/document-detail.jsp'"
-                         data-title="Giáo trình Giải tích 1 - Đại học Bách Khoa Hà Nội" data-category="Kỹ thuật">
-                    <div class="card-image-wrap">
-                        <span class="badge-hot">HOT</span>
-                        <img src="https://images.unsplash.com/photo-1544391439-1df5c17ad713?auto=format&fit=crop&q=80&w=800"
-                             alt="Laptop mockup">
-                    </div>
-                    <div class="card-content">
-                        <div class="card-tags">
-                            <span class="badge-tag">KỸ THUẬT</span>
-                            <span class="view-count">
-                  <span class="material-symbols-outlined">visibility</span>
-                  12.5k
-                </span>
+                <c:if test="${not empty mainFeatured}">
+                    <article class="main-featured-card document-card" style="cursor: pointer;"
+                             onclick="window.location.href='${pageContext.request.contextPath}/page/user/document-detail.jsp?id=${mainFeatured.id}'"
+                             data-title="${mainFeatured.title}" data-category="${mainFeatured.categoryName}">
+                        <div class="card-image-wrap">
+                            <c:if test="${(mainFeatured.viewCount + mainFeatured.downloadCount) > 50}">
+                                <span class="badge-hot">HOT</span>
+                            </c:if>
+                            <c:set var="thumbUrl" value="https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&q=80&w=800"/>
+                            <c:if test="${mainFeatured.categoryName == 'Giáo trình'}">
+                                <c:set var="thumbUrl" value="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=800"/>
+                            </c:if>
+                            <c:if test="${mainFeatured.categoryName == 'Tài liệu tham khảo'}">
+                                <c:set var="thumbUrl" value="https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&q=80&w=800"/>
+                            </c:if>
+                            <img src="${thumbUrl}" alt="${mainFeatured.title}" onerror="this.src='https://placehold.co/800x600/2563eb/white?text=DocShare'">
                         </div>
-                        <h3>Giáo trình Giải tích 1 - Đại học Bách Khoa Hà Nội</h3>
-                        <p class="card-desc">Bộ tài liệu tổng hợp đầy đủ các chương từ giới hạn hàm số, đạo hàm đến tích
-                            phân bất định. Bao gồm lý thuyết trọng tâm...</p>
-                        <div class="author-meta">
-                            <div class="author">
-                                <div class="author-avatar"></div>
-                                <span>Nguyễn Văn An</span>
+                        <div class="card-content">
+                            <div class="card-tags">
+                                <span class="badge-tag">${fn:toUpperCase(mainFeatured.categoryName != null ? mainFeatured.categoryName : 'CHUNG')}</span>
+                                <span class="view-count">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                    <fmt:formatNumber value="${mainFeatured.viewCount}" type="number"/>
+                                </span>
                             </div>
-                            <div class="updated-time">Cập nhật 2 ngày trước</div>
+                            <h3>${mainFeatured.title}</h3>
+                            <p class="card-desc">${fn:substring(mainFeatured.description, 0, 120)}${fn:length(mainFeatured.description) > 120 ? '...' : ''}</p>
+                            <div class="author-meta">
+                                <div class="author">
+                                    <div class="author-avatar"></div>
+                                    <span>${mainFeatured.uploaderName != null ? mainFeatured.uploaderName : 'Người dùng DocShare'}</span>
+                                </div>
+                                <div class="updated-time">
+                                    <fmt:parseDate value="${mainFeatured.createdAt}" pattern="yyyy-MM-dd'T'HH:mm:ss" var="parsedDate" type="both" />
+                                    Cập nhật <fmt:formatDate value="${mainFeatured.getCreatedAtDate()}" pattern="dd/MM/yyyy" />
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </article>
+                    </article>
+                </c:if>
                 <div class="sub-featured-list">
-                    <article class="small-featured-card document-card" style="cursor: pointer;"
-                             onclick="window.location.href='${pageContext.request.contextPath}/page/user/document-detail.jsp'"
-                             data-title="Lập trình C cơ bản từ con số 0" data-category="Công nghệ">
-                        <div class="card-icon-wrap">
-                            <span class="material-symbols-outlined" style="color: #2563eb;">terminal</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="card-footer" style="margin-bottom: 8px;">
-                                <span class="doc-info">PDF • 4.2 MB</span>
+                    <c:forEach items="${subFeatured}" var="doc">
+                        <article class="small-featured-card document-card" style="cursor: pointer;"
+                                 onclick="window.location.href='${pageContext.request.contextPath}/page/user/document-detail.jsp?id=${doc.id}'"
+                                 data-title="${doc.title}" data-category="${doc.categoryName}">
+                            <div class="card-icon-wrap">
+                                <c:choose>
+                                    <c:when test="${doc.fileExtension == 'pdf'}">
+                                        <span class="material-symbols-outlined" style="color: #ef4444;">picture_as_pdf</span>
+                                    </c:when>
+                                    <c:when test="${doc.fileExtension == 'docx' || doc.fileExtension == 'doc'}">
+                                        <span class="material-symbols-outlined" style="color: #2563eb;">description</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="material-symbols-outlined" style="color: #64748b;">article</span>
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
-                            <h4>Lập trình C cơ bản từ con số 0</h4>
-                            <p>Hướng dẫn chi tiết cài đặt môi trường và các cú pháp cơ bản trong C...</p>
-                            <div class="card-footer">
-                                <span class="status-label">TÀI LIỆU FREE</span>
-                                <span class="material-symbols-outlined" style="font-size: 18px; color: #cbd5e1;">arrow_forward</span>
+                            <div class="card-body">
+                                <div class="card-footer" style="margin-bottom: 8px;">
+                                    <span class="doc-info">${fn:toUpperCase(doc.fileExtension)} • <fmt:formatNumber value="${doc.fileSize / 1024 / 1024}" maxFractionDigits="1"/> MB</span>
+                                </div>
+                                <h4>${doc.title}</h4>
+                                <p>${fn:substring(doc.description, 0, 60)}${fn:length(doc.description) > 60 ? '...' : ''}</p>
+                                <div class="card-footer">
+                                    <c:choose>
+                                        <c:when test="${doc.downloadCount > 100}">
+                                            <span class="status-label">${doc.downloadCount}+ LƯỢT TẢI</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="status-label">TÀI LIỆU MỚI</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                    <span class="material-symbols-outlined" style="font-size: 18px; color: #cbd5e1;">arrow_forward</span>
+                                </div>
                             </div>
-                        </div>
-                    </article>
-                    <article class="small-featured-card document-card" style="cursor: pointer;"
-                             onclick="window.location.href='${pageContext.request.contextPath}/page/user/document-detail.jsp'"
-                             data-title="Tâm lý học đại cương - Tổng hợp đề thi" data-category="Khoa học">
-                        <div class="card-icon-wrap">
-                            <span class="material-symbols-outlined" style="color: #2563eb;">psychology</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="card-footer" style="margin-bottom: 8px;">
-                                <span class="doc-info">DOCX • 1.8 MB</span>
-                            </div>
-                            <h4>Tâm lý học đại cương - Tổng hợp đề thi</h4>
-                            <p>Ngân hàng câu hỏi trắc nghiệm và tự luận ôn tập kỳ thi cuối kỳ...</p>
-                            <div class="card-footer">
-                                <span class="status-label">500+ LƯỢT TẢI</span>
-                                <span class="material-symbols-outlined" style="font-size: 18px; color: #cbd5e1;">arrow_forward</span>
-                            </div>
-                        </div>
-                    </article>
+                        </article>
+                    </c:forEach>
+                    <c:if test="${empty subFeatured}">
+                        <p style="text-align: center; color: #64748b; padding: 2rem;">Chưa có tài liệu nổi bật khác.</p>
+                    </c:if>
                 </div>
             </div>
         </div>
@@ -126,34 +145,26 @@
     <section class="section category-section">
         <div class="container">
             <div class="centered">
-                <h2>Duyệt theo chuyên ngành</h2>
+                <h2>Danh mục</h2>
                 <div style="width: 40px; height: 3px; background: var(--primary); margin: 12px auto 0;"></div>
             </div>
             <div class="category-grid">
-                <a href="${pageContext.request.contextPath}/page/user/category.jsp" class="category-item">
-                    <span class="material-symbols-outlined">account_balance</span>
-                    <strong>Kinh tế</strong>
-                </a>
-                <a href="${pageContext.request.contextPath}/page/user/category.jsp" class="category-item">
-                    <span class="material-symbols-outlined">gavel</span>
-                    <strong>Luật học</strong>
-                </a>
-                <a href="${pageContext.request.contextPath}/page/user/category.jsp" class="category-item">
-                    <span class="material-symbols-outlined">developer_board</span>
-                    <strong>Công nghệ</strong>
-                </a>
-                <a href="${pageContext.request.contextPath}/page/user/category.jsp" class="category-item">
-                    <span class="material-symbols-outlined">medical_services</span>
-                    <strong>Y dược</strong>
-                </a>
-                <a href="${pageContext.request.contextPath}/page/user/category.jsp" class="category-item">
-                    <span class="material-symbols-outlined">palette</span>
-                    <strong>Nghệ thuật</strong>
-                </a>
-                <a href="${pageContext.request.contextPath}/page/user/category.jsp" class="category-item">
-                    <span class="material-symbols-outlined">language</span>
-                    <strong>Ngoại ngữ</strong>
-                </a>
+                <c:forEach items="${categories}" var="cat">
+                    <a href="${pageContext.request.contextPath}/page/user/category.jsp?slug=${cat.slug}" class="category-item">
+                        <c:choose>
+                            <c:when test="${cat.name == 'Giáo trình'}">
+                                <span class="material-symbols-outlined">menu_book</span>
+                            </c:when>
+                            <c:when test="${cat.name == 'Tài liệu tham khảo'}">
+                                <span class="material-symbols-outlined">library_books</span>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="material-symbols-outlined">folder</span>
+                            </c:otherwise>
+                        </c:choose>
+                        <strong>${cat.name}</strong>
+                    </a>
+                </c:forEach>
             </div>
         </div>
     </section>

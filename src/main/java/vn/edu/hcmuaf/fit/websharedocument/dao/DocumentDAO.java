@@ -5,12 +5,7 @@ import vn.edu.hcmuaf.fit.websharedocument.model.Category;
 import vn.edu.hcmuaf.fit.websharedocument.model.Document;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class DocumentDAO {
 
@@ -916,6 +911,81 @@ public class DocumentDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+
+    // =========================
+    // HOMEPAGE METHODS
+    // =========================
+    public List<Document> getLatestDocuments(int limit) {
+        List<Document> list = new ArrayList<>();
+        String query = "SELECT d.*, u.full_name as uploader_name, c.name AS category_name " +
+                "FROM documents d " +
+                "LEFT JOIN users u ON d.user_id = u.id " +
+                "LEFT JOIN categories c ON d.category_id = c.id " +
+                "WHERE d.is_active = 1 " +
+                "ORDER BY d.created_at DESC " +
+                "LIMIT ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToDocument(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<Document> getFeaturedDocuments(int limit) {
+        List<Document> list = new ArrayList<>();
+        String query = "SELECT d.*, u.full_name as uploader_name, c.name AS category_name " +
+                "FROM documents d " +
+                "LEFT JOIN users u ON d.user_id = u.id " +
+                "LEFT JOIN categories c ON d.category_id = c.id " +
+                "WHERE d.is_active = 1 AND LENGTH(d.title) > 3 AND d.title NOT LIKE '%sdf%' AND d.title NOT LIKE '%test%' " +
+                "ORDER BY (d.view_count + d.download_count) DESC " +
+                "LIMIT ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToDocument(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public Map<String, Integer> getHomepageStats() {
+        Map<String, Integer> stats = new HashMap<>();
+        String queryDocs = "SELECT COUNT(*) FROM documents WHERE is_active = 1";
+        String queryUsers = "SELECT COUNT(*) FROM users";
+        String queryCategories = "SELECT COUNT(*) FROM categories";
+
+        try (Connection conn = DBConnect.getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(queryDocs);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) stats.put("totalDocuments", rs.getInt(1));
+            }
+            try (PreparedStatement ps = conn.prepareStatement(queryUsers);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) stats.put("totalUsers", rs.getInt(1));
+            }
+            try (PreparedStatement ps = conn.prepareStatement(queryCategories);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) stats.put("totalCategories", rs.getInt(1));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return stats;
     }
 
     public boolean deleteDocument(int documentId, int userId) {
