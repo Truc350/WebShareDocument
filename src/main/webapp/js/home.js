@@ -42,7 +42,7 @@
 
 
 
-  const contextPath = window.CONTEXT_PATH || "/WebShareDocument";
+  const contextPath = typeof window.CONTEXT_PATH !== 'undefined' ? window.CONTEXT_PATH : "/WebShareDocument";
 
   if (headerSearchForm && headerSearchInput) {
       const suggestionsBox = document.querySelector("#searchSuggestions");
