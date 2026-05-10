@@ -55,13 +55,13 @@ public class LoginServlet extends HttpServlet {
             session.setAttribute("adminUser", user); // Phục vụ cho AdminFilter
             response.sendRedirect(request.getContextPath() + "/page/overview.jsp");
         } else {
-            // UC5.2.1.4: Chuyển hướng lại trang Upload nếu trước đó bị chặn
+            // UC5.2.1.5: Kiểm tra redirectAfterLogin và tự động điều hướng người dùng trở lại trang cũ
             String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
             if (redirectUrl != null) {
                 session.removeAttribute("redirectAfterLogin");
                 response.sendRedirect(redirectUrl);
             } else {
-                response.sendRedirect(request.getContextPath() + "/page/user/home.jsp");
+                response.sendRedirect(request.getContextPath() + "/home");
             }
         }
     }

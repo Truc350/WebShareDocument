@@ -44,17 +44,30 @@ public class UploadDocumentServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // UC5.1.2: Xác thực phiên đăng nhập (Hệ thống kiểm tra authUser)
         HttpSession session = request.getSession();
         User authUser = (User) session.getAttribute("authUser");
+        // Kiểm tra xem đây có phải là request HEAD từ script warm-up không
+        boolean isHeadRequest = "HEAD".equalsIgnoreCase(request.getMethod());
+
         if (authUser == null) {
-            String currentUrl = request.getRequestURI();
-            if (request.getQueryString() != null) {
-                currentUrl += "?" + request.getQueryString();
+            if (!isHeadRequest) {
+                // UC5.2.1.2: Hệ thống lưu URL hiện tại /upload vào session redirectAfterLogin
+                String currentUrl = request.getRequestURI();
+                if (request.getQueryString() != null) {
+                    currentUrl += "?" + request.getQueryString();
+                }
+                session.setAttribute("redirectAfterLogin", currentUrl);
             }
-            session.setAttribute("redirectAfterLogin", currentUrl);
-            response.sendRedirect(request.getContextPath() + "/login");
+            // UC5.2.1.3: Điều hướng người dùng đến trang Đăng nhập (/login)
+            if (isHeadRequest) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            } else {
+                response.sendRedirect(request.getContextPath() + "/login");
+            }
             return;
         }
+        // UC5.1.2: Hiển thị form đăng tải tài liệu
         request.getRequestDispatcher("/page/user/upload.jsp").forward(request, response);
     }
 
@@ -104,11 +117,14 @@ public class UploadDocumentServlet extends HttpServlet {
             doc.setCategoryId(resolvedCategoryId);
             doc.setIsActive(0);
             
+            // UC5.1.11: Ghi dữ liệu vào CSDL thông qua DocumentDAO
             boolean saved = documentDAO.saveDocument(doc);
             if (saved) {
+                // UC5.1.11: Trả về trạng thái thành công cho trình duyệt
                 response.setContentType("application/json; charset=UTF-8");
                 response.getWriter().write("{\"status\":\"success\",\"id\":" + doc.getId() + "}");
             } else {
+                // UC5 Exception E-04: Lỗi ghi CSDL
                 sendJsonError(response, "Lỗi khi lưu vào CSDL.");
             }
         } catch (Exception ex) {
