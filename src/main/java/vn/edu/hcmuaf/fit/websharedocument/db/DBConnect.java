@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 public class DBConnect {
     // Thay đổi thông tin CSDL cho phù hợp với môi trường của bạn
-    private static final String URL = "jdbc:mysql://mysql-345b2be-macchinguyenmcn-1236.k.aivencloud.com:25965/defaultdb";
+    private static final String URL = "jdbc:mysql://mysql-345b2be-macchinguyenmcn-1236.k.aivencloud.com:25965/defaultdb?sslMode=REQUIRED";
     private static final String USER = "avnadmin";
     private static final String PASS = "AVNS_5DOVBjmnXDxH_1xLa9I";
 
