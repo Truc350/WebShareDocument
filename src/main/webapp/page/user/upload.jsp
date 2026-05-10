@@ -15,6 +15,7 @@
 <body>
 <jsp:include page="/common/header.jsp"/>
 <main class="upload-page">
+    <!-- UC5.1.1: Người dùng truy cập trang 'Đăng tải tài liệu' -->
     <div class="upload-shell">
         <section class="upload-heading">
             <h1>
@@ -48,6 +49,7 @@
             <form id="uploadForm" action="${pageContext.request.contextPath}/upload" method="post"
                   enctype="multipart/form-data" novalidate data-context="${pageContext.request.contextPath}">
                 <label class="dropzone" id="dropzone" for="documentFile">
+                    <!-- UC5.1.4: Người dùng chọn tệp từ thiết bị -->
                     <input id="documentFile" name="documentFile" type="file"
                            accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.png,.jpg,.jpeg">
                     <span class="upload-cloud">
@@ -72,6 +74,7 @@
                 </div>
                 <div class="form-grid">
                     <div class="field full">
+                        <!-- UC5.1.3: Người dùng điền các thông tin: Tiêu đề (*), Danh mục (*), Môn học (*), Mô tả -->
                         <label for="title">Tiêu đề tài liệu*</label>
                         <input id="title" name="title" type="text" placeholder="Nhập tiêu đề ngắn gọn và rõ ràng"
                                required>
@@ -106,6 +109,7 @@
                     </button>
                     <button class="submit-btn" id="submitUpload" type="submit">
                         <span class="material-symbols-outlined">publish</span>
+                        <!-- UC5.1.6: Người dùng nhấn nút "Đăng tải ngay" -->
                         Đăng tải ngay
                     </button>
                 </div>

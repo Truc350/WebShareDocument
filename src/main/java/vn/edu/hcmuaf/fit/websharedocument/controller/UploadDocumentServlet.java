@@ -9,11 +9,8 @@ import vn.edu.hcmuaf.fit.websharedocument.model.Document;
 import vn.edu.hcmuaf.fit.websharedocument.model.User;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.Statement;
-import java.util.Locale;
-import java.util.Set;
 import vn.edu.hcmuaf.fit.websharedocument.db.DBConnect;
 
 @WebServlet(name = "UploadDocumentServlet", value = "/upload", loadOnStartup = 1)
@@ -23,13 +20,11 @@ import vn.edu.hcmuaf.fit.websharedocument.db.DBConnect;
         maxRequestSize = 60L * 1024L * 1024L
 )
 public class UploadDocumentServlet extends HttpServlet {
-    private static final Set<String> ALLOWED_EXTENSIONS = Set.of("pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "txt", "png", "jpg", "jpeg");
     private DocumentDAO documentDAO;
 
     @Override
     public void init() throws ServletException {
         documentDAO = new DocumentDAO();
-        // Warm-up database connection ngay khi khởi động
         try (Connection conn = DBConnect.getConnection()) {
             if (conn != null) {
                 try (Statement stmt = conn.createStatement()) {
@@ -44,22 +39,21 @@ public class UploadDocumentServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // UC5.1.2: Xác thực phiên đăng nhập (Hệ thống kiểm tra authUser)
+        // UC5.1.2: Xác thực phiên đăng nhập
         HttpSession session = request.getSession();
         User authUser = (User) session.getAttribute("authUser");
-        // Kiểm tra xem đây có phải là request HEAD từ script warm-up không
         boolean isHeadRequest = "HEAD".equalsIgnoreCase(request.getMethod());
 
         if (authUser == null) {
+            // UC5.2.1.2: Hệ thống lưu URL hiện tại /upload vào session redirectAfterLogin
             if (!isHeadRequest) {
-                // UC5.2.1.2: Hệ thống lưu URL hiện tại /upload vào session redirectAfterLogin
                 String currentUrl = request.getRequestURI();
                 if (request.getQueryString() != null) {
                     currentUrl += "?" + request.getQueryString();
                 }
                 session.setAttribute("redirectAfterLogin", currentUrl);
             }
-            // UC5.2.1.3: Điều hướng người dùng đến trang Đăng nhập (/login)
+            // UC5.2.1.3: Điều hướng người dùng đến trang Đăng nhập
             if (isHeadRequest) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             } else {
@@ -84,7 +78,6 @@ public class UploadDocumentServlet extends HttpServlet {
             }
             String title = trim(request.getParameter("title"));
             String category = trim(request.getParameter("category"));
-            String subject = trim(request.getParameter("subject"));
             String description = trim(request.getParameter("description"));
             String secureUrl = trim(request.getParameter("secureUrl"));
             String originalFileName = trim(request.getParameter("fileName"));
@@ -139,10 +132,6 @@ public class UploadDocumentServlet extends HttpServlet {
         return null;
     }
 
-    private boolean simulateVirusScan(Part filePart) {
-        return !filePart.getSubmittedFileName().toLowerCase().contains("virus");
-    }
-
     private String trim(String value) {
         return value == null ? "" : value.trim();
     }
@@ -156,11 +145,5 @@ public class UploadDocumentServlet extends HttpServlet {
     private void forwardError(HttpServletRequest request, HttpServletResponse response, String message) throws ServletException, IOException {
         request.setAttribute("errorMessage", message);
         request.getRequestDispatcher("/page/user/upload.jsp").forward(request, response);
-    }
-
-    private String getExtension(String fileName) {
-        int lastDot = fileName.lastIndexOf('.');
-        if (lastDot < 0 || lastDot == fileName.length() - 1) return "";
-        return fileName.substring(lastDot + 1).toLowerCase(Locale.ROOT);
     }
 }

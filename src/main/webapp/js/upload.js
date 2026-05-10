@@ -13,13 +13,13 @@
     const removeFile = document.querySelector("#removeFile");
     const formError = document.querySelector("#formError");
     const submitButton = document.querySelector("#submitUpload");
-    // Các phần tử hiển thị tiến trình (UC5.1.8)
+    // Các phần tử hiển thị tiến trình
     const progressContainer = document.querySelector("#progressContainer");
     const progressBarFill = document.querySelector("#progressBarFill");
     const progressText = document.querySelector("#progressText");
     const cancelUploadBtn = document.querySelector("#cancelUpload");
     const cancelFormBtn = document.querySelector("#cancelForm");
-    let currentXhr = null; // Để xử lý UC5.2.3 (Hủy trong khi đang tải lên)
+    let currentXhr = null;
     function setError(message) {
         if (formError) {
             formError.textContent = message || "";
@@ -61,7 +61,7 @@
         }
     }
 
-    // UC5.2.5: Hệ thống khôi phục dữ liệu từ bản nháp (Auto-save Recovery)
+    // UC5.2.5: Hệ thống khôi phục dữ liệu từ bản nháp
     persistentFields.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener("input", saveFormState);
@@ -132,26 +132,22 @@
     }
 
     /**
-     * UC5.1.5: Hệ thống kiểm tra sơ bộ phía client
+     * UC5.1.5: Hệ thống kiểm tra sơ bộ định dạng/kích thước và hiển thị Preview
      */
     function validateFile(file) {
-        if (!file) {
-            return "Vui lòng chọn file tài liệu.";
-        }
+        if (!file) return "Vui lòng chọn file tài liệu.";
         const extension = getExtension(file.name);
         if (!allowedExtensions.includes(extension)) {
             return "Định dạng tệp không được hỗ trợ. Chỉ chấp nhận PDF, DOCX, PPTX, XLSX, TXT, PNG, JPG.";
         }
         if (file.size > maxSize) {
-            return "Tệp vượt quá kích thước tối đa cho phép (50MB). Vui lòng chọn tệp nhỏ hơn.";
+            return "Tệp vượt quá kích thước tối đa cho phép (50MB).";
         }
         return "";
     }
 
-    /**
-     * UC5.1.5: Hệ thống hiển thị tên tệp, định dạng và kích thước tệp được chọn.
-     */
     function showFile(file) {
+        // UC5.1.5: Hiển thị Preview kèm thông tin tệp
         const error = validateFile(file);
         if (error) {
             setError(error);
@@ -209,9 +205,10 @@
     if (cancelFormBtn) {
         cancelFormBtn.addEventListener("click", function () {
             const homeUrl = cancelFormBtn.getAttribute("data-home") || "/";
-            // UC5.2.2.2: Hệ thống hiển thị hộp thoại xác nhận
+            // UC5.2.2.1 - UC5.2.2.2: Người dùng nhấn nút "Hủy" và hệ thống hiển thị Modal xác nhận
             showModal("Hủy đăng tải?", "Bạn có chắc chắn muốn hủy quá trình đăng tải? Mọi thông tin đã nhập sẽ bị mất.", 'confirm', function () {
-                // UC5.2.2.4: Chuyển người dùng về trang chủ
+                // UC5.2.2.4: Xóa dữ liệu tạm thời và điều hướng quay về Trang chủ
+                sessionStorage.removeItem("uploadFormState");
                 window.location.href = homeUrl;
             });
         });
@@ -221,7 +218,7 @@
      */
     if (form) {
         form.addEventListener("submit", function (event) {
-            event.preventDefault(); // UC5.1.8: Ngăn chặn reload trang
+            event.preventDefault();
             try {
                 setError("");
                 // UC5.1.7: Hệ thống kiểm tra tính hợp lệ của toàn bộ form
@@ -245,7 +242,7 @@
     }
 
     /**
-     * UC5.1.8: Hệ thống hiển thị thanh tiến trình thời gian thực và bắt đầu truyền tệp lên File Storage System
+     * UC5.1.8: Truyền tệp trực tiếp từ trình duyệt lên Supabase Storage và hiển thị tiến trình
      */
     function uploadFile(formData) {
         currentXhr = new XMLHttpRequest();
@@ -282,11 +279,10 @@
             submitButton.disabled = false;
             submitButton.innerHTML = '<span class="material-symbols-outlined">publish</span> Đăng tải ngay';
             if (result && result.status === "success") {
-                // UC5.1.11: Đăng tải thành công, xóa dữ liệu nháp
+                // UC5.1.11: Lưu dữ liệu thành công, xóa bản nháp và điều hướng về Trang cá nhân
                 sessionStorage.removeItem("uploadFormState");
                 const contextPath = form.getAttribute("data-context") || "";
                 const detailUrl = contextPath + "/page/user/profile.jsp";
-                // UC5.1.11: Hiển thị thông báo và điều hướng về Trang cá nhân
                 showModal("Thành công ✓", "Đăng tải tài liệu thành công!", "success", function () {
                     window.location.href = detailUrl;
                 });
@@ -304,12 +300,11 @@
         const cancelBtn = document.querySelector("#cancelUpload");
         cancelBtn.onclick = () => {
             isConfirmingCancel = true;
-            // UC5.2.3.2: Hiển thị Modal xác nhận dừng tải lên
+            // UC5.2.3.1 - UC5.2.3.2: Người dùng nhấn nút "Hủy tải lên" và hệ thống hiển thị Modal xác nhận
             showModal("Dừng tải lên?", "Bạn có chắc chắn muốn dừng quá trình tải tài liệu lên hệ thống? Dữ liệu đã nhập sẽ được giữ lại hoàn toàn.", 'confirm', function () {
                 isConfirmingCancel = false;
                 isCancelled = true;
                 if (currentXhr) {
-                    // UC5.2.3.4: Gọi lệnh currentXhr.abort() để ngắt luồng truyền tải
                     currentXhr.abort();
                     currentXhr = null;
                 }
@@ -320,7 +315,6 @@
                     preview.hidden = false;
                 }
                 setTimeout(() => {
-                    // UC5.2.3.5: Hiển thị thông báo "Đã dừng tải lên"
                     showModal("Đã dừng tải lên", "Quá trình tải lên đã được dừng lại.", "cancel-success");
                     setError("Đã hủy tải lên thành công.");
                 }, 300);
@@ -340,7 +334,7 @@
         // Cấu hình Supabase
         const supabaseUrl = "https://tlbznphszzpondlykmst.supabase.co";
         const supabaseKey = "sb_publishable_3IaZByYoSWSHakJqFMOifQ_ud2mNCpg";
-        const bucketName = "documents"; // Lưu ý: Cần tạo bucket 'documents' (Public) trên Supabase
+        const bucketName = "documents";
         
         // Tạo tên file an toàn
         const safeFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
@@ -349,20 +343,20 @@
 
         currentXhr.upload.addEventListener("progress", function (e) {
             if (e.lengthComputable) {
-                progress = (e.loaded / e.total) * 100 * 0.85; // 85% cho quá trình lên Cloud
+                progress = (e.loaded / e.total) * 100 * 0.85;
             }
         });
 
         currentXhr.addEventListener("load", function () {
             if (isCancelled) return;
             if (currentXhr.status >= 200 && currentXhr.status < 300) {
+                // UC5.1.9: Hệ thống nhận Public URL từ Supabase Storage
                 progress = 90;
                 progressStatus.textContent = "Đang lưu dữ liệu vào hệ thống...";
                 
-                // Lấy URL Public từ Supabase
                 const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
                 
-                // Bước 2: Gửi URL lên Server nội bộ
+                // UC5.1.10: Gửi URL và Metadata về Server Servlet
                 const serverData = new FormData();
                 serverData.append("title", form.title.value);
                 serverData.append("category", form.category.value);
@@ -410,7 +404,7 @@
         currentXhr.setRequestHeader("Authorization", "Bearer " + supabaseKey);
         currentXhr.setRequestHeader("apikey", supabaseKey);
         currentXhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
-        currentXhr.send(file); // Gửi trực tiếp tệp nhị phân
+        currentXhr.send(file);
     }
 
     function handleUploadError(message) {
@@ -419,11 +413,9 @@
         submitButton.innerHTML = '<span class="material-symbols-outlined">publish</span> Đăng tải ngay';
         setError(message);
     }
-    // Tối ưu hóa: "Đánh thức" server ngay khi trang vừa load xong
     (function () {
         const contextPath = form.getAttribute("data-context") || "";
         const uploadUrl = contextPath + "/upload";
-        // Gửi request HEAD nhẹ để khởi động Servlet và DB connection sẵn sàng
         fetch(uploadUrl, {method: 'HEAD'}).then(() => {
             console.log("Upload Servlet warmed up and ready.");
         }).catch(() => {});
