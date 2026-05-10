@@ -114,7 +114,7 @@
     </div>
     <nav class="flex-1 space-y-1">
         <a class="flex items-center px-6 py-3 text-slate-600 hover:bg-slate-50 hover:pl-8 transition-all duration-200 active:scale-[0.98]"
-           href="${pageContext.request.contextPath}/admin/overview">
+           href="${pageContext.request.contextPath}/page/overview.jsp">
             <span class="material-symbols-outlined mr-3" data-icon="dashboard">dashboard</span>
             <span>Tổng quan</span>
         </a>
@@ -126,25 +126,25 @@
         </a>
 
         <a class="flex items-center px-6 py-3 text-slate-600 hover:bg-slate-50 hover:pl-8 transition-all duration-200 active:scale-[0.98]"
-           href="${pageContext.request.contextPath}/admin/user-admin">
+           href="${pageContext.request.contextPath}/page/user-admin.jsp">
             <span class="material-symbols-outlined mr-3" data-icon="group">group</span>
             <span>Quản lý Người dùng</span>
         </a>
 
         <a class="flex items-center px-6 py-3 text-slate-600 hover:bg-slate-50 hover:pl-8 transition-all duration-200 active:scale-[0.98]"
-           href="${pageContext.request.contextPath}/admin/category-admin">
+           href="${pageContext.request.contextPath}/page/category-admin.jsp">
             <span class="material-symbols-outlined mr-3" data-icon="category">category</span>
             <span>Danh mục</span>
         </a>
 
         <a class="flex items-center px-6 py-3 text-slate-600 hover:bg-slate-50 hover:pl-8 transition-all duration-200 active:scale-[0.98]"
-           href="${pageContext.request.contextPath}/admin/statistics">
+           href="${pageContext.request.contextPath}/page/statistics.jsp">
             <span class="material-symbols-outlined mr-3" data-icon="leaderboard">leaderboard</span>
             <span>Thống kê</span>
         </a>
 
         <a class="flex items-center px-6 py-3 text-slate-600 hover:bg-slate-50 hover:pl-8 transition-all duration-200 active:scale-[0.98]"
-           href="${pageContext.request.contextPath}/admin/settings">
+           href="${pageContext.request.contextPath}/page/settings.jsp">
             <span class="material-symbols-outlined mr-3" data-icon="settings">settings</span>
             <span>Cài đặt</span>
         </a>
@@ -254,24 +254,20 @@
         <!-- Section 2: Tab Navigation -->
         <div class="flex border-b border-slate-200 mb-6 overflow-x-auto">
             <a class="whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors ${currentTab == -1 ? 'text-blue-700 border-b-2 border-blue-700' : 'text-slate-500 hover:text-slate-700'}"
-               href="${pageContext.request.contextPath}/admin/management-doc?tab=-1">
-                Tất cả tài liệu
-                <span class="ml-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">${totalDocs != null ? totalDocs : 0}</span>
+               href="${pageContext.request.contextPath}/admin/management-doc?tab=-1">Tất cả tài liệu
+               <span class="ml-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">${totalDocs != null ? totalDocs : 0}</span>
             </a>
-            <a class="px-4 py-2 text-sm font-medium transition-colors ${currentTab == 0 || empty currentTab ? 'text-blue-700 border-b-2 border-blue-700' : 'text-slate-500 hover:text-slate-700'}"
-               href="${pageContext.request.contextPath}/admin/management-doc?tab=0">
-                Đang chờ duyệt
-                <span class="ml-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">${pendingDocs}</span>
+            <a class="whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors ${currentTab == 0 || empty currentTab ? 'text-blue-700 border-b-2 border-blue-700' : 'text-slate-500 hover:text-slate-700'}"
+               href="${pageContext.request.contextPath}/admin/management-doc?tab=0">Đang chờ duyệt
+               <span class="ml-2 bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px]">${pendingDocs}</span>
             </a>
 
-            <a class="px-4 py-2 text-sm font-medium transition-colors ${currentTab == 1 ? 'text-blue-700 border-b-2 border-blue-700' : 'text-slate-500 hover:text-slate-700'}"
-               href="${pageContext.request.contextPath}/admin/management-doc?tab=1">
-                Đã duyệt
+            <a class="whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors ${currentTab == 1 ? 'text-blue-700 border-b-2 border-blue-700' : 'text-slate-500 hover:text-slate-700'}"
+               href="${pageContext.request.contextPath}/admin/management-doc?tab=1">Đã duyệt
             </a>
 
-            <a class="px-4 py-2 text-sm font-medium transition-colors ${currentTab == 2 ? 'text-blue-700 border-b-2 border-blue-700' : 'text-slate-500 hover:text-slate-700'}"
-               href="${pageContext.request.contextPath}/admin/management-doc?tab=2">
-                Vi phạm
+            <a class="whitespace-nowrap px-4 py-2 text-sm font-medium transition-colors ${currentTab == 2 ? 'text-blue-700 border-b-2 border-blue-700' : 'text-slate-500 hover:text-slate-700'}"
+               href="${pageContext.request.contextPath}/admin/management-doc?tab=2">Vi phạm
             </a>
         </div>
         <!-- Section 3: Tab Content -->
@@ -325,33 +321,19 @@
                 </button>
             </div>
             <!-- Pending Documents Table -->
-            <div
-                    class="bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200 overflow-hidden">
-                <table class="w-full text-left border-collapse">
+            <div class="bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-slate-200 overflow-x-auto">
+                <table class="w-full text-left border-collapse whitespace-nowrap">
                     <thead>
                     <tr class="bg-surface-bright border-b border-slate-200">
-                        <th class="p-4 w-10">
-                            <input class="rounded border-slate-300 text-blue-700 focus:ring-blue-700"
-                                   type="checkbox"/>
-                        </th>
-                        <th class="p-4 font-bold text-slate-700 text-sm uppercase tracking-wider">Tài liệu
-                        </th>
-                        <th class="p-4 font-bold text-slate-700 text-sm uppercase tracking-wider">Người tải
-                            lên
-                        </th>
-                        <th class="p-4 font-bold text-slate-700 text-sm uppercase tracking-wider">Danh mục
-                        </th>
-                        <th class="p-4 font-bold text-slate-700 text-sm uppercase tracking-wider">Định dạng
-                        </th>
-                        <th class="p-4 font-bold text-slate-700 text-sm uppercase tracking-wider">Kích thước
-                        </th>
-                        <th class="p-4 font-bold text-slate-700 text-sm uppercase tracking-wider">Thời gian
-                            tải
-                        </th>
-                        <th
-                                class="p-4 font-bold text-slate-700 text-sm uppercase tracking-wider text-right">
-                            Thao tác
-                        </th>
+                        <%--UC17.1.6: Hiển thị đầy đủ thông tin tài liệu--%>
+                        <th class="p-4 w-10"><input class="rounded border-slate-300 text-blue-700 focus:ring-blue-700" type="checkbox"/></th>
+                        <th class="p-4 font-bold text-slate-700 text-sm uppercase tracking-wider">Tài liệu</th>
+                        <th class="p-4 font-bold text-slate-700 text-sm uppercase tracking-wider">Người tải lên</th>
+                        <th class="p-4 font-bold text-slate-700 text-sm uppercase tracking-wider">Danh mục</th>
+                        <th class="p-4 font-bold text-slate-700 text-sm uppercase tracking-wider">Định dạng</th>
+                        <th class="p-4 font-bold text-slate-700 text-sm uppercase tracking-wider">Kích thước</th>
+                        <th class="p-4 font-bold text-slate-700 text-sm uppercase tracking-wider">Thời gian tải</th>
+                        <th class="p-4 font-bold text-slate-700 text-sm uppercase tracking-wider text-right">Thao tác</th>
                     </tr>
                     </thead>
                     <tbody id="documentTableBody" class="divide-y divide-slate-100">
@@ -360,8 +342,7 @@
                             data-category="${doc.categoryName}"
                             data-format="${doc.fileExtension}">
                             <td class="p-4">
-                                <input class="rounded border-slate-300 text-blue-700 focus:ring-blue-700"
-                                       type="checkbox" value="${doc.id}"/>
+                                <input class="rounded border-slate-300 text-blue-700 focus:ring-blue-700" type="checkbox" value="${doc.id}"/>
                             </td>
                             <td class="p-4">
                                 <div class="flex items-center gap-3">
@@ -369,7 +350,7 @@
                                         <span class="material-symbols-outlined text-[20px]" data-icon="description">description</span>
                                     </div>
                                     <div>
-                                        <p class="font-bold text-slate-900 text-sm">${doc.fileName}</p>
+                                        <p class="font-bold text-slate-900 text-sm max-w-[200px] lg:max-w-[300px] truncate" title="${doc.fileName}">${doc.fileName}</p>
                                         <p class="text-[10px] text-slate-400">ID: DOC-${doc.id}</p>
                                     </div>
                                 </div>
@@ -400,10 +381,18 @@
                             <td class="p-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <c:set var="vUrl" value="${doc.viewUrl}" />
+                                    <%--UC17.1.5: Xem chi tiết tài liệu--%>
                                     <a href="${vUrl.startsWith('http') ? vUrl : pageContext.request.contextPath.concat(vUrl)}"
                                        target="_blank"
                                        class="px-3 py-1.5 text-xs font-bold text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors inline-block text-center">
-                                        Xem
+                                        Chi tiết
+                                    </a>
+
+                                        <%-- [UC17.1.7] Nút Chỉnh sửa thông tin tài liệu (Tiêu đề, Mô tả, Danh mục) --%>
+                                    <a href="${pageContext.request.contextPath}/admin/edit-doc?id=${doc.id}"
+                                       class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg inline-block transition-colors"
+                                       title="Chỉnh sửa">
+                                        <span class="material-symbols-outlined" data-icon="edit">edit</span>
                                     </a>
 
                                         <%-- Nút Duyệt: Biến thẻ <button> thành thẻ <a> để gọi Servlet Update --%>
@@ -416,9 +405,10 @@
 
                                         <%-- Nút Xóa/Từ chối: Biến thẻ <button> thành thẻ <a> để gọi Servlet Update --%>
                                     <a href="${pageContext.request.contextPath}/admin/update-doc-status?id=${doc.id}&status=2"
-                                       class="p-1.5 text-error hover:bg-red-50 rounded-lg inline-block" title="Xóa"
-                                       onclick="return confirm('Bạn có chắc chắn muốn chuyển tài liệu này sang Vi phạm / Xóa không?')">
-                                        <span class="material-symbols-outlined" data-icon="close">close</span>
+                                       class="p-1.5 text-error hover:bg-red-50 rounded-lg inline-block transition-colors"
+                                       title="Xóa/Từ chối"
+                                       onclick="return confirm('Bạn có chắc chắn muốn xóa và đánh dấu vi phạm tài liệu này không?')">
+                                        <span class="material-symbols-outlined" data-icon="delete">delete</span>
                                     </a>
                                 </div>
                             </td>
@@ -467,6 +457,8 @@
         </div>
     </div>
 </main>
+
+<%--UC17.1.3: Nhập từ khóa tìm kiếm--%>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const searchInput = document.getElementById("searchInput");

@@ -1023,4 +1023,37 @@ public class DocumentDAO {
             return false;
         }
     }
+
+    // [UC17.1.8] Cập nhật thông tin tài liệu (tiêu đề, mô tả, danh mục) vào Database
+    public boolean updateDocumentMetadata(int id, String title, String description, int categoryId) {
+        String sql = "UPDATE documents SET title = ?, description = ?, category_id = ?, updated_at = NOW() WHERE id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, title);
+            ps.setString(2, description);
+            ps.setInt(3, categoryId);
+            ps.setInt(4, id);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // [UC17.1.11] Ghi nhật ký hoạt động (Audit Log)
+    public void logActivity(int adminId, String action, String targetType, int targetId, String detail, String ip) {
+        String sql = "INSERT INTO activity_logs (user_id, action, target_type, target_id, detail, ip_address) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, adminId);
+            ps.setString(2, action);
+            ps.setString(3, targetType);
+            ps.setInt(4, targetId);
+            ps.setString(5, detail);
+            ps.setString(6, ip);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
