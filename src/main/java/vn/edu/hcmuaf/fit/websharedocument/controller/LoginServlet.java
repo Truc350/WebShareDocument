@@ -50,12 +50,13 @@ public class LoginServlet extends HttpServlet {
         userDAO.updateLastLogin(user.getId());
 
         HttpSession session = request.getSession();
+        // UC5.2.1.4: Người dùng thực hiện đăng nhập thành công.
         session.setAttribute("authUser", user); // Lưu authUser dùng chung
         if ("admin".equals(user.getRole())) {
             session.setAttribute("adminUser", user); // Phục vụ cho AdminFilter
             response.sendRedirect(request.getContextPath() + "/page/overview.jsp");
         } else {
-            // UC5.2.1.5: Kiểm tra redirectAfterLogin và tự động điều hướng người dùng trở lại trang cũ
+            // UC5.2.1.5: Hệ thống kiểm tra redirectAfterLogin và tự động điều hướng người dùng trở lại trang đăng tải.
             String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
             if (redirectUrl != null) {
                 session.removeAttribute("redirectAfterLogin");
