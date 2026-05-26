@@ -133,7 +133,11 @@ public class EditDocumentServlet extends HttpServlet {
             categoryId = Integer.parseInt(categoryIdRaw);
         }
 
+        Document existingDoc = documentDAO.getDocumentByIdForEdit(documentId);
         int isActive = "public".equals(privacy) ? 1 : 0;
+        if (existingDoc != null && existingDoc.getIsActive() == 2) {
+            isActive = 2; // Giữ nguyên trạng thái Vi phạm để Admin duyệt lại từ tab Vi phạm
+        }
 
         List<String> tags = tagsRaw == null || tagsRaw.isBlank()
                 ? List.of()
