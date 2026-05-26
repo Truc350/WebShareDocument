@@ -63,7 +63,8 @@
                     <small>Hỗ trợ: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG · Tối đa 50MB</small>
                 </label>
                 <div class="file-preview" id="filePreview" hidden>
-                    <span class="material-symbols-outlined">draft</span>
+                    <img id="fileThumbnail" src="" alt="Preview" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; display: none;">
+                    <span class="material-symbols-outlined" id="fileIcon">draft</span>
                     <div>
                         <strong id="fileName">Tên file</strong>
                         <p id="fileMeta">0 MB</p>
@@ -158,13 +159,16 @@
         <div class="progress-bar-bg">
             <div class="progress-bar-fill" id="progressBarFill"></div>
         </div>
-        <div class="progress-percentage" id="progressText">0%</div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="progress-percentage" id="progressText">0%</div>
+            <div id="progressBytes" style="color: #737686; font-size: 13px; font-weight: 600;">0 MB / 0 MB</div>
+        </div>
         <div class="modal-actions">
             <button type="button" class="btn btn-secondary" id="cancelUpload">Hủy tải lên</button>
         </div>
     </div>
 </div>
 <script src="${pageContext.request.contextPath}/js/home.js"></script>
-<script src="${pageContext.request.contextPath}/js/upload.js"></script>
+<script src="${pageContext.request.contextPath}/js/upload.js?v=2"></script>
 </body>
 </html>
