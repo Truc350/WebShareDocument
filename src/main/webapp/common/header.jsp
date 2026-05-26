@@ -8,6 +8,7 @@
 %>
 <script>
     window.CONTEXT_PATH = '${pageContext.request.contextPath}';
+    window.LOGGED_IN_USER_ID = '${sessionScope.authUser != null ? sessionScope.authUser.id : (sessionScope.adminUser != null ? sessionScope.adminUser.id : "")}';
 </script>
 <header class="site-header">
     <div class="container nav-wrap">
