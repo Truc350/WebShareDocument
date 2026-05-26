@@ -39,13 +39,14 @@ public class UploadDocumentServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // UC5.1.2: Xác thực phiên đăng nhập
+        // UC5.1.2: Hệ thống xác thực phiên đăng nhập và hiển thị form đăng tải tài liệu.
         HttpSession session = request.getSession();
         User authUser = (User) session.getAttribute("authUser");
         boolean isHeadRequest = "HEAD".equalsIgnoreCase(request.getMethod());
 
         if (authUser == null) {
-            // UC5.2.1.2: Hệ thống lưu URL hiện tại /upload vào session redirectAfterLogin
+            // UC5.2.1.1: Hệ thống phát hiện người dùng chưa có phiên đăng nhập.
+            // UC5.2.1.2: Hệ thống lưu URL hiện tại /upload vào thuộc tính session redirectAfterLogin.
             if (!isHeadRequest) {
                 String currentUrl = request.getRequestURI();
                 if (request.getQueryString() != null) {
@@ -53,7 +54,7 @@ public class UploadDocumentServlet extends HttpServlet {
                 }
                 session.setAttribute("redirectAfterLogin", currentUrl);
             }
-            // UC5.2.1.3: Điều hướng người dùng đến trang Đăng nhập
+            // UC5.2.1.3: Hệ thống điều hướng người dùng đến trang Đăng nhập.
             if (isHeadRequest) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             } else {
@@ -110,14 +111,14 @@ public class UploadDocumentServlet extends HttpServlet {
             doc.setCategoryId(resolvedCategoryId);
             doc.setIsActive(0);
             
-            // UC5.1.11: Ghi dữ liệu vào CSDL thông qua DocumentDAO
+            // UC5.1.11: Hệ thống lưu dữ liệu vào database, hiển thị thông báo thành công và điều hướng người dùng về Trang cá nhân.
             boolean saved = documentDAO.saveDocument(doc);
             if (saved) {
                 // UC5.1.11: Trả về trạng thái thành công cho trình duyệt
                 response.setContentType("application/json; charset=UTF-8");
                 response.getWriter().write("{\"status\":\"success\",\"id\":" + doc.getId() + "}");
             } else {
-                // UC5 Exception E-04: Lỗi ghi CSDL
+                // Lỗi ghi CSDL
                 sendJsonError(response, "Lỗi khi lưu vào CSDL.");
             }
         } catch (Exception ex) {

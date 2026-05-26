@@ -15,7 +15,7 @@
 <body>
 <jsp:include page="/common/header.jsp"/>
 <main class="upload-page">
-    <!-- UC5.1.1: Người dùng truy cập trang 'Đăng tải tài liệu' -->
+    <!-- UC5.1.1: User Truy cập trang 'Đăng tải tài liệu'. -->
     <div class="upload-shell">
         <section class="upload-heading">
             <h1>
@@ -49,7 +49,7 @@
             <form id="uploadForm" action="${pageContext.request.contextPath}/upload" method="post"
                   enctype="multipart/form-data" novalidate data-context="${pageContext.request.contextPath}">
                 <label class="dropzone" id="dropzone" for="documentFile">
-                    <!-- UC5.1.4: Người dùng chọn tệp từ thiết bị -->
+                    <!-- UC5.1.4: User Chọn tệp từ thiết bị. -->
                     <input id="documentFile" name="documentFile" type="file"
                            accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.png,.jpg,.jpeg">
                     <span class="upload-cloud">
@@ -75,7 +75,7 @@
                 </div>
                 <div class="form-grid">
                     <div class="field full">
-                        <!-- UC5.1.3: Người dùng điền các thông tin: Tiêu đề (*), Danh mục (*), Môn học (*), Mô tả -->
+                        <!-- UC5.1.3: User Điền các thông tin: Tiêu đề (*), Danh mục (*), Môn học (*), Mô tả. -->
                         <label for="title">Tiêu đề tài liệu*</label>
                         <input id="title" name="title" type="text" placeholder="Nhập tiêu đề ngắn gọn và rõ ràng"
                                required>
@@ -104,13 +104,13 @@
                 </div>
                 <p class="form-error" id="formError" aria-live="polite"></p>
                 <div class="upload-actions">
-                    <!-- UC5.2.2: Người dùng nhấn nút 'Hủy' -->
+                    <!-- UC5.2.2.1: Người dùng nhấn nút "Hủy" trên giao diện. -->
                     <button class="cancel-btn" type="button" id="cancelForm"
                             data-home="${pageContext.request.contextPath}/page/user/home.jsp">Hủy
                     </button>
                     <button class="submit-btn" id="submitUpload" type="submit">
                         <span class="material-symbols-outlined">publish</span>
-                        <!-- UC5.1.6: Người dùng nhấn nút "Đăng tải ngay" -->
+                        <!-- UC5.1.6: User Nhấn nút "Đăng tải ngay". -->
                         Đăng tải ngay
                     </button>
                 </div>
@@ -148,7 +148,7 @@
         </div>
     </div>
 </div>
-<!-- UC5.1.8: Hiển thị thanh tiến trình -->
+<!-- UC5.1.8: Hệ thống hiển thị tiến trình upload (progress bar). -->
 <div id="progressContainer" class="modal-overlay progress-overlay" hidden>
     <div class="modal-card progress-card">
         <div class="modal-icon progress-icon">
@@ -164,6 +164,7 @@
             <div id="progressBytes" style="color: #737686; font-size: 13px; font-weight: 600;">0 MB / 0 MB</div>
         </div>
         <div class="modal-actions">
+            <!-- UC5.2.3.1: Người dùng nhấn nút "Hủy tải lên" trên thanh tiến trình. -->
             <button type="button" class="btn btn-secondary" id="cancelUpload">Hủy tải lên</button>
         </div>
     </div>
