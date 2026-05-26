@@ -853,19 +853,17 @@
 
         // ── Public API ────────────────────────────────────────────────────
 
-        // [UC13.1.2] Người dùng nhấn nút "Tải xuống ngay" → mở modal xác nhận
-        // → Sequence: User ->> UI: clickDownload(documentId)
-        // → File: document-detail.jsp (JS) | Nút: #btnDlMain, #btnDlAlt
+        // // UC13.1.2: Người dùng xác định tài liệu cần tải và nhấp vào nút "Tải xuống".
+        // // Hệ thống hiển thị modal xác nhận tải xuống.
         window.openDownloadConfirm = function (docId) {
             if (_isDownloading) return;
             _docId = docId;
             showOverlay('dlOverlayConfirm');
         };
 
-        // [UC13.2.1.2] Đóng tất cả modal → trở về trạng thái ban đầu
-        // → Gọi khi: nhấn nút "Huỷ", nhấn X, click ngoài overlay, hoặc Escape
-        // → Không gửi bất kỳ request nào lên server (UC13.2.1.2)
-        // → File: document-detail.jsp (JS)
+        // // UC13.2.1.1: Người dùng nhấn "Huỷ" tại modal xác nhận trước khi gửi yêu cầu.
+        // // UC13.2.1.2: Quá trình tải xuống bị hủy trước khi bắt đầu.
+        // // UC13.2.1.3: Giao diện đóng modal và trở về trạng thái ban đầu. Use case kết thúc.
         window.closeAllModals = function () {
             if (_isDownloading) return;  // loading modal không thể đóng bằng ngoài
             if (_successTimer) clearTimeout(_successTimer);
@@ -876,20 +874,15 @@
                 });
         };
 
-        // [UC13.2.4.1] Người dùng nhấn "Huỷ tải xuống" trong khi đang stream
-        // → _abortCtrl.abort() kích hoạt AbortSignal trên fetch()
-        // → fetch().catch(AbortError) → onDownloadDone() → showErrorModal
-        // → File: document-detail.jsp (JS) | Nút: #btnCancelDownload
+        // // UC13.2.4.1: Người dùng nhấn "Huỷ tải xuống" trong khi đang tải stream.
+        // // UC13.2.4.2: Quá trình tải xuống bị hủy. Không có tệp nào được lưu.
         window.cancelDownload = function () {
             if (!_isDownloading || !_abortCtrl) return;
             if (elCancelBtn) elCancelBtn.disabled = true;  // UC13.2.4.1: tránh bấm 2 lần
             _abortCtrl.abort();  // kích hoạt AbortSignal → fetch().catch()
         };
 
-        // [UC13.1.2→UC13.1.8] Hàm chính điều phối toàn bộ luồng tải xuống
-        // → Gọi khi: người dùng nhấn "Xác nhận tải" (modal confirm)
-        //            hoặc nhấn "Thử lại" (modal error)
-        // → File: document-detail.jsp (JS) | Nút: #btnConfirmDownload, .btn-retry
+        // Xác nhận tải xuống (confirmDownload)
         window.startDownload = function () {
             if (_isDownloading || !_docId) return;
             _isDownloading = true;
@@ -938,17 +931,17 @@
                     }
 
                     return pump().then(function () {
-                        // [UC13.1.7] Ghép tất cả chunks thành 1 Blob
+                        // // UC13.1.7: Tệp được tải xuống hoàn tất. Trình duyệt ghép các chunks thành Blob...
                         return new Blob(chunks, { type: contentType });
                     });
                 })
                 .then(function (blob) {
-                    // [UC13.1.7] Hiển thị 100% trước khi mở save dialog
+                    // // ...và thanh tiến trình hiển thị 100%.
                     if (elFill)  { elFill.classList.remove('indeterminate'); elFill.style.width = '100%'; }
                     if (elPct)   elPct.innerText  = '100%';
                     if (elText)  elText.innerText  = 'Hoàn tất! Đang mở hộp thoại lưu...';
 
-                    // [UC13.1.7] Tạo Blob URL và kích hoạt browser save dialog
+                    // // ...kích hoạt hộp thoại lưu tệp...
                     var url = URL.createObjectURL(blob);
                     var a   = document.createElement('a');
                     a.href  = url;
@@ -958,13 +951,14 @@
                     document.body.removeChild(a);
                     setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
 
-                    // [UC13.1.8] Cập nhật số lượt tải hiển thị trên giao diện
-                    // → download_count thực sự đã tăng ở DMS.writeAuditLog() phía server
+                    // dlCountVal += 1
                     var counter = document.getElementById('dlCountVal');
                     if (counter) counter.innerText = parseInt(counter.innerText || '0') + 1;
 
-                    // [UC13.1.8] Dọn dẹp state và hiển thị modal thành công
+                    // onDownloadDone()
                     onDownloadDone();
+                    
+                    // // Giao diện hiển thị thông báo thành công, tự động đóng sau 4 giây.
                     showOverlay('dlOverlaySuccess');
 
                     // [UC13.1.8] Tự động đóng modal sau 4 giây
@@ -974,11 +968,10 @@
                     }, 4000);
                 })
                 .catch(function (err) {
-                    // [UC13.2.4.2] AbortError: người dùng chủ động hủy → showErrorModal
-                    // [UC13.2.2]   HTTP 403: không có quyền   → showErrorModal
-                    // [UC13.2.3]   HTTP 404: file không tồn tại → showErrorModal
-                    // [UC13.2.5]   IOException/network lỗi    → showErrorModal
-                    onDownloadDone();  // UC13.2.x.4: resetState
+                    // // UC13.2.4.3: Hệ thống không ghi log sự kiện tải xuống thành công.
+                    // // UC13.2.4.4: Giao diện trở về trạng thái ban đầu. Use case kết thúc.
+                    // // Hoặc UC13.2.5.3: Trạng thái tải xuống được đặt lại.
+                    onDownloadDone();
                     showOverlay('dlOverlayError');
                 });
         };

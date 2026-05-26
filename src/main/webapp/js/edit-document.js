@@ -38,6 +38,21 @@
     const allowedExtensions = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "txt", "png", "jpg", "jpeg"];
     let currentXhr = null;
 
+    // Live Preview elements
+    const previewTitle = document.getElementById('previewTitle');
+    const previewCategory = document.getElementById('previewCategory');
+    const previewTagsContainer = document.getElementById('previewTagsContainer');
+    const previewDescription = document.getElementById('previewDescription');
+    const previewPrivacyBadge = document.getElementById('previewPrivacyBadge');
+    const previewFileName = document.getElementById('previewFileName');
+    const previewFileSize = document.getElementById('previewFileSize');
+    const previewFileExt = document.getElementById('previewFileExt');
+
+    // Store original file info
+    const originalFileName = previewFileName ? previewFileName.textContent.trim() : '';
+    const originalFileSize = previewFileSize ? previewFileSize.textContent.trim() : '';
+    const originalFileExt = previewFileExt ? previewFileExt.textContent.trim() : '';
+
     // ── Counters ────────────────────────────────────────────────────────
     function updateCounter(input, display, max) {
         const len = input.value.length;
@@ -75,6 +90,11 @@
         if (filePreview) filePreview.classList.add('hidden');
         if (dropzone) dropzone.classList.remove('hidden');
         clearErrors();
+
+        // Restore original file info on Preview Card
+        if (previewFileName) previewFileName.textContent = originalFileName;
+        if (previewFileSize) previewFileSize.textContent = originalFileSize;
+        if (previewFileExt) previewFileExt.textContent = originalFileExt;
     }
 
     if (removeFileBtn) {
@@ -108,6 +128,11 @@
         filePreview.classList.remove('hidden');
         newFileNameDisplay.textContent = file.name;
         newFileMetaDisplay.textContent = formatSize(file.size) + " · " + extension.toUpperCase();
+
+        // Update file info on Preview Card
+        if (previewFileName) previewFileName.textContent = file.name;
+        if (previewFileSize) previewFileSize.textContent = formatSize(file.size);
+        if (previewFileExt) previewFileExt.textContent = extension.toUpperCase();
     }
 
     if (dropzone && fileInput) {
@@ -257,11 +282,27 @@
         } else {
             errP.innerHTML = `<span class="material-symbols-outlined text-[14px]">error</span> ${message}`;
         }
+
+        // Highlight corresponding preview card elements
+        if (fieldId === 'title' && previewTitle) {
+            previewTitle.classList.add('text-red-500', 'border', 'border-red-200', 'p-1', 'rounded');
+        } else if (fieldId === 'tags' && previewTagsContainer) {
+            previewTagsContainer.classList.add('border', 'border-red-200', 'p-1', 'rounded');
+        }
+
         input.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     function clearErrors() {
         form.querySelectorAll('.js-error').forEach(el => el.remove());
         form.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+
+        // Clear preview highlights
+        if (previewTitle) {
+            previewTitle.classList.remove('text-red-500', 'border', 'border-red-200', 'p-1', 'rounded');
+        }
+        if (previewTagsContainer) {
+            previewTagsContainer.classList.remove('border', 'border-red-200', 'p-1', 'rounded');
+        }
     }
 
     function setLoadingState(loading) {
@@ -272,6 +313,95 @@
         if (btnSaveIcon) btnSaveIcon.textContent = loading ? 'hourglass_empty' : 'save';
         if (btnSaveText) btnSaveText.textContent  = loading ? 'Đang lưu...' : 'Lưu thay đổi';
     }
+
+    // ── Live Preview Logic ────────────────────────────────────────────────
+    function updateLivePreview() {
+        // Title
+        if (titleInput && previewTitle) {
+            const titleVal = titleInput.value.trim();
+            previewTitle.textContent = titleVal || 'Chưa đặt tên tài liệu';
+        }
+
+        // Description
+        if (descInput && previewDescription) {
+            const descVal = descInput.value.trim();
+            previewDescription.textContent = descVal || 'Chưa có mô tả nào cho tài liệu này.';
+        }
+
+        // Category
+        const categorySelect = document.getElementById('categoryId');
+        if (categorySelect && previewCategory) {
+            const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+            const catName = selectedOption && categorySelect.value ? selectedOption.textContent.trim() : 'Chưa chọn danh mục';
+            previewCategory.textContent = catName;
+        }
+
+        // Privacy Badge
+        if (previewPrivacyBadge) {
+            const checkedRadio = document.querySelector('input[name="privacy"]:checked');
+            const isPublic = checkedRadio && checkedRadio.value === 'public';
+            previewPrivacyBadge.textContent = isPublic ? 'Công khai' : 'Nháp';
+            if (isPublic) {
+                previewPrivacyBadge.className = 'px-2.5 py-1 text-xs font-semibold rounded-full border bg-emerald-50 text-emerald-700 border-emerald-100 transition-all duration-300';
+            } else {
+                previewPrivacyBadge.className = 'px-2.5 py-1 text-xs font-semibold rounded-full border bg-slate-50 text-slate-600 border-slate-100 transition-all duration-300';
+            }
+        }
+
+        // Tags
+        const tagsInput = document.getElementById('tags');
+        if (tagsInput && previewTagsContainer) {
+            const tagsVal = tagsInput.value.trim();
+            previewTagsContainer.innerHTML = '';
+            if (tagsVal) {
+                const tagsArr = tagsVal.split(',')
+                    .map(t => t.trim())
+                    .filter(t => t !== '');
+                if (tagsArr.length > 0) {
+                    tagsArr.forEach(tag => {
+                        const span = document.createElement('span');
+                        span.className = 'px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs';
+                        span.textContent = tag;
+                        previewTagsContainer.appendChild(span);
+                    });
+                } else {
+                    showEmptyTagsPlaceholder();
+                }
+            } else {
+                showEmptyTagsPlaceholder();
+            }
+        }
+    }
+
+    function showEmptyTagsPlaceholder() {
+        if (!previewTagsContainer) return;
+        const span = document.createElement('span');
+        span.className = 'text-xs text-slate-400';
+        span.textContent = 'Chưa có tag nào';
+        previewTagsContainer.appendChild(span);
+    }
+
+    // Setup Preview Event Listeners
+    if (titleInput) {
+        titleInput.addEventListener('input', updateLivePreview);
+    }
+    if (descInput) {
+        descInput.addEventListener('input', updateLivePreview);
+    }
+    const categorySelect = document.getElementById('categoryId');
+    if (categorySelect) {
+        categorySelect.addEventListener('change', updateLivePreview);
+    }
+    const tagsInput = document.getElementById('tags');
+    if (tagsInput) {
+        tagsInput.addEventListener('input', updateLivePreview);
+    }
+    document.querySelectorAll('input[name="privacy"]').forEach(radio => {
+        radio.addEventListener('change', updateLivePreview);
+    });
+
+    // Initialize preview on page load
+    updateLivePreview();
 
     setTimeout(() => {
         ['flash-success', 'flash-error'].forEach(id => {
