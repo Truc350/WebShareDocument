@@ -20,6 +20,7 @@
     const cancelUploadBtn = document.querySelector("#cancelUpload");
     const cancelFormBtn = document.querySelector("#cancelForm");
     let currentXhr = null;
+
     function setError(message) {
         if (formError) {
             formError.textContent = message || "";
@@ -160,6 +161,27 @@
         preview.hidden = false;
         fileName.textContent = file.name;
         fileMeta.textContent = formatSize(file.size) + " · " + getExtension(file.name).toUpperCase();
+
+        const ext = getExtension(fileName).toLowerCase();
+        fileMeta.textContent = formatSize(file.size) + " . " + ext.toUpperCase();
+
+        // Hiển thị Thumbnail nếu là ảnh
+        const fileThumbnail = document.querySelector("#fileThumbnail");
+        const fileIcon = document.querySelector("#fileIcon");
+
+        if (file.type.startsWith("image/")) {
+            fileThumbnail.src = URL.createObjectURL(file);
+            fileThumbnail.style.display = "block";
+            fileIcon.style.display = "none";
+        } else {
+            fileThumbnail.style.display = "none";
+            fileIcon.style.display = "block";
+
+            if (ext === 'pdf') fileIcon.textContent = "picture_as_pdf";
+            else if (['doc', 'docx'].includes(ext)) fileIcon.textContent = "description";
+            else if (['xls', 'xlsx'].includes(ext)) fileIcon.textContent = "table_chart";
+            else fileIcon.textContent = "draft";
+        }
     }
 
     if (dropzone && fileInput) {
@@ -253,29 +275,17 @@
         setError("");
         submitButton.innerHTML = '<span class="material-symbols-outlined rotating">sync</span> Đang chuẩn bị...';
         progressContainer.hidden = false;
-        let progress = 0;
+
         let isCancelled = false;
         let isConfirmingCancel = false;
-        let uploadFinished = false;
-        let lastResult = null;
 
-        const startTime = Date.now();
-        const minDuration = 3000;
+        const file = fileInput.files[0];
+        const progressBytesEl = document.querySelector("#progressBytes");
 
-        function animateProgress() {
-            if (isCancelled) return;
-            const elapsed = Date.now() - startTime;
-            const timePercent = Math.min((elapsed / minDuration) * 100, 100);
-            const visiblePercent = Math.max(progress, timePercent);
-            progressBarFill.style.width = visiblePercent.toFixed(1) + "%";
-            progressText.textContent = Math.round(visiblePercent) + "%";
-
-            if (visiblePercent < 100 || !uploadFinished) {
-                requestAnimationFrame(animateProgress);
-            } else {
-                finalizeUploadUI(lastResult);
-            }
-        }
+        progressBarFill.style.width = "0%";
+        progressText.textContent = "0%";
+        progressStatus.textContent = "Đang truyền tải lên Supabase Storage... ";
+        if (progressBytesEl) progressBytesEl.textContent = "0 MB / " + formatSize(file.size);
 
         function finalizeUploadUI(result) {
             if (isCancelled || isConfirmingCancel) return;
@@ -327,43 +337,45 @@
                 }, 300);
             }, function () {
                 isConfirmingCancel = false;
-                if (uploadFinished) finalizeUploadUI(lastResult);
             });
         };
 
-        requestAnimationFrame(animateProgress);
-
-        const file = fileInput.files[0];
-        const contextPath = form.getAttribute("data-context") || "";
-
-        progressStatus.textContent = "Đang truyền tải lên Supabase Storage...";
-        
         // Cấu hình Supabase
         const supabaseUrl = "https://tlbznphszzpondlykmst.supabase.co";
         const supabaseKey = "sb_publishable_3IaZByYoSWSHakJqFMOifQ_ud2mNCpg";
         const bucketName = "documents";
-        
+
         // Tạo tên file an toàn
         const safeFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
         const filePath = `uploads/${Date.now()}_${safeFileName}`;
         const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucketName}/${filePath}`;
 
         currentXhr.upload.addEventListener("progress", function (e) {
-            if (e.lengthComputable) {
-                progress = (e.loaded / e.total) * 100 * 0.85;
+            if (e.lengthComputable && !isCancelled) {
+                // Tính % cho UI: 90% dành cho việc upload lên supabase
+                const realPercent = (e.loaded / e.total) * 100;
+                const uiPercent = realPercent * 0.9;
+
+                progressBarFill.style.width = uiPercent.toFixed(1) + "%";
+                progressText.textContent = Math.round(uiPercent) + "%";
+
+                if (progressBytesEl) {
+                    progressBytesEl.textContent = formatSize(e.loaded) + " / " + formatSize(e.total);
+                }
             }
         });
 
         currentXhr.addEventListener("load", function () {
             if (isCancelled) return;
             if (currentXhr.status >= 200 && currentXhr.status < 300) {
-                // UC5.1.9: Hệ thống / Storage lưu trữ tệp và trả về Public URL.
-                progress = 90;
+                // UC5.1.9: Hệ thống nhận Public URL từ Supabase Storage
+                progressBarFill.style.width = "90%";
+                progressText.textContent = "90%";
                 progressStatus.textContent = "Đang lưu dữ liệu vào hệ thống...";
-                
+
                 const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
-                
-                // UC5.1.10: Hệ thống gửi URL và Metadata về Server Servlet để thực hiện ghi dữ liệu vào CSDL.
+
+                // UC5.1.10: Gửi URL và Metadata về Server Servlet
                 const serverData = new FormData();
                 serverData.append("title", form.title.value);
                 serverData.append("category", form.category.value);
@@ -378,33 +390,30 @@
                     method: "POST",
                     body: serverData
                 })
-                .then(r => r.json())
-                .then(serverResult => {
-                    // UC5.1.10: Hệ thống nhận URL và Metadata sau khi backend lưu DB thành công
-                    if (isCancelled) return;
-                    progress = 100;
-                    uploadFinished = true;
-                    lastResult = serverResult;
-                })
-                .catch(e => {
-                    uploadFinished = true;
-                    lastResult = {status: "error", message: "Lỗi lưu DB: " + e.message};
-                });
+                    .then(r => r.json())
+                    .then(serverResult => {
+                        // UC5.1.10: Hệ thống nhận URL và Metadata sau khi backend lưu DB thành công
+                        if (isCancelled) return;
+                        progressBarFill.style.width = "100%";
+                        progressText.textContent = "100%";
+                        setTimeout(() => finalizeUploadUI(serverResult), 300); // Đợi 0.
+                    })
+                    .catch(e => {
+                        finalizeUploadUI({status: "error", message: "Lỗi lưu DB: " +  e.message});
+                    });
             } else {
-                uploadFinished = true;
                 let errorMsg = "Supabase error";
                 try {
                     const result = JSON.parse(currentXhr.responseText);
                     errorMsg += ": " + (result.message || result.error || currentXhr.status);
-                } catch(e) {}
-                lastResult = {status: "error", message: errorMsg};
+                } catch (e) {}
+                finalizeUploadUI({status: "error", message: errorMsg});
             }
         });
 
         currentXhr.addEventListener("error", function () {
             if (isCancelled) return;
-            uploadFinished = true;
-            lastResult = {status: "error", message: "Lỗi kết nối mạng khi tải lên Supabase."};
+            finalizeUploadUI({status: "error", message: "Lỗi kết nối mạng khi tải lên Supabase."});
         });
 
         currentXhr.open("POST", uploadUrl, true);
@@ -420,11 +429,13 @@
         submitButton.innerHTML = '<span class="material-symbols-outlined">publish</span> Đăng tải ngay';
         setError(message);
     }
+
     (function () {
         const contextPath = form.getAttribute("data-context") || "";
         const uploadUrl = contextPath + "/upload";
         fetch(uploadUrl, {method: 'HEAD'}).then(() => {
             console.log("Upload Servlet warmed up and ready.");
-        }).catch(() => {});
+        }).catch(() => {
+        });
     })();
 })();
