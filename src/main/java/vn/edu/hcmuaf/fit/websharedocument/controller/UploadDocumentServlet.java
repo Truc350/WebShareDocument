@@ -5,13 +5,16 @@ import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import vn.edu.hcmuaf.fit.websharedocument.dao.DocumentDAO;
+import vn.edu.hcmuaf.fit.websharedocument.db.DBConnect;
 import vn.edu.hcmuaf.fit.websharedocument.model.Document;
 import vn.edu.hcmuaf.fit.websharedocument.model.User;
 
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.Statement;
-import vn.edu.hcmuaf.fit.websharedocument.db.DBConnect;
+import vn.edu.hcmuaf.fit.websharedocument.service.FileStorage;
+import vn.edu.hcmuaf.fit.websharedocument.service.DMS;
+import java.util.Date;
 
 @WebServlet(name = "UploadDocumentServlet", value = "/upload", loadOnStartup = 1)
 @MultipartConfig(
@@ -21,10 +24,12 @@ import vn.edu.hcmuaf.fit.websharedocument.db.DBConnect;
 )
 public class UploadDocumentServlet extends HttpServlet {
     private DocumentDAO documentDAO;
+    private FileStorage storage;
 
     @Override
     public void init() throws ServletException {
         documentDAO = new DocumentDAO();
+        storage = new FileStorage(getServletContext().getRealPath("/document/uploads"));
         try (Connection conn = DBConnect.getConnection()) {
             if (conn != null) {
                 try (Statement stmt = conn.createStatement()) {
@@ -87,6 +92,35 @@ public class UploadDocumentServlet extends HttpServlet {
 
             if (secureUrl.isEmpty() || originalFileName.isEmpty()) {
                 forwardError(request, response, "Lỗi: Không nhận được thông tin file từ trình duyệt.");
+                return;
+            }
+
+            // ── Kiểm tra an toàn tệp trước khi lưu vào CSDL ────────────────────
+            try {
+                if (secureUrl.startsWith("http")) {
+                    java.net.URL url = new java.net.URL(secureUrl);
+                    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.setConnectTimeout(5000);
+                    conn.setReadTimeout(5000);
+                    conn.connect();
+                    if (conn.getResponseCode() == 200) {
+                        try (java.io.InputStream inStream = conn.getInputStream()) {
+                            storage.checkFileSafety(inStream, originalFileName, extension);
+                        }
+                    } else {
+                        sendJsonError(response, "Lỗi: Không thể truy cập tệp đã tải lên để kiểm tra an toàn.");
+                        return;
+                    }
+                }
+            } catch (FileStorage.DangerousFileException e) {
+                DMS dms = new DMS();
+                dms.writeSecurityLog(0, authUser.getId(), "Upload blocked: " + e.getMessage(), new Date().toString(), request.getRemoteAddr());
+                sendJsonError(response, "Tệp bị từ chối: nội dung không an toàn hoặc định dạng không hợp lệ.");
+                return;
+            } catch (Exception e) {
+                e.printStackTrace();
+                sendJsonError(response, "Lỗi kiểm tra an toàn tệp: " + e.getMessage());
                 return;
             }
 

@@ -136,14 +136,17 @@
         });
     }
 
-    // ── Form Submit ─────────────────────────────────────────────────────
+    // ── UC15.1.5 / UC15.1.6: Form Submit & Validation ───────────────────
     if (form) {
         form.addEventListener('submit', function (e) {
             e.preventDefault();
             clearErrors();
             
+            // UC15.1.6 & UC15.2.2.1: Hệ thống phát hiện lỗi validation (tên tài liệu để trống)
             const title = titleInput ? titleInput.value.trim() : '';
             if (!title) {
+                // UC15.2.2.2: Hệ thống highlight trường nhập liệu bị lỗi và hiển thị thông báo lỗi
+                // UC15.2.2.3: User sửa lại thông tin không hợp lệ trên form và nhấp lại nút “Lưu thay đổi” (chờ user thao tác lại)
                 showError('title', 'Tên tài liệu không được để trống.');
                 return;
             }
@@ -231,9 +234,11 @@
         setLoadingState(false);
     }
 
-    // ── Helpers ─────────────────────────────────────────────────────────────
+    // UC15.2.3: Alternate Flow - User huỷ thao tác chỉnh sửa
     if (btnCancel) {
         btnCancel.addEventListener('click', function () {
+            // UC15.2.3.1: User nhấp nút “Huỷ”
+            // UC15.2.3.2: Hệ thống không lưu bất kỳ thay đổi nào và chuyển hướng User về trang chi tiết tài liệu với dữ liệu cũ còn nguyên
             history.back();
         });
     }
@@ -254,7 +259,6 @@
         }
         input.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-
     function clearErrors() {
         form.querySelectorAll('.js-error').forEach(el => el.remove());
         form.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
