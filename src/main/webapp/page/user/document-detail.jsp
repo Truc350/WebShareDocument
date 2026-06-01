@@ -216,6 +216,24 @@
             box-shadow: none;
         }
 
+        .dl-input {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 14px;
+            border: 1px solid #c3c6d7;
+            border-radius: 10px;
+            outline: none;
+            background: #fff;
+            color: #191b23;
+            transition: border-color .15s, box-shadow .15s;
+            margin-top: 4px;
+        }
+
+        .dl-input:focus {
+            border-color: #0040ab;
+            box-shadow: 0 0 0 3px rgba(0,64,171,.15);
+        }
+
         /* ===== DOWNLOAD MODAL SYSTEM ===== */
         .dl-overlay {
             position: fixed;
@@ -466,6 +484,16 @@
             .btn-close-modal { background: #252840; color: #9097b8; }
             .btn-close-modal:hover { background: #2e3250; }
             .dl-spinner { border-color: #2e3a6e; border-top-color: #5c8aff; }
+            
+            .dl-input {
+                background: #252840;
+                border-color: #2e3250;
+                color: #f0f1ff;
+            }
+            .dl-input:focus {
+                border-color: #5c8aff;
+                box-shadow: 0 0 0 3px rgba(92,138,255,.2);
+            }
         }
 
         .stat-row {
@@ -700,6 +728,11 @@
         </div>
         <h2 id="dlConfirmTitle">Xác nhận tải xuống</h2>
         <p>Bạn có chắc chắn muốn tải file này không?</p>
+        <!-- UC13.2.6.1: Hệ thống hiển thị trường nhập văn bản "Tên tệp khi lưu" -->
+        <div style="margin: -12px 0 24px; display: flex; flex-direction: column; gap: 8px; text-align: left;">
+            <label for="customFileName" style="font-size: 13px; color: #555; font-weight: 600; cursor: pointer;">Tên tệp khi lưu (không cần nhập đuôi):</label>
+            <input type="text" id="customFileName" class="dl-input" placeholder="Nhập tên tệp mới...">
+        </div>
         <div class="dl-modal-actions">
             <button class="btn-cancel" onclick="closeAllModals()">Huỷ</button>
             <button class="btn-confirm" id="btnConfirmDownload" onclick="startDownload()">Xác nhận tải</button>
@@ -859,6 +892,16 @@
         window.openDownloadConfirm = function (docId) {
             if (_isDownloading) return;
             _docId = docId;
+            
+            // [UC13.2.6.2]: Hệ thống trích xuất tên gốc của tệp, loại bỏ phần mở rộng và điền sẵn vào ô nhập liệu
+            var inputFileName = document.getElementById('customFileName');
+            if (inputFileName) {
+                var origName = '<%= doc.getFileName() != null ? doc.getFileName().replace("'", "\\'").replace("\"", "\\\"") : "document" %>';
+                var lastDot = origName.lastIndexOf('.');
+                var nameWithoutExt = lastDot >= 0 ? origName.substring(0, lastDot) : origName;
+                inputFileName.value = nameWithoutExt;
+            }
+            
             showOverlay('dlOverlayConfirm');
         };
 
@@ -894,6 +937,8 @@
             if (_isDownloading || !_docId) return;
             _isDownloading = true;
 
+            var finalFileName = '';
+
             // [UC13.1.2] Chuẩn bị UI trước khi gửi request
             resetProgressUI();
             setDownloadBtnsDisabled(true);
@@ -903,12 +948,32 @@
             _abortCtrl = new AbortController();
             var signal = _abortCtrl.signal;
 
+            // [UC13.2.6.3]: JavaScript lấy tên tệp tùy chỉnh mới đã nhập và mã hóa URL thông qua customName
+            var inputFileName = document.getElementById('customFileName');
+            var customNameParam = '';
+            if (inputFileName && inputFileName.value.trim()) {
+                customNameParam = '&customName=' + encodeURIComponent(inputFileName.value.trim());
+            }
+
             // [UC13.1.3] Gửi GET /download?id= lên DownloadDocumentServlet
             // → signal liên kết với AbortController để có thể hủy
-            fetch(_downloadUrl + _docId, { method: 'GET', credentials: 'same-origin', signal: signal })
+            fetch(_downloadUrl + _docId + customNameParam, { method: 'GET', credentials: 'same-origin', signal: signal })
                 .then(function (res) {
                     // [UC13.2.2 / UC13.2.3] HTTP 403/404 → ném Error → xuống .catch()
                     if (!res.ok) throw new Error('HTTP_' + res.status);
+
+                    // Extract filename from Content-Disposition header
+                    var contentDisposition = res.headers.get('Content-Disposition');
+                    if (contentDisposition) {
+                        var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                        var matches = filenameRegex.exec(contentDisposition);
+                        if (matches != null && matches[1]) { 
+                            finalFileName = matches[1].replace(/['"]/g, '');
+                            try {
+                                finalFileName = decodeURIComponent(finalFileName);
+                            } catch(e) {}
+                        }
+                    }
 
                     // [UC13.1.6] Đọc Content-Length để tính % tiến trình
                     // → Nếu server không trả → dùng animation indeterminate
@@ -952,7 +1017,7 @@
                     var url = URL.createObjectURL(blob);
                     var a   = document.createElement('a');
                     a.href  = url;
-                    a.download = '<%= doc.getFileName() != null ? doc.getFileName().replace("'", "\\'").replace("\"", "\\\"") : "document" %>';
+                    a.download = finalFileName || '<%= doc.getFileName() != null ? doc.getFileName().replace("'", "\\'").replace("\"", "\\\"") : "document" %>';
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);

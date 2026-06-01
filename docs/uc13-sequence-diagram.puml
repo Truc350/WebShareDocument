@@ -18,6 +18,7 @@ UI -->> User: renderDocumentDetail(document)
 
 User ->> UI: UC13.1.2 clickDownload(documentId)
 UI -->> User: showConfirmModal() [Modal "Xác nhận tải xuống"]
+UI ->> UI: UC13.2.6.2 Tự động trích xuất tên gốc & pre-fill ô nhập liệu "Tên tệp khi lưu" (UC13.2.6.1)
 
 alt UC13.2.1 – Người dùng hủy tại modal xác nhận
     note over User,UI
@@ -30,9 +31,13 @@ alt UC13.2.1 – Người dùng hủy tại modal xác nhận
 else Người dùng nhấn "Xác nhận tải" → tiếp tục UC13.1.3
     User ->> UI: confirmDownload()
     UI ->> UI: setDownloadBtnsDisabled(true) / resetProgressUI()\n_abortCtrl = new AbortController()
+    UI ->> UI: UC13.2.6.3 Lấy tên tùy chỉnh mới & mã hóa thành customNameParam
     UI -->> User: showLoadingModal() [Spinner + 0% + nút "Huỷ tải xuống"]
 
-    UI ->> Servlet ++: UC13.1.3 fetch(GET /download?id, { signal })
+    UI ->> Servlet ++: UC13.1.3 fetch(GET /download?id&customName, { signal })
+    note over Servlet
+    UC13.2.6.4 Backend đọc customName từ request
+    end note
     Servlet ->> Auth ++: verifySessionAndPermission(userId, documentId)
 
     alt UC13.2.2 – Người dùng không có quyền tải tài liệu
@@ -61,8 +66,22 @@ else Người dùng nhấn "Xác nhận tải" → tiếp tục UC13.1.3
             UI ->> UI: UC13.2.3.4 onDownloadDone() / resetState() – kết thúc
             deactivate Servlet
 
-        else File OK → tiếp tục UC13.1.5
+        else EX-02 – Tệp nguy hiểm bị phát hiện (DangerousFileException)
+            note over Storage,UI
+            Tại bước UC13.1.4b
+            end note
+            Storage ->> Storage: checkFileSafety(inputStream, fileName, ext)
+            Storage -->> Servlet --: EX-02.1 throw DangerousFileException\n(magic bytes không khớp / extension bị chặn)
+            Servlet ->> DMS ++: EX-02.2 writeSecurityLog(docId, userId, reason, timestamp, ip)
+            DMS -->> Servlet --: returnLogConfirmed()
+            Servlet -->> UI: EX-02.3 HTTP 403 Forbidden – showErrorModal ["Tệp bị chặn vì lý do bảo mật"]
+            UI ->> UI: EX-02.4 onDownloadDone() / resetState() – kết thúc
+            deactivate Servlet
+
+        else File OK & An toàn → tiếp tục UC13.1.5
+            Storage ->> Storage: checkFileSafety(inputStream, fileName, ext)
             Storage -->> Servlet: returnFileData(fileName, fileSize, InputStream)
+            Servlet ->> Servlet: UC13.2.6.5 Xử lý kiểm tra & tự động ghép nối đuôi tệp gốc vào tên mới
 
             Servlet ->> DMS ++: UC13.1.5 generateSignedUrl(documentId, expiry=900s)
             DMS -->> Servlet --: returnSignedUrl(signedUrl)

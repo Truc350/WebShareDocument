@@ -72,7 +72,9 @@ public class DownloadDocumentServlet extends HttpServlet {
         User user      = (User) request.getSession().getAttribute("authUser");
         Integer userId = user != null ? user.getId() : null;
 
-        clickDownload(request, response, userId, documentId);
+        // [UC13.2.6.4] Backend Servlet nhận tham số customName từ request
+        String customName = request.getParameter("customName");
+        clickDownload(request, response, userId, documentId, customName);
     }
 
     // ====================================================================
@@ -80,7 +82,7 @@ public class DownloadDocumentServlet extends HttpServlet {
     // ====================================================================
 
     private void clickDownload(HttpServletRequest request, HttpServletResponse response,
-                               Integer userId, int documentId) throws IOException {
+                               Integer userId, int documentId, String customName) throws IOException {
 
         // ── UC13.1.3: Kiểm tra quyền ─────────────────────────────────────
         boolean hasPermission = auth.verifySessionAndPermission(userId, documentId);
@@ -111,11 +113,32 @@ public class DownloadDocumentServlet extends HttpServlet {
             String signedUrl = dms.generateSignedUrl(documentId, 900);
             dms.returnSignedUrl(signedUrl, "expiresAt_XYZ");
 
+            // [UC13.2.6.5] Hệ thống kiểm tra và tự động ghép nối đuôi tệp gốc vào tên mới
+            String finalFileName = fileData.getFileName();
+            if (customName != null && !customName.trim().isEmpty()) {
+                String trimmedCustom = customName.trim();
+                String ext = "";
+                int dotIdx = finalFileName.lastIndexOf('.');
+                if (dotIdx >= 0) {
+                    ext = finalFileName.substring(dotIdx);
+                }
+                
+                // If user didn't write the extension, append it
+                if (!ext.isEmpty() && !trimmedCustom.toLowerCase().endsWith(ext.toLowerCase())) {
+                    finalFileName = trimmedCustom + ext;
+                } else {
+                    finalFileName = trimmedCustom;
+                }
+            }
+
+            // Expose the Content-Disposition header
+            response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+
             // ── UC13.1.6: Thiết lập HTTP Response headers ─────────────────
-            showSaveDialog(response, fileData.getFileName(), fileData.getFileSize(), signedUrl);
+            showSaveDialog(response, finalFileName, fileData.getFileSize(), signedUrl);
 
             // ── UC13.1.6 → UC13.1.8: Stream file và ghi audit log ─────────
-            confirmSave(request, response, documentId, userId, signedUrl, fileData);
+            confirmSave(request, response, documentId, userId, signedUrl, fileData, finalFileName);
 
         } catch (FileStorage.DangerousFileException e) {
             // ── EX-02: File bị phát hiện là nguy hiểm ────────────────────
@@ -153,7 +176,7 @@ public class DownloadDocumentServlet extends HttpServlet {
 
     private void confirmSave(HttpServletRequest request, HttpServletResponse response,
                              int documentId, Integer userId,
-                             String signedUrl, FileStorage.FileData fileData) {
+                             String signedUrl, FileStorage.FileData fileData, String finalFileName) {
 
         startFileTransfer(signedUrl);
 
@@ -166,7 +189,7 @@ public class DownloadDocumentServlet extends HttpServlet {
                 outStream.write(buffer, 0, bytesRead);
             }
 
-            onDownloadComplete(fileData.getFileName(), "Thiết bị của người dùng");
+            onDownloadComplete(finalFileName, "Thiết bị của người dùng");
 
             dms.writeAuditLog(documentId, userId, new Date().toString(), request.getRemoteAddr());
             dms.returnAuditConfirmed("LOG_" + System.currentTimeMillis());
