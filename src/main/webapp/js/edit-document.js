@@ -400,6 +400,281 @@
         radio.addEventListener('change', updateLivePreview);
     });
 
+    // ==========================================
+    // DOCUMENT PREVIEW PANEL LOGIC (UC15.1.5)
+    // ==========================================
+    const btnViewFile = document.getElementById('btnViewFile');
+    const btnViewNewFile = document.getElementById('btnViewNewFile');
+    const filePreviewPanel = document.getElementById('filePreviewPanel');
+    const btnClosePreviewPanel = document.getElementById('btnClosePreviewPanel');
+    const panelBody = document.getElementById('panelBody');
+    const panelFileName = document.getElementById('panelFileName');
+    const panelFileExtBadge = document.getElementById('panelFileExtBadge');
+    const panelFileIcon = document.getElementById('panelFileIcon');
+
+    function openPreviewModal() {
+        if (!filePreviewPanel) return;
+        filePreviewPanel.classList.remove('hidden');
+        filePreviewPanel.classList.add('flex');
+        // Force reflow for CSS transitions
+        filePreviewPanel.offsetHeight;
+        filePreviewPanel.classList.add('modal-active');
+    }
+
+    function closePreviewModal() {
+        if (!filePreviewPanel) return;
+        filePreviewPanel.classList.remove('modal-active');
+        setTimeout(() => {
+            filePreviewPanel.classList.remove('flex');
+            filePreviewPanel.classList.add('hidden');
+            if (panelBody) panelBody.innerHTML = '';
+        }, 300);
+    }
+
+    if (btnClosePreviewPanel) {
+        btnClosePreviewPanel.addEventListener('click', closePreviewModal);
+    }
+    if (filePreviewPanel) {
+        filePreviewPanel.addEventListener('click', (e) => {
+            if (e.target === filePreviewPanel) closePreviewModal();
+        });
+    }
+
+    // Dynamic loader spinner
+    function showPanelLoading() {
+        if (!panelBody) return;
+        panelBody.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-12">
+                <span class="material-symbols-outlined text-4xl text-[#0555dd] animate-spin">sync</span>
+                <p class="text-sm text-slate-500 mt-3 font-medium">Đang tải và chuẩn bị nội dung tài liệu...</p>
+            </div>
+        `;
+    }
+
+    function showPanelError(message) {
+        if (!panelBody) return;
+        panelBody.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-12 text-center max-w-md px-4">
+                <span class="material-symbols-outlined text-4xl text-red-500 mb-2">error</span>
+                <h3 class="text-sm font-bold text-slate-800">Không thể xem trực tiếp</h3>
+                <p class="text-xs text-slate-500 mt-1">${message}</p>
+            </div>
+        `;
+    }
+
+    function getMaterialIconByExt(ext) {
+        switch (ext.toLowerCase()) {
+            case 'pdf': return 'picture_as_pdf';
+            case 'png':
+            case 'jpg':
+            case 'jpeg': return 'image';
+            case 'doc':
+            case 'docx': return 'article';
+            case 'xls':
+            case 'xlsx': return 'table_chart';
+            case 'ppt':
+            case 'pptx': return 'present_to_all';
+            case 'txt': return 'text_snippet';
+            default: return 'description';
+        }
+    }
+
+    function renderPreview(fileName, extension, source) {
+        if (!panelBody || !panelFileName || !panelFileExtBadge || !panelFileIcon) return;
+
+        // Set metadata on header
+        panelFileName.textContent = fileName;
+        panelFileExtBadge.textContent = extension.toUpperCase();
+        panelFileIcon.textContent = getMaterialIconByExt(extension);
+
+        openPreviewModal();
+        showPanelLoading();
+
+        const ext = extension.toLowerCase();
+
+        if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') {
+            // Render Image
+            const img = document.createElement('img');
+            img.className = 'max-w-full max-h-[70vh] rounded-lg shadow-md object-contain transition-all duration-300';
+            img.alt = fileName;
+            
+            if (source instanceof File) {
+                img.src = URL.createObjectURL(source);
+                img.onload = () => URL.revokeObjectURL(img.src);
+            } else {
+                img.src = source;
+            }
+            
+            panelBody.innerHTML = '';
+            panelBody.appendChild(img);
+        }
+        else if (ext === 'pdf') {
+            // Render PDF in standard scrollable iframe (natively supported by all browsers)
+            let pdfUrl = '';
+            if (source instanceof File) {
+                pdfUrl = URL.createObjectURL(source);
+            } else {
+                pdfUrl = source;
+            }
+
+            panelBody.innerHTML = `
+                <iframe src="${pdfUrl}" class="w-full h-[70vh] border border-slate-200/60 rounded-xl bg-white shadow-sm" title="Preview PDF"></iframe>
+            `;
+        }
+        else if (ext === 'docx') {
+            // Render DOCX utilizing Mammoth.js
+            if (source instanceof File) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const arrayBuffer = e.target.result;
+                    mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
+                        .then(result => {
+                            panelBody.innerHTML = `
+                                <div class="w-full overflow-y-auto max-h-[70vh] py-4">
+                                    <div class="docx-paper docx-preview-content">
+                                        ${result.value || '<p class="text-slate-400 text-center py-8">Tài liệu không có nội dung văn bản.</p>'}
+                                    </div>
+                                </div>
+                            `;
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            showPanelError('Không thể chuyển đổi nội dung tệp DOCX này. Vui lòng thử lại.');
+                        });
+                };
+                reader.onerror = () => showPanelError('Không thể đọc dữ liệu tệp từ máy tính.');
+                reader.readAsArrayBuffer(source);
+            } else {
+                // Fetch the remote/online DOCX and render
+                fetch(source)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Không thể tải tệp từ máy chủ.');
+                        return response.arrayBuffer();
+                    })
+                    .then(arrayBuffer => {
+                        mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
+                            .then(result => {
+                                panelBody.innerHTML = `
+                                    <div class="w-full overflow-y-auto max-h-[70vh] py-4">
+                                        <div class="docx-paper docx-preview-content">
+                                            ${result.value || '<p class="text-slate-400 text-center py-8">Tài liệu không có nội dung văn bản.</p>'}
+                                        </div>
+                                    </div>
+                                `;
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                // Fallback to office apps live preview if mammoth fails (e.g. file protected or complex formatting)
+                                loadOfficeAppsFallback(source);
+                            });
+                    })
+                    .catch(err => {
+                        console.warn('Mammoth fetch/parse failed. Falling back to Office Viewer:', err);
+                        loadOfficeAppsFallback(source);
+                    });
+            }
+        }
+        else if (ext === 'doc' || ext === 'xls' || ext === 'xlsx' || ext === 'ppt' || ext === 'pptx') {
+            // Older Word or Spreadsheet format: use Office Online embed if remote, or show instruction if local
+            if (source instanceof File) {
+                showPanelError(`Định dạng tệp .${ext} không hỗ trợ xem trước trực tiếp khi chưa lưu. Vui lòng sử dụng tệp dạng .docx, .pdf hoặc hình ảnh.`);
+            } else {
+                loadOfficeAppsFallback(source);
+            }
+        }
+        else if (ext === 'txt') {
+            // Text file
+            if (source instanceof File) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const text = e.target.result;
+                    panelBody.innerHTML = `
+                        <div class="w-full overflow-y-auto max-h-[70vh] py-4">
+                            <div class="docx-paper docx-preview-content">
+                                <pre class="whitespace-pre-wrap font-mono text-xs leading-relaxed">${escapeHtml(text)}</pre>
+                            </div>
+                        </div>
+                    `;
+                };
+                reader.readAsText(source);
+            } else {
+                fetch(source)
+                    .then(res => res.text())
+                    .then(text => {
+                        panelBody.innerHTML = `
+                            <div class="w-full overflow-y-auto max-h-[70vh] py-4">
+                                <div class="docx-paper docx-preview-content">
+                                    <pre class="whitespace-pre-wrap font-mono text-xs leading-relaxed">${escapeHtml(text)}</pre>
+                                </div>
+                            </div>
+                        `;
+                    })
+                    .catch(() => showPanelError('Không thể tải tệp văn bản này.'));
+            }
+        }
+        else {
+            showPanelError(`Định dạng .${ext} chưa được hỗ trợ xem trước trực tiếp.`);
+        }
+    }
+
+    function loadOfficeAppsFallback(fileUrl) {
+        if (!panelBody) return;
+        // Office Online requires an absolute URL.
+        let absoluteUrl = fileUrl;
+        if (!fileUrl.startsWith('http')) {
+            absoluteUrl = window.location.origin + fileUrl;
+        }
+        const encodedUrl = encodeURIComponent(absoluteUrl);
+        panelBody.innerHTML = `
+            <iframe src="https://view.officeapps.live.com/op/embed.aspx?src=${encodedUrl}" class="w-full h-[70vh] border border-slate-200/60 rounded-xl bg-white shadow-sm" title="Office Apps Preview"></iframe>
+        `;
+    }
+
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Bind original file preview button
+    if (btnViewFile) {
+        btnViewFile.addEventListener('click', () => {
+            if (!window.originalDocInfo || !window.originalDocInfo.viewUrl) {
+                alert('Tài liệu hiện tại chưa được lưu tệp tin.');
+                return;
+            }
+
+            const info = window.originalDocInfo;
+            // Resolve fileUrl correctly taking contextPath into account
+            let fileUrl = info.viewUrl;
+            if (fileUrl && !fileUrl.startsWith('http')) {
+                // If it doesn't already start with the contextPath, prepend it
+                const context = info.contextPath || '';
+                if (context && !fileUrl.startsWith(context)) {
+                    fileUrl = context + fileUrl;
+                }
+            }
+
+            renderPreview(info.fileName || 'Tài liệu gốc', info.fileExtension || 'docx', fileUrl);
+        });
+    }
+
+    // Bind newly selected local file preview button
+    if (btnViewNewFile) {
+        btnViewNewFile.addEventListener('click', () => {
+            if (!fileInput || fileInput.files.length === 0) {
+                alert('Vui lòng chọn tệp tin trước.');
+                return;
+            }
+            const file = fileInput.files[0];
+            const ext = getExtension(file.name);
+            renderPreview(file.name, ext, file);
+        });
+    }
+
     // Initialize preview on page load
     updateLivePreview();
 
