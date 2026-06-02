@@ -298,9 +298,15 @@
                                             </c:if>
                                         </div>
                                     </div>
-                                    <button type="button" id="btnReplaceFile" class="text-sm font-medium px-3 py-1.5 bg-blue-50 text-[#0555dd] rounded hover:bg-blue-100 transition-colors">
-                                        Thay thế tệp khác
-                                    </button>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" id="btnViewFile" class="text-sm font-medium px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded hover:bg-emerald-100 transition-colors flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-[18px]">visibility</span>
+                                            Xem nội dung file
+                                        </button>
+                                        <button type="button" id="btnReplaceFile" class="text-sm font-medium px-3 py-1.5 bg-blue-50 text-[#0555dd] rounded hover:bg-blue-100 transition-colors">
+                                            Thay thế tệp khác
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -320,9 +326,15 @@
                                             <p id="newFileMetaDisplay" class="text-xs text-slate-500">0 MB</p>
                                         </div>
                                     </div>
-                                    <button id="removeFile" type="button" class="text-slate-400 hover:text-red-500 transition-colors" title="Xóa file">
-                                        <span class="material-symbols-outlined">close</span>
-                                    </button>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" id="btnViewNewFile" class="text-xs font-semibold px-2.5 py-1.5 bg-emerald-50 text-emerald-700 rounded hover:bg-emerald-100 transition-colors flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-[16px]">visibility</span>
+                                            Xem nội dung
+                                        </button>
+                                        <button id="removeFile" type="button" class="text-slate-400 hover:text-red-500 transition-colors" title="Xóa file">
+                                            <span class="material-symbols-outlined">close</span>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="flex items-center justify-between mt-2">
                                     <p class="text-xs text-slate-500"><span class="text-orange-500 font-medium">Lưu ý:</span> Tệp mới sẽ ghi đè lên tệp cũ sau khi lưu.</p>
@@ -493,6 +505,94 @@
         </div>
         <div id="progressText" class="text-xs font-semibold text-slate-700 mb-6">0%</div>
         <button type="button" id="cancelUpload" class="px-5 py-2 rounded-lg border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50 transition-colors w-full">Hủy tải lên</button>
+    </div>
+</div>
+
+<!-- Tích hợp thư viện Mammoth.js để phân tích cú pháp DOCX phía client (UC15.1.5) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+<!-- Cấu hình siêu dữ liệu tệp gốc từ phía Server -->
+<script>
+    window.originalDocInfo = {
+        id: "${document.id}",
+        fileName: "${document.fileName}",
+        fileExtension: "${document.fileExtension}",
+        fileSize: "${document.fileSize}",
+        viewUrl: "${document.viewUrl}",
+        contextPath: "${pageContext.request.contextPath}"
+    };
+</script>
+
+<!-- CSS đặc thù cho việc hiển thị tệp DOCX theo dạng trang văn bản A4 giả lập (UC15.1.5) -->
+<style>
+    .docx-paper {
+        background-color: #ffffff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 2.5rem 3rem;
+        width: 100%;
+        max-width: 820px;
+        min-height: 100%;
+        margin: 0 auto;
+        color: #1e293b;
+        font-family: 'Inter', system-ui, sans-serif;
+        line-height: 1.65;
+        word-break: break-word;
+    }
+    .docx-paper h1, .docx-paper h2, .docx-paper h3, .docx-paper h4 {
+        color: #0f172a;
+        font-weight: 700;
+        margin-top: 1.5em;
+        margin-bottom: 0.6em;
+        font-family: 'Manrope', sans-serif;
+    }
+    .docx-paper h1 { font-size: 1.8rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.4rem; margin-top: 0; }
+    .docx-paper h2 { font-size: 1.45rem; }
+    .docx-paper h3 { font-size: 1.2rem; }
+    .docx-paper p { margin-bottom: 1.2rem; }
+    .docx-paper ul, .docx-paper ol { padding-left: 1.5rem; margin-bottom: 1.2rem; }
+    .docx-paper ul { list-style-type: disc; }
+    .docx-paper ol { list-style-type: decimal; }
+    .docx-paper li { margin-bottom: 0.4rem; }
+    .docx-paper table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+    .docx-paper th, .docx-paper td { border: 1px solid #cbd5e1; padding: 0.75rem; text-align: left; }
+    .docx-paper th { background-color: #f1f5f9; font-weight: 600; }
+    .docx-paper img { max-width: 100%; height: auto; border-radius: 6px; margin: 1rem 0; }
+    
+    /* Animation helper classes */
+    #filePreviewPanel.modal-active {
+        opacity: 1 !important;
+    }
+    #filePreviewPanel.modal-active #previewModalContent {
+        transform: scale(1) !important;
+    }
+</style>
+
+<!-- Document Preview Panel Modal (UC15.1.5) -->
+<div id="filePreviewPanel" class="fixed inset-0 z-[150] hidden items-center justify-center bg-slate-900/60 backdrop-blur-md transition-all duration-300 opacity-0">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden mx-4 transform scale-95 transition-all duration-300" id="previewModalContent">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-[#0555dd] text-2xl" id="panelFileIcon">description</span>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-base font-bold text-slate-800 truncate max-w-[300px] md:max-w-[450px]" id="panelFileName">Xem trước nội dung tài liệu</h2>
+                        <span class="bg-[#0555dd]/10 text-[#0555dd] text-[10px] font-bold px-2 py-0.5 rounded-md uppercase" id="panelFileExtBadge">DOCX</span>
+                    </div>
+                    <p class="text-xs text-slate-500" id="panelFileType">Chi tiết nội dung tệp</p>
+                </div>
+            </div>
+            <button type="button" id="btnClosePreviewPanel" class="w-9 h-9 rounded-full bg-slate-200/60 flex items-center justify-center text-slate-600 hover:bg-red-50 hover:text-red-500 transition-all">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="flex-grow p-6 overflow-y-auto bg-slate-100 flex items-center justify-center relative min-h-[300px]" id="panelBody">
+            <!-- Dynamic Content loaded dynamically -->
+        </div>
     </div>
 </div>
 
