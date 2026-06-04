@@ -74,86 +74,107 @@ public class UploadDocumentServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
-        response.setContentType("text/html; charset=UTF-8");
+        response.setContentType("application/json; charset=UTF-8");
         try {
             HttpSession session = request.getSession();
             User authUser = (User) session.getAttribute("authUser");
             if (authUser == null) {
-                response.sendRedirect(request.getContextPath() + "/login");
+                sendJsonError(response, "Vui lòng đăng nhập lại.");
                 return;
             }
-            String title = trim(request.getParameter("title"));
-            String category = trim(request.getParameter("category"));
-            String description = trim(request.getParameter("description"));
-            String secureUrl = trim(request.getParameter("secureUrl"));
+
+            // Lấy thông tin về Chunk hiện tại từ JavaScript truyền lên
+            String chunkIndexStr = request.getParameter("chunkIndex");
+            if (chunkIndexStr == null) {
+                sendJsonError(response, "Yêu cầu không hợp lệ. Lỗi Chunked Upload.");
+                return;
+            }
+
+            int chunkIndex = Integer.parseInt(chunkIndexStr);
+            int totalChunks = Integer.parseInt(request.getParameter("totalChunks"));
+            String fileId = trim(request.getParameter("fileId"));
             String originalFileName = trim(request.getParameter("fileName"));
-            long fileSize = Long.parseLong(trim(request.getParameter("fileSize")));
-            String extension = trim(request.getParameter("extension"));
+            Part fileChunk = request.getPart("fileChunk");
 
-            if (secureUrl.isEmpty() || originalFileName.isEmpty()) {
-                forwardError(request, response, "Lỗi: Không nhận được thông tin file từ trình duyệt.");
-                return;
+            // Tạo thư mục tạm trên Server (nếu chưa có)
+            String uploadDirPath = getServletContext().getRealPath("/document/uploads");
+            java.io.File uploadDir = new java.io.File(uploadDirPath);
+            if (!uploadDir.exists()) uploadDir.mkdirs();
+
+            // Lắp ráp file: Nối chunk mới vào đuôi file tạm (.part)
+            java.io.File tempFile = new java.io.File(uploadDir, fileId + ".part");
+            try (java.io.InputStream is = fileChunk.getInputStream();
+                 java.io.FileOutputStream fos = new java.io.FileOutputStream(tempFile, true)) {
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = is.read(buffer)) != -1) {
+                    fos.write(buffer, 0, bytesRead);
+                }
             }
 
-            // ── Kiểm tra an toàn tệp trước khi lưu vào CSDL ────────────────────
-            try {
-                if (secureUrl.startsWith("http")) {
-                    java.net.URL url = new java.net.URL(secureUrl);
-                    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("GET");
-                    conn.setConnectTimeout(5000);
-                    conn.setReadTimeout(5000);
-                    conn.connect();
-                    if (conn.getResponseCode() == 200) {
-                        try (java.io.InputStream inStream = conn.getInputStream()) {
-                            storage.checkFileSafety(inStream, originalFileName, extension);
-                        }
+            // Nếu đây là chunk cuối cùng -> Xử lý lưu DB và kiểm tra bảo mật
+            if (chunkIndex == totalChunks - 1) {
+                String title = trim(request.getParameter("title"));
+                String category = trim(request.getParameter("category"));
+                String description = trim(request.getParameter("description"));
+                long fileSize = Long.parseLong(trim(request.getParameter("fileSize")));
+                String extension = trim(request.getParameter("extension"));
+
+                // Đổi tên file: bỏ đuôi .part đi thành file hoàn chỉnh
+                java.io.File finalFile = new java.io.File(uploadDir, fileId);
+                tempFile.renameTo(finalFile);
+
+                // ── Kiểm tra an toàn tệp trước khi lưu vào CSDL ────────────────────
+                try (java.io.InputStream checkStream = new java.io.FileInputStream(finalFile)) {
+                    storage.checkFileSafety(checkStream, originalFileName, extension);
+                } catch (FileStorage.DangerousFileException e) {
+                    finalFile.delete(); // Xóa ngay file nếu phát hiện nguy hiểm
+                    DMS dms = new DMS();
+                    dms.writeSecurityLog(0, authUser.getId(), "Upload blocked: " + e.getMessage(), new Date().toString(), request.getRemoteAddr());
+                    sendJsonError(response, "Tệp bị từ chối: nội dung không an toàn hoặc định dạng không hợp lệ.");
+                    return;
+                } catch (Exception e) {
+                    finalFile.delete();
+                    e.printStackTrace();
+                    sendJsonError(response, "Lỗi kiểm tra an toàn tệp: " + e.getMessage());
+                    return;
+                }
+
+                Document doc = new Document();
+                doc.setTitle(title);
+                doc.setDescription(description);
+                // Lưu đường dẫn cục bộ trên Server
+                doc.setFilePath("/document/uploads/" + fileId);
+                doc.setFileName(originalFileName);
+                doc.setFileSize(fileSize);
+                doc.setFileType("application/" + extension);
+                doc.setFileExtension(extension);
+                doc.setUserId(authUser.getId());
+
+                Integer resolvedCategoryId = null;
+                if (category != null && !category.isEmpty()) {
+                    if (category.matches("\\d+")) {
+                        resolvedCategoryId = Integer.parseInt(category);
                     } else {
-                        sendJsonError(response, "Lỗi: Không thể truy cập tệp đã tải lên để kiểm tra an toàn.");
-                        return;
+                        resolvedCategoryId = findOrCreateCategoryId(category);
                     }
                 }
-            } catch (FileStorage.DangerousFileException e) {
-                DMS dms = new DMS();
-                dms.writeSecurityLog(0, authUser.getId(), "Upload blocked: " + e.getMessage(), new Date().toString(), request.getRemoteAddr());
-                sendJsonError(response, "Tệp bị từ chối: nội dung không an toàn hoặc định dạng không hợp lệ.");
-                return;
-            } catch (Exception e) {
-                e.printStackTrace();
-                sendJsonError(response, "Lỗi kiểm tra an toàn tệp: " + e.getMessage());
-                return;
-            }
+                doc.setCategoryId(resolvedCategoryId);
+                doc.setIsActive(0);
 
-            Document doc = new Document();
-            doc.setTitle(title);
-            doc.setDescription(description);
-            doc.setFilePath(secureUrl); 
-            doc.setFileName(originalFileName);
-            doc.setFileSize(fileSize);
-            doc.setFileType("application/" + extension);
-            doc.setFileExtension(extension);
-            doc.setUserId(authUser.getId());
-
-            Integer resolvedCategoryId = null;
-            if (category != null && !category.isEmpty()) {
-                if (category.matches("\\d+")) {
-                    resolvedCategoryId = Integer.parseInt(category);
+                // UC5.1.11: Hệ thống lưu dữ liệu vào database, hiển thị thông báo thành công và điều hướng người dùng về Trang cá nhân.
+                boolean saved = documentDAO.saveDocument(doc);
+                if (saved) {
+                    // UC5.1.11: Trả về trạng thái thành công cho trình duyệt
+                    response.setContentType("application/json; charset=UTF-8");
+                    response.getWriter().write("{\"status\":\"success\",\"id\":" + doc.getId() + "}");
                 } else {
-                    resolvedCategoryId = findOrCreateCategoryId(category);
+                    finalFile.delete(); // Xóa file rác trên server nếu việc lưu CSDL thất bại
+                    sendJsonError(response, "Lỗi khi lưu vào CSDL.");
                 }
-            }
-            doc.setCategoryId(resolvedCategoryId);
-            doc.setIsActive(0);
-            
-            // UC5.1.11: Hệ thống lưu dữ liệu vào database, hiển thị thông báo thành công và điều hướng người dùng về Trang cá nhân.
-            boolean saved = documentDAO.saveDocument(doc);
-            if (saved) {
-                // UC5.1.11: Trả về trạng thái thành công cho trình duyệt
-                response.setContentType("application/json; charset=UTF-8");
-                response.getWriter().write("{\"status\":\"success\",\"id\":" + doc.getId() + "}");
             } else {
-                // Lỗi ghi CSDL
-                sendJsonError(response, "Lỗi khi lưu vào CSDL.");
+                // Phản hồi thành công cho 1 chunk để Client (JS) gửi tiếp chunk tiếp theo
+                response.getWriter().write("{\"status\":\"chunk_success\"}");
             }
         } catch (Exception ex) {
             ex.printStackTrace();

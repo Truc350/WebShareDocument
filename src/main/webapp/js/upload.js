@@ -301,14 +301,14 @@
     /**
      * UC5.1.8: Hệ thống truyền tệp trực tiếp từ trình duyệt lên Supabase Storage; hiển thị tiến trình upload (progress bar).
      */
-    function uploadFile(formData) {
-        currentXhr = new XMLHttpRequest();
+    async function uploadFile(formData) {
         setError("");
         submitButton.innerHTML = '<span class="material-symbols-outlined rotating">sync</span> Đang chuẩn bị...';
         progressContainer.hidden = false;
 
         let isCancelled = false;
         let isConfirmingCancel = false;
+        let abortController = new AbortController();
 
         const file = fileInput.files[0];
         const progressBytesEl = document.querySelector("#progressBytes");
@@ -371,87 +371,75 @@
             });
         };
 
-        // Cấu hình Supabase
-        const supabaseUrl = "https://tlbznphszzpondlykmst.supabase.co";
-        const supabaseKey = "sb_publishable_3IaZByYoSWSHakJqFMOifQ_ud2mNCpg";
-        const bucketName = "documents";
+        // --- BẮT ĐẦU CHIA NHỎ VÀ TẢI LÊN ---
+        const CHUNK_SIZE = 5 * 1024 * 1024; // Cắt mỗi phần 5MB
+        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+        const fileId = Date.now() + "_" + file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+        let uploadedBytes = 0;
 
-        // Tạo tên file an toàn
-        const safeFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-        const filePath = `uploads/${Date.now()}_${safeFileName}`;
-        const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucketName}/${filePath}`;
+        for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+            if (isCancelled) break;
 
-        currentXhr.upload.addEventListener("progress", function (e) {
-            if (e.lengthComputable && !isCancelled) {
-                // Tính % cho UI: 90% dành cho việc upload lên supabase
-                const realPercent = (e.loaded / e.total) * 100;
-                const uiPercent = realPercent * 0.9;
+            const start = chunkIndex * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, file.size);
+            const chunk = file.slice(start, end);
 
-                progressBarFill.style.width = uiPercent.toFixed(1) + "%";
-                progressText.textContent = Math.round(uiPercent) + "%";
+            const chunkFormData = new FormData();
+            chunkFormData.append("fileChunk", chunk);
+            chunkFormData.append("chunkIndex", chunkIndex);
+            chunkFormData.append("totalChunks", totalChunks);
+            chunkFormData.append("fileId", fileId);
+            chunkFormData.append("fileName", file.name);
 
-                if (progressBytesEl) {
-                    progressBytesEl.textContent = formatSize(e.loaded) + " / " + formatSize(e.total);
-                }
+            // UC5.1.10: Gửi Metadata (Tiêu đề, danh mục,...) về Server Servlet cùng với chunk cuối cùng
+            if (chunkIndex === totalChunks - 1) {
+                chunkFormData.append("title", form.title.value);
+                chunkFormData.append("category", form.category.value);
+                chunkFormData.append("subject", form.subject.value);
+                chunkFormData.append("description", form.description.value);
+                chunkFormData.append("fileSize", file.size);
+                chunkFormData.append("extension", getExtension(file.name));
             }
-        });
 
-        currentXhr.addEventListener("load", function () {
-            if (isCancelled) return;
-            if (currentXhr.status >= 200 && currentXhr.status < 300) {
-                // UC5.1.9: Hệ thống nhận Public URL từ Supabase Storage
-                progressBarFill.style.width = "90%";
-                progressText.textContent = "90%";
-                progressStatus.textContent = "Đang lưu dữ liệu vào hệ thống...";
+            try {
+                progressStatus.textContent = `Đang gửi phần ${chunkIndex + 1}/${totalChunks}...`;
 
-                const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
-
-                // UC5.1.10: Gửi URL và Metadata về Server Servlet
-                const serverData = new FormData();
-                serverData.append("title", form.title.value);
-                serverData.append("category", form.category.value);
-                serverData.append("subject", form.subject.value);
-                serverData.append("description", form.description.value);
-                serverData.append("secureUrl", publicUrl);
-                serverData.append("fileName", file.name);
-                serverData.append("fileSize", file.size);
-                serverData.append("extension", getExtension(file.name));
-
-                fetch(form.action, {
+                // Fetch API gửi chunk trực tiếp về Server Java thay vì Supabase
+                const response = await fetch(form.action, {
                     method: "POST",
-                    body: serverData
-                })
-                    .then(r => r.json())
-                    .then(serverResult => {
-                        // UC5.1.10: Hệ thống nhận URL và Metadata sau khi backend lưu DB thành công
-                        if (isCancelled) return;
-                        progressBarFill.style.width = "100%";
-                        progressText.textContent = "100%";
-                        setTimeout(() => finalizeUploadUI(serverResult), 300); // Đợi 0.
-                    })
-                    .catch(e => {
-                        finalizeUploadUI({status: "error", message: "Lỗi lưu DB: " +  e.message});
-                    });
-            } else {
-                let errorMsg = "Supabase error";
-                try {
-                    const result = JSON.parse(currentXhr.responseText);
-                    errorMsg += ": " + (result.message || result.error || currentXhr.status);
-                } catch (e) {}
-                finalizeUploadUI({status: "error", message: errorMsg});
+                    body: chunkFormData,
+                    signal: abortController.signal // Gắn bộ điều khiển hủy vào đây
+                });
+
+                const result = await response.json();
+                if (result.status === "error") throw new Error(result.message);
+
+                uploadedBytes += chunk.size;
+                const percent = (uploadedBytes / file.size) * 100;
+
+                progressBarFill.style.width = percent.toFixed(1) + "%";
+                progressText.textContent = Math.round(percent) + "%";
+                if (progressBytesEl) {
+                    progressBytesEl.textContent = formatSize(uploadedBytes) + " / " + formatSize(file.size);
+                }
+
+                // UC5.1.9: Hệ thống nhận trạng thái phản hồi từ Server (Đã nhận xong toàn bộ chunk)
+                if (chunkIndex === totalChunks - 1) {
+                    progressStatus.textContent = "Hoàn tất! Đang lưu dữ liệu vào hệ thống...";
+                    finalizeUploadUI(result);
+                }
+            } catch (err) {
+                // Nếu người dùng bấm Hủy, fetch sẽ văng lỗi có tên là 'AbortError'
+                if (err.name === 'AbortError') {
+                    console.log("Đã hủy kết nối fetch.");
+                    break;
+                }
+
+                console.error("Lỗi Upload Chunk:", err);
+                finalizeUploadUI({status: "error", message: "Lỗi kết nối mạng khi tải lên Server: " + err.message});
+                break;
             }
-        });
-
-        currentXhr.addEventListener("error", function () {
-            if (isCancelled) return;
-            finalizeUploadUI({status: "error", message: "Lỗi kết nối mạng khi tải lên Supabase."});
-        });
-
-        currentXhr.open("POST", uploadUrl, true);
-        currentXhr.setRequestHeader("Authorization", "Bearer " + supabaseKey);
-        currentXhr.setRequestHeader("apikey", supabaseKey);
-        currentXhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
-        currentXhr.send(file);
+        }
     }
 
     function handleUploadError(message) {
