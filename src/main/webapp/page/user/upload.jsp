@@ -63,8 +63,8 @@
                     <small>Hỗ trợ: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT, PNG, JPG · Tối đa 50MB</small>
                 </label>
                 <div class="file-preview" id="filePreview" hidden>
-                    <img id="fileThumbnail" src="" alt="Preview" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; display: none;">
-                    <span class="material-symbols-outlined" id="fileIcon">draft</span>
+                    <img id="fileThumbnail" src="" alt="Preview" style="width: 48px; height: 48px; object-fit: cover; border-radius: 6px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <span class="material-symbols-outlined" id="fileIcon" style="font-size: 32px;">draft</span>
                     <div>
                         <strong id="fileName">Tên file</strong>
                         <p id="fileMeta">0 MB</p>
@@ -170,6 +170,6 @@
     </div>
 </div>
 <script src="${pageContext.request.contextPath}/js/home.js"></script>
-<script src="${pageContext.request.contextPath}/js/upload.js?v=2"></script>
+<script src="${pageContext.request.contextPath}/js/upload.js?v=<%= System.currentTimeMillis() %>"></script>
 </body>
 </html>
