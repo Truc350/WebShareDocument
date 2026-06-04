@@ -162,25 +162,49 @@
         fileName.textContent = file.name;
         fileMeta.textContent = formatSize(file.size) + " · " + getExtension(file.name).toUpperCase();
 
-        const ext = getExtension(fileName).toLowerCase();
+        const ext = getExtension(file.name).toLowerCase();
         fileMeta.textContent = formatSize(file.size) + " . " + ext.toUpperCase();
 
         // Hiển thị Thumbnail nếu là ảnh
         const fileThumbnail = document.querySelector("#fileThumbnail");
         const fileIcon = document.querySelector("#fileIcon");
 
-        if (file.type.startsWith("image/")) {
-            fileThumbnail.src = URL.createObjectURL(file);
-            fileThumbnail.style.display = "block";
-            fileIcon.style.display = "none";
-        } else {
-            fileThumbnail.style.display = "none";
-            fileIcon.style.display = "block";
+        if (fileThumbnail && fileIcon) {
+            if (fileThumbnail.src && fileThumbnail.src.startsWith('blob:')) {
+                URL.revokeObjectURL(fileThumbnail.src);
+            }
 
-            if (ext === 'pdf') fileIcon.textContent = "picture_as_pdf";
-            else if (['doc', 'docx'].includes(ext)) fileIcon.textContent = "description";
-            else if (['xls', 'xlsx'].includes(ext)) fileIcon.textContent = "table_chart";
-            else fileIcon.textContent = "draft";
+            if (file.type.startsWith("image/")) {
+                // Nếu là ảnh thì tạo URl để hiển thị thumbnail
+                fileThumbnail.src = URL.createObjectURL(file);
+                fileThumbnail.style.display = "block";
+                fileIcon.style.display = "none";
+            } else {
+                // Nếu không phải ảnh thì tắt thumbnail, bật icon
+                fileThumbnail.style.display = "none";
+                fileIcon.style.display = "block";
+
+                if (ext === 'pdf') {
+                    fileIcon.textContent = "picture_as_pdf";
+                    fileIcon.style.color = "#dc2626";
+                }
+                else if (['doc', 'docx']. includes(ext)) {
+                    fileIcon.textContent = "description";
+                    fileIcon.style.color = "#2563eb";
+                }
+                else if (['xls', 'xlsx'].includes(ext)) {
+                    fileIcon.textContent = "table_chart";
+                    fileIcon.style.color = "#16a34a";
+                }
+                else if (['ppt', 'pptx'].includes(ext)) {
+                    fileIcon.textContent = "slideshow";
+                    fileIcon.style.color = "#ea580c";
+                }
+                else {
+                    fileIcon.textContent = "draft";
+                    fileIcon.style.color = "#0555dd";
+                }
+            }
         }
     }
 
@@ -221,6 +245,13 @@
             fileInput.value = "";
             preview.hidden = true;
             setError("");
+
+            // Dọn dẹp URL ảnh nếu người dùng xóa file
+            const fileThumbnail = document.querySelector("#fileThumbnail");
+            if (fileThumbnail && fileThumbnail.src.startsWith('blob:')) {
+                URL.revokeObjectURL(fileThumbnail.src);
+                fileThumbnail.src = "";
+            }
         });
     }
     /**
