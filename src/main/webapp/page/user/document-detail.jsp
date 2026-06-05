@@ -914,7 +914,7 @@
             if (elCancelBtn) elCancelBtn.disabled = false;
         }
 
-        // [UC13.1.6] Cập nhật thanh tiến trình theo từng chunk nhận được
+        // [UC13.1.7] Cập nhật thanh tiến trình theo từng chunk nhận được
         // → Gọi trong pump() mỗi khi reader.read() trả về chunk mới
         // → File: document-detail.jsp (JS)
         function setProgress(received, total) {
@@ -937,7 +937,7 @@
             return bytes + ' B';
         }
 
-        // [UC13.1.2 / UC13.2.x] Disable/enable nút "Tải xuống ngay" khi đang tải
+        // [UC13.1.3 / UC13.2.x] Disable/enable nút "Tải xuống ngay" khi đang tải
         // → Ngăn người dùng bấm nhiều lần (chống duplicate request)
         // → File: document-detail.jsp (JS)
         function setDownloadBtnsDisabled(disabled) {
@@ -1006,7 +1006,7 @@
 
             var finalFileName = '';
 
-            // [UC13.1.2] Chuẩn bị UI trước khi gửi request
+            // [UC13.1.3] Chuẩn bị UI trước khi gửi request
             resetProgressUI();
             setDownloadBtnsDisabled(true);
             showOverlay('dlOverlayLoading');
@@ -1022,8 +1022,7 @@
                 customNameParam = '&customName=' + encodeURIComponent(inputFileName.value.trim());
             }
 
-            // [UC13.1.3] Gửi GET /download?id= lên DownloadDocumentServlet
-            // → signal liên kết với AbortController để có thể hủy
+            // Gửi GET /download?id= lên DownloadDocumentServlet để khởi chạy UC13.1.4
             fetch(_downloadUrl + _docId + customNameParam, { method: 'GET', credentials: 'same-origin', signal: signal })
                 .then(function (res) {
                     // [UC13.2.2 / UC13.2.3] HTTP 403/404 → ném Error → xuống .catch()
@@ -1042,7 +1041,7 @@
                         }
                     }
 
-                    // [UC13.1.6] Đọc Content-Length để tính % tiến trình
+                    // [UC13.1.7] Đọc Content-Length để tính % tiến trình
                     // → Nếu server không trả → dùng animation indeterminate
                     var contentLength = res.headers.get('Content-Length');
                     var total = contentLength ? parseInt(contentLength, 10) : 0;
@@ -1052,10 +1051,10 @@
 
                     if (!total && elFill) elFill.classList.add('indeterminate');
 
-                    // [UC13.1.6] Lấy ReadableStream reader để đọc từng chunk
+                    // [UC13.1.7] Lấy ReadableStream reader để đọc từng chunk
                     var reader = res.body.getReader();
 
-                    // [UC13.1.6] pump() – đệ quy đọc từng Uint8Array chunk
+                    // [UC13.1.7] pump() – đệ quy đọc từng Uint8Array chunk
                     // → Mỗi chunk: cộng dồn received, gọi setProgress()
                     // → Khi AbortController.abort() → reader.read() ném AbortError
                     function pump() {
@@ -1064,13 +1063,13 @@
                             var chunk = result.value;   // Uint8Array
                             chunks.push(chunk);
                             received += chunk.length;
-                            setProgress(received, total);  // [UC13.1.6] cập nhật thanh %
+                            setProgress(received, total);  // [UC13.1.7] cập nhật thanh %
                             return pump();
                         });
                     }
 
                     return pump().then(function () {
-                        // // UC13.1.7: Tệp được tải xuống hoàn tất. Trình duyệt ghép các chunks thành Blob...
+                        // // UC13.1.8: Tệp được tải xuống hoàn tất. Trình duyệt ghép các chunks thành Blob...
                         return new Blob(chunks, { type: contentType });
                     });
                 })
@@ -1097,10 +1096,10 @@
                     // onDownloadDone()
                     onDownloadDone();
                     
-                    // // Giao diện hiển thị thông báo thành công, tự động đóng sau 4 giây.
+                    // // UC13.1.9: Giao diện hiển thị thông báo thành công, tự động đóng sau 4 giây.
                     showOverlay('dlOverlaySuccess');
 
-                    // [UC13.1.8] Tự động đóng modal sau 4 giây
+                    // [UC13.1.9] Tự động đóng modal sau 4 giây
                     _successTimer = setTimeout(function () {
                         var el = document.getElementById('dlOverlaySuccess');
                         if (el) el.classList.remove('active');

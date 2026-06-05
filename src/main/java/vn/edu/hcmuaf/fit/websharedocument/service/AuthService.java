@@ -3,11 +3,11 @@ package vn.edu.hcmuaf.fit.websharedocument.service;
 public class AuthService {
 
     /**
-     * [UC13.1.3] Xác minh phiên đăng nhập và quyền tải xuống của người dùng.
+     * [UC13.1.4] Xác minh phiên đăng nhập và quyền tải xuống của người dùng.
      * → Gọi bởi: DownloadDocumentServlet.clickDownload()
      * → userId = null nếu chưa đăng nhập (session không có authUser)
      * → return false → UC13.2.2 (permission denied)
-     * → return true  → tiếp tục UC13.1.4 (fetchFile)
+     * → return true  → tiếp tục UC13.1.5 (fetchFile)
      * → File: AuthService.java
      */
     public boolean verifySessionAndPermission(Integer userId, int documentId) {
@@ -28,7 +28,7 @@ public class AuthService {
     }
 
     /**
-     * [UC13.1.3] Xác nhận quyền hợp lệ, tiếp tục luồng bình thường.
+     * [UC13.1.4] Xác nhận quyền hợp lệ, tiếp tục luồng bình thường.
      * → Gọi bởi: DownloadDocumentServlet.clickDownload() khi verifySessionAndPermission() = true
      * → File: AuthService.java
      */

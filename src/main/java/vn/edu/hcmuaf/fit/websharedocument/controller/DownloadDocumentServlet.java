@@ -17,24 +17,28 @@ import java.util.Date;
 /**
  * DownloadDocumentServlet – UC-13: Tải Tài Liệu Về Thiết Bị
  *
- * URL pattern : GET /download?id={documentId}
+ * URL pattern : GET /download?id={documentId}&customName={customName}
  * Trigger     : JS fetch() trong document-detail.jsp gọi sau khi người dùng
- *               nhấn "Xác nhận tải" tại modal xác nhận (UC13.1.2 → UC13.1.3)
+ *               nhập tên tùy chỉnh và nhấn "Xác nhận tải" (UC13.1.2 → UC13.1.3)
  *
  * Luồng bình thường:
- *   UC13.1.3  → verifySessionAndPermission()  [AuthService]
- *   UC13.1.4  → fetchFile()                   [FileStorage → DocumentDAO]
- *   UC13.1.4b → checkFileSafety()             [FileStorage – kiểm tra magic bytes + extension]
- *   UC13.1.5  → generateSignedUrl()            [DMS]
- *   UC13.1.6  → showSaveDialog() + stream      [response headers + OutputStream]
- *   UC13.1.8  → writeAuditLog()               [DMS → DocumentDAO.incrementDownloadCount]
+ *   UC13.1.2  → Giao diện hiển thị modal, pre-fill tên không kèm extension
+ *   UC13.1.3  → Người dùng chỉnh sửa tên mới và nhấn xác nhận tải
+ *   UC13.1.4  → verifySessionAndPermission() [AuthService]
+ *   UC13.1.5  → checkFileSafety() (magic bytes + extension blacklist) [FileStorage]
+ *   UC13.1.6  → Nhận customName (UC13.2.6.4), tự động ghép đuôi gốc (UC13.2.6.5), tạo Signed URL [DMS], set response headers
+ *   UC13.1.7  → Stream tệp tin về trình duyệt & cập nhật % tiến trình
+ *   UC13.1.8  → Tệp tải hoàn tất, ghép Blob kích hoạt hộp thoại lưu
+ *   UC13.1.9  → writeAuditLog() + incrementDownloadCount() [DMS -> DocumentDAO] + hiển thị thông báo thành công
  *
  * Luồng thay thế / ngoại lệ:
- *   UC13.2.2  → Không có quyền            → HTTP 403
- *   UC13.2.3  → Tệp không tìm thấy        → HTTP 404 + writeErrorLog()
- *   UC13.2.4  → Hủy giữa chừng           → xử lý phía JS (AbortController)
- *   UC13.2.5  → IOException stream        → skipAuditLog()
- *   EX-02     → File nguy hiểm bị chặn   → HTTP 403 + writeSecurityLog()
+ *   UC13.2.1  → Hủy tại modal xác nhận
+ *   UC13.2.2  → Không có quyền tải tài liệu
+ *   UC13.2.3  → Tệp không tìm thấy hoặc lỗi Storage
+ *   UC13.2.4  → Hủy tải xuống giữa chừng (stream)
+ *   UC13.2.5  → Kết nối bị gián đoạn (IOException)
+ *   UC13.2.6  → Nhánh thay đổi tên tệp (1-5)
+ *   EX-02     → File nguy hiểm bị chặn (EX-02.1 -> EX-02.4)
  *
  * File: DownloadDocumentServlet.java
  */
@@ -78,13 +82,13 @@ public class DownloadDocumentServlet extends HttpServlet {
     }
 
     // ====================================================================
-    // [UC13.1.3 → UC13.1.6] Điều phối luồng chính
+    // [UC13.1.4 → UC13.1.7] Điều phối luồng chính
     // ====================================================================
 
     private void clickDownload(HttpServletRequest request, HttpServletResponse response,
                                Integer userId, int documentId, String customName) throws IOException {
 
-        // ── UC13.1.3: Kiểm tra quyền ─────────────────────────────────────
+        // ── UC13.1.4: Kiểm tra quyền ─────────────────────────────────────
         boolean hasPermission = auth.verifySessionAndPermission(userId, documentId);
 
         if (!hasPermission) {
@@ -101,19 +105,19 @@ public class DownloadDocumentServlet extends HttpServlet {
         auth.returnPermissionGranted(userId, documentId);
 
         try {
-            // ── UC13.1.4 + UC13.1.4b: Lấy file và kiểm tra an toàn ───────
-            // → fetchFile() gọi nội bộ checkFileSafety() trước khi trả FileData
+            // ── UC13.1.5: Lấy file và kiểm tra an toàn ──────────────────
+            // → fetchFile() gọi nội bộ checkFileSafety() (kiểm tra magic bytes + blacklist)
             // → throw DangerousFileException → EX-02 (bên dưới)
             // → throw FileNotFoundException  → UC13.2.3 (bên dưới)
             FileStorage.FileData fileData = storage.fetchFile(documentId);
 
             storage.returnFileData(fileData.getFileName(), fileData.getFileSize());
 
-            // ── UC13.1.5: Tạo Signed URL ──────────────────────────────────
+            // ── UC13.1.6: Tạo Signed URL & Xử lý tên tệp tùy chỉnh ───────
             String signedUrl = dms.generateSignedUrl(documentId, 900);
             dms.returnSignedUrl(signedUrl, "expiresAt_XYZ");
 
-            // [UC13.2.6.5] Hệ thống kiểm tra và tự động ghép nối đuôi tệp gốc vào tên mới
+            // [UC13.2.6.5] Servlet kiểm tra và tự động ghép nối đuôi tệp gốc vào tên mới
             String finalFileName = fileData.getFileName();
             if (customName != null && !customName.trim().isEmpty()) {
                 String trimmedCustom = customName.trim();
@@ -134,25 +138,23 @@ public class DownloadDocumentServlet extends HttpServlet {
             // Expose the Content-Disposition header
             response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
 
-            // ── UC13.1.6: Thiết lập HTTP Response headers ─────────────────
+            // Thiết lập HTTP Response headers (UC13.1.6)
             showSaveDialog(response, finalFileName, fileData.getFileSize(), signedUrl);
 
-            // ── UC13.1.6 → UC13.1.8: Stream file và ghi audit log ─────────
+            // ── UC13.1.7: Bắt đầu truyền dữ liệu dưới dạng stream ─────────
             confirmSave(request, response, documentId, userId, signedUrl, fileData, finalFileName);
 
         } catch (FileStorage.DangerousFileException e) {
-            // ── EX-02: File bị phát hiện là nguy hiểm ────────────────────
-            // Xảy ra khi: extension nằm trong danh sách đen
-            //             hoặc magic bytes không khớp với định dạng hợp lệ
+            // ── EX-02: File bị phát hiện là nguy hiểm (EX-02.1) ──────────
+            // Xảy ra khi: extension nằm trong danh sách đen hoặc magic bytes không khớp
 
-            // [EX-02 – Bước 1] Log sự kiện bảo mật nội bộ để đội kỹ thuật xử lý
+            // [EX-02.2] Log sự kiện bảo mật nội bộ để đội kỹ thuật xử lý
             dms.writeSecurityLog(documentId, userId, e.getMessage(), new Date().toString(), request.getRemoteAddr());
 
-            // [EX-02 – Bước 2] Trả HTTP 403 + thông báo cảnh báo rõ ràng cho người dùng
-            // → JS .catch() nhận lỗi → showErrorModal: "Tệp bị chặn vì lý do bảo mật"
+            // [EX-02.3] Trả HTTP 403 + thông báo cảnh báo rõ ràng cho người dùng
             showError(response, 403, "Tệp bị từ chối: nội dung không an toàn. Vui lòng liên hệ quản trị viên.");
 
-            // [EX-02 – Bước 3] Use case kết thúc – không ghi audit log tải thành công
+            // [EX-02.4] Kết thúc luồng – JS nhận lỗi và reset trạng thái tải
         } catch (FileStorage.FileNotFoundException e) {
             // ── UC13.2.3: Tệp không tìm thấy hoặc lỗi Storage ───────────
 
@@ -169,9 +171,8 @@ public class DownloadDocumentServlet extends HttpServlet {
             // [UC13.2.3.4] Use case kết thúc
         }
     }
-
     // ====================================================================
-    // [UC13.1.6 → UC13.1.8] Stream file & ghi audit log
+    // [UC13.1.7 → UC13.1.9] Stream file & ghi audit log
     // ====================================================================
 
     private void confirmSave(HttpServletRequest request, HttpServletResponse response,
@@ -189,8 +190,10 @@ public class DownloadDocumentServlet extends HttpServlet {
                 outStream.write(buffer, 0, bytesRead);
             }
 
+            // UC13.1.8: Tệp được tải xuống hoàn tất từ phía server
             onDownloadComplete(finalFileName, "Thiết bị của người dùng");
 
+            // UC13.1.9: Ghi audit log sự kiện tải xuống thành công & tăng lượt tải
             dms.writeAuditLog(documentId, userId, new Date().toString(), request.getRemoteAddr());
             dms.returnAuditConfirmed("LOG_" + System.currentTimeMillis());
 
@@ -223,11 +226,11 @@ public class DownloadDocumentServlet extends HttpServlet {
     }
 
     private void onDownloadComplete(String fileName, String savedPath) {
-        System.out.println("Servlet: UC13.1.7 onDownloadComplete(" + fileName + ", " + savedPath + ")");
+        System.out.println("Servlet: UC13.1.8 onDownloadComplete(" + fileName + ", " + savedPath + ")");
     }
 
     private void showSuccess(String msg) {
-        System.out.println("Servlet: UC13.1.8 showSuccess(\"" + msg + "\")");
+        System.out.println("Servlet: UC13.1.9 showSuccess(\"" + msg + "\")");
     }
 
     private void detectConnectionLost() {

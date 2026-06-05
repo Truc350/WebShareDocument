@@ -23,8 +23,8 @@ RUN sed -i 's/port="8005"/port="-1"/g' conf/server.xml
 # Copy file WAR đã được build từ Stage 1 sang Stage 2
 COPY --from=build /app/target/*.war webapps/ROOT.war
 
-# Mở port
+# Mở port (có thể không cần thiết nếu platform tự động set biến PORT)
 EXPOSE 8080
 
-# Chạy Tomcat
-CMD ["catalina.sh", "run"]
+# Thay đổi port 8080 mặc định thành biến môi trường PORT (Render, Heroku...) trước khi chạy Tomcat
+CMD sed -i -e "s/port=\"8080\"/port=\"${PORT:-8080}\"/g" conf/server.xml && catalina.sh run

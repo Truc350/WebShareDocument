@@ -38,30 +38,30 @@ public class DMS {
     }
 
     /**
-     * [UC13.1.5] Tạo Signed URL tạm thời để tải xuống (expiry = 900 giây).
+     * [UC13.1.6] Tạo Signed URL tạm thời để tải xuống (expiry = 900 giây).
      * → Gọi bởi: DownloadDocumentServlet.clickDownload() sau khi fetchFile() thành công
      */
     public String generateSignedUrl(int documentId, int expiry) {
         return "/download/signed?docId=" + documentId + "&token=temp_token";
     }
 
-    /** [UC13.1.5] Phản hồi Signed URL đã tạo. */
+    /** [UC13.1.6] Phản hồi Signed URL đã tạo. */
     public void returnSignedUrl(String url, String expiresAt) {
         System.out.println("DMS -->> UI: returnSignedUrl(" + url + ", " + expiresAt + ")");
     }
 
     /**
-     * [UC13.1.8] Ghi audit log sự kiện tải xuống thành công.
+     * [UC13.1.9] Ghi audit log sự kiện tải xuống thành công.
      * → Gọi bởi: DownloadDocumentServlet.confirmSave() sau khi stream thành công
      * → Gọi nội bộ: documentDAO.incrementDownloadCount(documentId)
      */
     public void writeAuditLog(int documentId, Integer userId, String timestamp, String ipAddress) {
         documentDAO.incrementDownloadCount(documentId);
         System.out.println("DMS: Audit Log - User: " + userId + " downloaded DocID: " + documentId
-                + " at " + timestamp + " from IP: " + ipAddress);
+                 + " at " + timestamp + " from IP: " + ipAddress);
     }
 
-    /** [UC13.1.8] Phản hồi xác nhận đã ghi audit log. */
+    /** [UC13.1.9] Phản hồi xác nhận đã ghi audit log. */
     public void returnAuditConfirmed(String logId) {
         System.out.println("DMS -->> UI: returnAuditConfirmed(" + logId + ")");
     }
