@@ -26,12 +26,10 @@ public class EditDocumentServlet extends HttpServlet {
     public void init() throws ServletException {
         storage = new FileStorage(getServletContext().getRealPath("/document/uploads"));
     }
-
     @Override
     protected void doGet(HttpServletRequest request,
                          HttpServletResponse response)
             throws ServletException, IOException {
-        
         // UC15.1.1: User truy cập trang chi tiết tài liệu của mình và nhấp nút “Chỉnh sửa” (Trigger doGet)
         HttpSession session = request.getSession();
 
