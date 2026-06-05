@@ -60,6 +60,11 @@
     <div class="flex items-center gap-4">
       <button class="rounded-full p-1 text-slate-500 transition-colors hover:bg-slate-50" type="button"><span class="material-symbols-outlined">notifications</span></button>
       <button class="rounded-full p-1 text-slate-500 transition-colors hover:bg-slate-50" type="button"><span class="material-symbols-outlined">help</span></button>
+      <a href="${pageContext.request.contextPath}/logout"
+         class="p-1 text-red-600 hover:bg-red-50 rounded-full transition-colors flex items-center justify-center cursor-pointer"
+         title="Đăng xuất">
+        <span class="material-symbols-outlined">logout</span>
+      </a>
       <div class="mx-1 h-8 w-px bg-slate-200"></div>
       <div class="flex cursor-pointer items-center gap-3">
         <div class="text-right">
