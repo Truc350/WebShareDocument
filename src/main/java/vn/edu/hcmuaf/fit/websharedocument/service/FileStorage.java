@@ -76,17 +76,17 @@ public class FileStorage {
     }
 
     /**
-     * [UC13.1.4] Lấy dữ liệu tệp theo documentId từ kho lưu trữ.
+     * [UC13.1.5] Lấy dữ liệu tệp theo documentId từ kho lưu trữ.
      * → Gọi bởi: DownloadDocumentServlet.clickDownload() sau khi quyền hợp lệ
      * → Bước 1: documentDAO.getDocumentById(documentId) → lấy Document từ DB
      * → Bước 2a: filePath bắt đầu bằng "http" → Remote file (Supabase/Cloudinary) → HttpURLConnection
      * → Bước 2b: filePath cục bộ → new File(uploadDir, filePath) → FileInputStream
-     * → [UC13.1.4b] checkFileSafety() → phát hiện file nguy hiểm → throw DangerousFileException → EX-02
+     * → [UC13.1.5] checkFileSafety() → phát hiện file nguy hiểm → throw DangerousFileException → EX-02
      * → throw FileNotFoundException → UC13.2.3 (tệp không tìm thấy)
-     * → return FileData → tiếp tục UC13.1.5 (generateSignedUrl)
+     * → return FileData → tiếp tục UC13.1.6 (generateSignedUrl & customName)
      */
     public FileData fetchFile(int documentId) throws FileNotFoundException, DangerousFileException {
-        Document document = documentDAO.getDocumentById(documentId);  // [UC13.1.4 → DocumentDAO]
+        Document document = documentDAO.getDocumentById(documentId);  // [UC13.1.5 → DocumentDAO]
 
         if (document == null) {
             throw new FileNotFoundException("Document DB record not found");  // [UC13.2.3.1]
@@ -95,7 +95,7 @@ public class FileStorage {
         String path = document.getFilePath();
         try {
             if (path != null && path.startsWith("http")) {
-                // [UC13.1.4] Tệp lưu trên Remote (Supabase / Cloudinary)
+                // [UC13.1.5] Tệp lưu trên Remote (Supabase / Cloudinary)
                 URL url = new URL(path);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
@@ -110,7 +110,7 @@ public class FileStorage {
                 java.io.BufferedInputStream bis = new java.io.BufferedInputStream(inputStream);
                 bis.mark(1024);
 
-                // ── [UC13.1.4b] Kiểm tra an toàn tệp ────────────────────
+                // ── [UC13.1.5] Kiểm tra an toàn tệp ──────────────────────
                 checkFileSafety(bis, document.getFileName(), document.getFileExtension());
 
                 bis.reset();
@@ -118,13 +118,13 @@ public class FileStorage {
                 return new FileData(document.getFileName(), size, bis, true, path);
 
             } else {
-                // [UC13.1.4] Tệp lưu cục bộ trên disk
+                // [UC13.1.5] Tệp lưu cục bộ trên disk
                 File file = new File(uploadDir, path);
                 if (!file.exists()) {
                     throw new FileNotFoundException("Physical file not found in storage");  // [UC13.2.3.1]
                 }
 
-                // ── [UC13.1.4b] Kiểm tra an toàn tệp ────────────────────
+                // ── [UC13.1.5] Kiểm tra an toàn tệp ──────────────────────
                 try (InputStream checkStream = new FileInputStream(file)) {
                     checkFileSafety(checkStream, document.getFileName(), document.getFileExtension());
                 }
@@ -140,11 +140,11 @@ public class FileStorage {
     }
 
     // ====================================================================
-    // [UC13.1.4b] KIỂM TRA AN TOÀN TỆP – EX-02
+    // [UC13.1.5] KIỂM TRA AN TOÀN TỆP – EX-02
     // ====================================================================
 
     /**
-     * [UC13.1.4b] Kiểm tra tính an toàn của tệp trước khi phục vụ tải xuống.
+     * [UC13.1.5] Kiểm tra tính an toàn của tệp trước khi phục vụ tải xuống.
      *
      * Hai lớp kiểm tra:
      *   1. Kiểm tra extension: nếu nằm trong DANGEROUS_EXTENSIONS → từ chối ngay
@@ -186,7 +186,7 @@ public class FileStorage {
             throw new DangerousFileException("File nguy hiểm: nội dung không hợp lệ – " + fileName);
         }
 
-        // [UC13.1.4b] Kiểm tra qua – file an toàn
+        // [UC13.1.5] Kiểm tra qua – file an toàn
         returnSafeFileConfirmed(fileName);
     }
 
@@ -202,14 +202,14 @@ public class FileStorage {
     }
 
     /**
-     * [UC13.1.4] Log xác nhận đã tìm thấy và trả về dữ liệu tệp.
+     * [UC13.1.5] Log xác nhận đã tìm thấy và trả về dữ liệu tệp.
      */
     public void returnFileData(String fileName, long fileSize) {
         System.out.println("Storage -->> UI: returnFileData(" + fileName + ", " + fileSize + ")");
     }
 
     /**
-     * [UC13.1.4b] Log phát hiện file nguy hiểm trước khi ném exception.
+     * [UC13.1.5] Log phát hiện file nguy hiểm trước khi ném exception.
      * → Gọi bởi: checkFileSafety() khi phát hiện file không hợp lệ
      */
     public void throwDangerousFileDetected(String fileName, String reason) {
@@ -217,7 +217,7 @@ public class FileStorage {
     }
 
     /**
-     * [UC13.1.4b] Log xác nhận file đã qua kiểm tra an toàn.
+     * [UC13.1.5] Log xác nhận file đã qua kiểm tra an toàn.
      * → Gọi bởi: checkFileSafety() khi magic bytes khớp với định dạng hợp lệ
      */
     public void returnSafeFileConfirmed(String fileName) {

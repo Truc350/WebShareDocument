@@ -13,12 +13,12 @@ end note
 
 == Luồng Bình Thường ==
 
-User ->> UI ++: UC13.1.1 navigateToDocumentPage()
-UI -->> User: renderDocumentDetail(document)
+User ->> UI ++: UC13.1.0 navigateToDocumentPage()
+UI -->> User: UC13.1.1 renderDocumentDetail(document)
 
 User ->> UI: UC13.1.2 clickDownload(documentId)
-UI -->> User: showConfirmModal() [Modal "Xác nhận tải xuống"]
 UI ->> UI: UC13.2.6.2 Tự động trích xuất tên gốc & pre-fill ô nhập liệu "Tên tệp khi lưu" (UC13.2.6.1)
+UI -->> User: showConfirmModal() [Modal "Xác nhận tải xuống"]
 
 alt UC13.2.1 – Người dùng hủy tại modal xác nhận
     note over User,UI
@@ -29,35 +29,35 @@ alt UC13.2.1 – Người dùng hủy tại modal xác nhận
     UI -->> User: UC13.2.1.3 resetToInitialState() / skipAuditLog() – kết thúc
 
 else Người dùng nhấn "Xác nhận tải" → tiếp tục UC13.1.3
-    User ->> UI: confirmDownload()
+    User ->> UI: UC13.1.3 confirmDownload()
     UI ->> UI: setDownloadBtnsDisabled(true) / resetProgressUI()\n_abortCtrl = new AbortController()
     UI ->> UI: UC13.2.6.3 Lấy tên tùy chỉnh mới & mã hóa thành customNameParam
     UI -->> User: showLoadingModal() [Spinner + 0% + nút "Huỷ tải xuống"]
 
-    UI ->> Servlet ++: UC13.1.3 fetch(GET /download?id&customName, { signal })
+    UI ->> Servlet ++: fetch(GET /download?id&customName, { signal })
     note over Servlet
     UC13.2.6.4 Backend đọc customName từ request
     end note
-    Servlet ->> Auth ++: verifySessionAndPermission(userId, documentId)
+    Servlet ->> Auth ++: UC13.1.4 verifySessionAndPermission(userId, documentId)
 
     alt UC13.2.2 – Người dùng không có quyền tải tài liệu
         note over Auth,UI
-        Tại bước UC13.1.3
+        Tại bước UC13.1.4
         end note
         Auth -->> Servlet --: UC13.2.2.1 detectPermissionDenied() → userId null / sai quyền
         Servlet -->> UI --: UC13.2.2.2 HTTP 403 – showErrorModal ["Tải thất bại"]
         UI ->> UI: UC13.2.2.3 onDownloadDone() / resetState() – kết thúc
 
-    else Quyền hợp lệ → tiếp tục UC13.1.4
+    else Quyền hợp lệ → tiếp tục UC13.1.5
         Auth -->> Servlet --: returnPermissionGranted() → true
 
-        Servlet ->> Storage ++: UC13.1.4 fetchFile(documentId)
+        Servlet ->> Storage ++: UC13.1.5 fetchFile(documentId)
         Storage ->> DAO ++: getDocumentById(documentId)
         DAO -->> Storage --: Document { filePath, fileName, fileSize }
 
         alt UC13.2.3 – Tệp không tìm thấy / lỗi Storage
             note over Storage,UI
-            Tại bước UC13.1.4
+            Tại bước UC13.1.5
             end note
             Storage -->> Servlet --: UC13.2.3.1 throw FileNotFoundException\n(DB null / remote 4xx / local missing)
             Servlet -->> UI: UC13.2.3.2 HTTP 404 – showErrorModal ["Tài liệu không khả dụng"]
@@ -68,7 +68,7 @@ else Người dùng nhấn "Xác nhận tải" → tiếp tục UC13.1.3
 
         else EX-02 – Tệp nguy hiểm bị phát hiện (DangerousFileException)
             note over Storage,UI
-            Tại bước UC13.1.4b
+            Tại bước UC13.1.5
             end note
             Storage ->> Storage: checkFileSafety(inputStream, fileName, ext)
             Storage -->> Servlet --: EX-02.1 throw DangerousFileException\n(magic bytes không khớp / extension bị chặn)
@@ -78,45 +78,45 @@ else Người dùng nhấn "Xác nhận tải" → tiếp tục UC13.1.3
             UI ->> UI: EX-02.4 onDownloadDone() / resetState() – kết thúc
             deactivate Servlet
 
-        else File OK & An toàn → tiếp tục UC13.1.5
+        else File OK & An toàn → tiếp tục UC13.1.6
             Storage ->> Storage: checkFileSafety(inputStream, fileName, ext)
             Storage -->> Servlet: returnFileData(fileName, fileSize, InputStream)
             Servlet ->> Servlet: UC13.2.6.5 Xử lý kiểm tra & tự động ghép nối đuôi tệp gốc vào tên mới
 
-            Servlet ->> DMS ++: UC13.1.5 generateSignedUrl(documentId, expiry=900s)
+            Servlet ->> DMS ++: UC13.1.6 generateSignedUrl(documentId, expiry=900s)
             DMS -->> Servlet --: returnSignedUrl(signedUrl)
             Servlet ->> Servlet: setResponseHeaders()\n[Content-Type / Content-Length / Content-Disposition]
 
-            Servlet ->> Servlet: UC13.1.6 startFileTransfer()\n[read InputStream → write OutputStream, buffer 8192B]
+            Servlet ->> Servlet: UC13.1.7 startFileTransfer()\n[read InputStream → write OutputStream, buffer 8192B]
 
             alt UC13.2.5 – Kết nối bị gián đoạn (IOException)
                 note over Servlet,UI
-                Tại bước UC13.1.6
+                Tại bước UC13.1.7
                 end note
                 Servlet ->> Servlet: UC13.2.5.1 detectConnectionLost()
                 Servlet -->> UI --: UC13.2.5.2 Connection error – showErrorModal ["Tải thất bại"]
                 UI ->> UI: UC13.2.5.3 skipAuditLog()
                 UI ->> UI: UC13.2.5.4 onDownloadDone() / resetState() – kết thúc
 
-            else Stream thành công → tiếp tục UC13.1.7
+            else Stream thành công → tiếp tục UC13.1.8
                 Servlet ->> Servlet: onDownloadComplete(fileName)
-                Servlet ->> DMS ++: UC13.1.8 writeAuditLog(docId, userId, timestamp, ip)
+                Servlet ->> DMS ++: UC13.1.9 writeAuditLog(docId, userId, timestamp, ip)
                 DMS ->> DAO ++: incrementDownloadCount(documentId)
                 note right: UPDATE documents\nSET download_count = download_count+1\nWHERE id = documentId
                 DAO -->> DMS --: OK (1 row affected)
                 DMS -->> Servlet --: returnAuditConfirmed("LOG_"+ts)
                 Servlet -->> UI --: HTTP 200 + streaming body
 
-                UI ->> UI: UC13.1.6 total = Content-Length / reader = res.body.getReader()
+                UI ->> UI: UC13.1.7 total = Content-Length / reader = res.body.getReader()
 
-                loop pump() – đọc từng chunk Uint8Array (UC13.1.6)
+                loop pump() – đọc từng chunk Uint8Array (UC13.1.7)
                     UI ->> UI: chunks.push(chunk) / received += chunk.byteLength
                     UI ->> UI: setProgress(received, total)
                     UI -->> User: [Tiến trình cập nhật: "34%  1.2 MB / 3.5 MB"]
 
                     alt UC13.2.4 – Người dùng hủy tải giữa chừng
                         note over User,UI
-                        Tại bước UC13.1.6
+                        Tại bước UC13.1.7
                         end note
                         User ->> UI: UC13.2.4.1 cancelDownload() → _abortCtrl.abort()
                         UI ->> UI: UC13.2.4.2 AbortError → fetch().catch() – không lưu tệp
@@ -126,11 +126,11 @@ else Người dùng nhấn "Xác nhận tải" → tiếp tục UC13.1.3
                     end
                 end
 
-                UI ->> UI: UC13.1.7 new Blob(chunks) / URL.createObjectURL(blob)
+                UI ->> UI: UC13.1.8 new Blob(chunks) / URL.createObjectURL(blob)
                 UI ->> UI: <a download>.click() → browser save dialog
                 UI ->> UI: dlCountVal += 1 / setTimeout(revokeObjectURL, 10000)
                 UI ->> UI: onDownloadDone()
-                UI -->> User: UC13.1.8 showSuccessModal [✔ "Tải thành công"]
+                UI -->> User: UC13.1.9 showSuccessModal [✔ "Tải thành công"]
                 note right: Tự đóng sau 4 giây\n(_successTimer = setTimeout 4000ms)\nhoặc người dùng nhấn "Đóng"
             end
         end
