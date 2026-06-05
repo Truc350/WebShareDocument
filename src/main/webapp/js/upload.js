@@ -327,7 +327,7 @@
                 // UC5.1.11: Hệ thống lưu dữ liệu vào database, hiển thị thông báo thành công và điều hướng người dùng về Trang cá nhân.
                 sessionStorage.removeItem("uploadFormState");
                 const contextPath = form.getAttribute("data-context") || "";
-                const detailUrl = contextPath + "/page/user/profile.jsp";
+                const detailUrl = contextPath + "/profile";
                 showModal("Thành công ✓", "Đăng tải tài liệu thành công!", "success", function () {
                     window.location.href = detailUrl;
                 });

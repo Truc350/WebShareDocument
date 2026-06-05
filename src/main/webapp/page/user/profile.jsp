@@ -138,7 +138,7 @@
                                                         <span class="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded uppercase tracking-wide">Chờ duyệt</span>
                                                     </c:when>
                                                     <c:when test="${doc.isActive == 2}">
-                                                        <span class="px-2 py-1 bg-red-100 text-red-700 text-[10px] font-bold rounded uppercase tracking-wide">Vi phạm</span>
+                                                        <span class="px-2 py-1 bg-red-100 text-red-700 text-[10px] font-bold rounded uppercase tracking-wide">Vi phạm (yêu cầu sửa lại)</span>
                                                     </c:when>
                                                     <c:otherwise>
                                                         <span class="px-2 py-1 bg-slate-100 text-slate-700 text-[10px] font-bold rounded uppercase tracking-wide">Khác</span>

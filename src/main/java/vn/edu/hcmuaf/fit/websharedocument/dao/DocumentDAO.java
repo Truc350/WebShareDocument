@@ -1107,7 +1107,7 @@ public class DocumentDAO {
     public boolean deleteDocument(int documentId, int userId) {
         String deleteTagsSql = "DELETE FROM document_tags WHERE document_id = ?";
         String deleteDocSql = "DELETE FROM documents WHERE id = ? AND user_id = ?";
-        
+
         try (Connection conn = DBConnect.getConnection()) {
             conn.setAutoCommit(false);
             try {
@@ -1115,14 +1115,50 @@ public class DocumentDAO {
                     psTags.setInt(1, documentId);
                     psTags.executeUpdate();
                 }
-                
+
                 int affectedRows = 0;
                 try (PreparedStatement psDoc = conn.prepareStatement(deleteDocSql)) {
                     psDoc.setInt(1, documentId);
                     psDoc.setInt(2, userId);
                     affectedRows = psDoc.executeUpdate();
                 }
-                
+
+                if (affectedRows > 0) {
+                    conn.commit();
+                    return true;
+                } else {
+                    conn.rollback();
+                    return false;
+                }
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // [UC17.2.6.2] Admin xóa vĩnh viễn tài liệu khỏi hệ thống
+    public boolean deleteDocumentByAdmin(int documentId) {
+        String deleteTagsSql = "DELETE FROM document_tags WHERE document_id = ?";
+        String deleteDocSql = "DELETE FROM documents WHERE id = ?";
+
+        try (Connection conn = DBConnect.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement psTags = conn.prepareStatement(deleteTagsSql)) {
+                    psTags.setInt(1, documentId);
+                    psTags.executeUpdate();
+                }
+
+                int affectedRows = 0;
+                try (PreparedStatement psDoc = conn.prepareStatement(deleteDocSql)) {
+                    psDoc.setInt(1, documentId);
+                    affectedRows = psDoc.executeUpdate();
+                }
+
                 if (affectedRows > 0) {
                     conn.commit();
                     return true;

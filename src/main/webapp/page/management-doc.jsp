@@ -166,13 +166,18 @@
                 <span>Xuất báo cáo</span>
             </button>
             <div class="h-8 w-px bg-slate-200 mx-2"></div>
-            <div class="flex gap-2">
+            <div class="flex gap-2 items-center">
                 <button class="p-2 text-slate-600 hover:bg-slate-50 rounded-full transition-colors">
                     <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
                 </button>
                 <button class="p-2 text-slate-600 hover:bg-slate-50 rounded-full transition-colors">
                     <span class="material-symbols-outlined" data-icon="help">help</span>
                 </button>
+                <a href="${pageContext.request.contextPath}/logout"
+                   class="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors flex items-center justify-center"
+                   title="Đăng xuất">
+                    <span class="material-symbols-outlined">logout</span>
+                </a>
             </div>
             <div class="flex items-center gap-3 ml-2 cursor-pointer">
                 <div class="w-10 h-10 rounded-full overflow-hidden border border-slate-200">
@@ -396,18 +401,22 @@
                                     </a>
 
                                         <%-- Nút Duyệt: Biến thẻ <button> thành thẻ <a> để gọi Servlet Update --%>
-                                    <c:if test="${doc.isActive == 0}">
-                                        <a href="${pageContext.request.contextPath}/admin/update-doc-status?id=${doc.id}&status=1"
-                                           class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg inline-block" title="Duyệt">
-                                            <span class="material-symbols-outlined">done</span>
-                                        </a>
+                                    <c:if test="${doc.isActive == 0 || doc.isActive == 2}">
+                                         <a href="${pageContext.request.contextPath}/admin/update-doc-status?id=${doc.id}&status=1"
+                                            class="approve-btn p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg inline-block" 
+                                            title="Duyệt"
+                                            data-id="${doc.id}"
+                                            data-status="${doc.isActive}">
+                                             <span class="material-symbols-outlined">done</span>
+                                         </a>
                                     </c:if>
-
-                                        <%-- Nút Xóa/Từ chối: Biến thẻ <button> thành thẻ <a> để gọi Servlet Update --%>
-                                    <a href="${pageContext.request.contextPath}/admin/update-doc-status?id=${doc.id}&status=2"
-                                       class="p-1.5 text-error hover:bg-red-50 rounded-lg inline-block transition-colors"
-                                       title="Xóa/Từ chối"
-                                       onclick="return confirm('Bạn có chắc chắn muốn xóa và đánh dấu vi phạm tài liệu này không?')">
+ 
+                                         <%-- Nút Xóa/Từ chối --%>
+                                    <a href="javascript:void(0)"
+                                       class="delete-btn p-1.5 text-error hover:bg-red-50 rounded-lg inline-block transition-colors"
+                                       title="${doc.isActive == 2 ? 'Xóa vĩnh viễn' : 'Đánh dấu vi phạm'}"
+                                       data-id="${doc.id}"
+                                       data-status="${doc.isActive}">
                                         <span class="material-symbols-outlined" data-icon="delete">delete</span>
                                     </a>
                                 </div>
@@ -519,6 +528,139 @@
         });
     });
 </script>
-</body>
 
+<!-- Modal: Đánh dấu vi phạm (tab Chờ duyệt) -->
+<div id="markViolationModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 transform transition-all scale-95 opacity-0 duration-300" id="markViolationModalContent">
+        <div class="flex items-center gap-3 text-amber-600 mb-4">
+            <div class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-2xl">report_problem</span>
+            </div>
+            <h3 class="text-lg font-bold">Đánh dấu vi phạm</h3>
+        </div>
+        <p class="text-slate-600 text-sm mb-4">Chọn loại vi phạm và nhập mô tả. Tài liệu sẽ chuyển sang tab <strong>Vi phạm</strong>, người đăng sẽ nhận yêu cầu chỉnh sửa.</p>
+        <div class="mb-3">
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Loại vi phạm <span class="text-red-500">*</span></label>
+            <select id="violationTypeSelect" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-100 focus:border-amber-500">
+                <option value="">-- Chọn loại vi phạm --</option>
+                <option value="Vi phạm bản quyền">Vi phạm bản quyền</option>
+                <option value="Nội dung không phù hợp">Nội dung không phù hợp</option>
+                <option value="Spam">Spam</option>
+                <option value="Khác">Khác</option>
+            </select>
+        </div>
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Mô tả chi tiết</label>
+            <textarea id="violationReasonInput" rows="3" placeholder="Nhập lý do vi phạm cụ thể..."
+                      class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-100 focus:border-amber-500 resize-none"></textarea>
+        </div>
+        <div class="flex items-center justify-end gap-3">
+            <button type="button" id="btnCancelMarkViolation" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Hủy</button>
+            <button type="button" id="btnConfirmMarkViolation" class="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition-colors">Chuyển sang Vi phạm</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Xóa vĩnh viễn (tab Vi phạm) -->
+<div id="deletePermanentModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 transform transition-all scale-95 opacity-0 duration-300" id="deletePermanentModalContent">
+        <div class="flex items-center gap-3 text-red-600 mb-4">
+            <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-2xl">delete_forever</span>
+            </div>
+            <h3 class="text-lg font-bold">Xóa vĩnh viễn tài liệu</h3>
+        </div>
+        <p class="text-slate-600 text-sm mb-6">Tài liệu này vẫn vi phạm sau khi chỉnh sửa. Bạn có chắc chắn muốn <strong>xóa vĩnh viễn</strong> khỏi hệ thống? Hành động này không thể hoàn tác.</p>
+        <div class="flex items-center justify-end gap-3">
+            <button type="button" id="btnCancelDeletePermanent" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Hủy</button>
+            <button type="button" id="btnConfirmDeletePermanent" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">Xóa vĩnh viễn</button>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const CTX = "${pageContext.request.contextPath}";
+        let activeDocId = null;
+
+        function showModal(modalId, contentId) {
+            const modal = document.getElementById(modalId);
+            const content = document.getElementById(contentId);
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function hideModal(modalId, contentId) {
+            const modal = document.getElementById(modalId);
+            const content = document.getElementById(contentId);
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // [UC17.1.11] Nút Duyệt -> duyệt thẳng, không check
+        document.querySelectorAll(".approve-btn").forEach(btn => {
+            btn.addEventListener("click", function (e) {
+                e.preventDefault();
+                const docId = this.getAttribute("data-id");
+                window.location.href = CTX + "/admin/update-doc-status?id=" + docId + "&status=1";
+            });
+        });
+
+        // [UC17.1.13 / UC17.2.5.1] Nút thùng rác
+        document.querySelectorAll(".delete-btn").forEach(btn => {
+            btn.addEventListener("click", function (e) {
+                e.preventDefault();
+                activeDocId = this.getAttribute("data-id");
+                const docStatus = this.getAttribute("data-status");
+
+                if (docStatus === "2") {
+                    // Tab Vi phạm -> Xóa vĩnh viễn
+                    showModal("deletePermanentModal", "deletePermanentModalContent");
+                } else {
+                    // Tab Chờ duyệt -> Đánh dấu vi phạm
+                    document.getElementById("violationTypeSelect").value = "";
+                    document.getElementById("violationReasonInput").value = "";
+                    showModal("markViolationModal", "markViolationModalContent");
+                }
+            });
+        });
+
+        // [UC17.2.5.2] Xác nhận chuyển sang Vi phạm
+        document.getElementById("btnConfirmMarkViolation").addEventListener("click", () => {
+            const type = document.getElementById("violationTypeSelect").value;
+            if (!type) {
+                document.getElementById("violationTypeSelect").focus();
+                document.getElementById("violationTypeSelect").style.borderColor = "#f59e0b";
+                return;
+            }
+            if (activeDocId) {
+                window.location.href = CTX + "/admin/update-doc-status?id=" + activeDocId + "&status=2";
+            }
+        });
+        document.getElementById("btnCancelMarkViolation").addEventListener("click", () => {
+            hideModal("markViolationModal", "markViolationModalContent");
+        });
+
+        // [UC17.2.6.2] Xác nhận xóa vĩnh viễn
+        document.getElementById("btnConfirmDeletePermanent").addEventListener("click", () => {
+            if (activeDocId) {
+                window.location.href = CTX + "/admin/update-doc-status?id=" + activeDocId + "&status=3";
+            }
+        });
+        document.getElementById("btnCancelDeletePermanent").addEventListener("click", () => {
+            hideModal("deletePermanentModal", "deletePermanentModalContent");
+        });
+    });
+</script>
+</body>
 </html>
