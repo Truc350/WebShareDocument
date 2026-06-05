@@ -28,6 +28,7 @@
         </div>
         <form class="header-search" id="headerSearch" style="position: relative;">
             <span class="material-symbols-outlined">search</span>
+            <!-- UC11.1.1: Người dùng nhấp vào ô tìm kiếm trên thanh điều hướng hoặc trang danh sách tài liệu và bắt đầu gõ từ khóa. -->
             <input type="search" name="q" autocomplete="off" placeholder="Tìm kiếm tài liệu...">
             <button class="btn btn-primary" type="submit">Tìm</button>
             <div id="searchSuggestions" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; border-radius: 4px; display: none; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 4px; max-height: 250px; overflow-y: auto;">

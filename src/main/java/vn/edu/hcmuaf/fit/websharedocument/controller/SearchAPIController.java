@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +32,23 @@ public class SearchAPIController extends HttpServlet {
         return sb.toString();
     }
 
-    private String buildResultsJson(List<Document> list) {
-        StringBuilder sb = new StringBuilder("{\"count\":").append(list.size()).append(",\"results\":[");
+    private String buildResultsJson(List<Document> list, List<String> synonymsUsed, List<String> popularKeywords) {
+        StringBuilder sb = new StringBuilder("{\"count\":").append(list.size()).append(",");
+        // UC11.2.6.5 synonymsUsed
+        sb.append("\"synonymsUsed\":[");
+        for (int i = 0; i < synonymsUsed.size(); i++) {
+            sb.append("\"").append(escapeJson(synonymsUsed.get(i))).append("\"");
+            if (i < synonymsUsed.size() - 1) sb.append(",");
+        }
+        sb.append("],");
+        // UC11.2.4.3 popularKeywords
+        sb.append("\"popularKeywords\":[");
+        for (int i = 0; i < popularKeywords.size(); i++) {
+            sb.append("\"").append(escapeJson(popularKeywords.get(i))).append("\"");
+            if (i < popularKeywords.size() - 1) sb.append(",");
+        }
+        sb.append("],");
+        sb.append("\"results\":[");
         for (int i = 0; i < list.size(); i++) {
             Document d = list.get(i);
             sb.append("{")
@@ -80,20 +96,22 @@ public class SearchAPIController extends HttpServlet {
                 response.getWriter().write("[]");
                 return;
             }
-            // UC11.1.2 getSuggestions(q)
+            // UC11.1.2: Sau 300ms kể từ lúc người dùng ngừng gõ (debounce), hệ thống gửi yêu cầu tìm kiếm gợi ý (autocomplete) với từ khóa hiện tại.
             List<String> suggestions = documentDAO.getSuggestions(q);
             response.getWriter().write(buildSuggestionsJson(suggestions));
         } else if (uri.endsWith("/api/search")) {
             List<Document> results;
+            List<String> synonymsUsed = new ArrayList<>();
+            List<String> popularKeywords = documentDAO.getPopularSearchKeywords();
             if (q.isEmpty()) {
-                // UC11.2.3.3 getFullDocumentList()
+                // UC11.2.3.3: Khôi phục lại danh sách tài liệu đầy đủ (không có bộ lọc từ khóa) – giữ nguyên các bộ lọc danh mục đang áp dụng.
                 results = documentDAO.getFullDocumentList();
             } else {
-                // UC11.1.5 fullTextSearch(q)
-                results = documentDAO.fullTextSearch(q);
+                // UC11.1.5: Nhận tham số q={từ+khóa}; thực hiện truy vấn full-text search trên các trường: tên tài liệu, mô tả, chủ đề, tags. / UC11.2.6.3: Thực hiện truy vấn full-text song song cho từ khóa gốc và tất cả từ đồng nghĩa; kết hợp kết quả và loại bỏ trùng lặp.
+                results = documentDAO.fullTextSearch(q, synonymsUsed);
             }
 
-            response.getWriter().write(buildResultsJson(results));
+            response.getWriter().write(buildResultsJson(results, synonymsUsed, popularKeywords));
         }
     }
 }
