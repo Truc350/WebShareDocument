@@ -301,6 +301,7 @@
     /**
      * UC5.1.8: Hệ thống truyền tệp trực tiếp từ trình duyệt lên Supabase Storage; hiển thị tiến trình upload (progress bar).
      */
+    // Update: UC5.1.8: Hệ thống phân mảnh (chunked) và truyền tệp trực tiếp từ trình duyệt lên Server cục bộ; hiển thị tiến trình upload (progress bar).
     async function uploadFile(formData) {
         setError("");
         submitButton.innerHTML = '<span class="material-symbols-outlined rotating">sync</span> Đang chuẩn bị...';
