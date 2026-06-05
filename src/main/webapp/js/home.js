@@ -53,42 +53,57 @@
         event.preventDefault();
         const activeTag = document.querySelector(".tag.active");
         const q = headerSearchInput.value.trim();
-        // UC11.1.10 Lưu từ khóa vừa tìm kiếm vào lịch sử tìm kiếm
+        // UC11.1.10: Lưu từ khóa vừa tìm kiếm vào lịch sử tìm kiếm của người dùng đã đăng nhập; giữ tối đa 10 mục gần nhất, xóa mục cũ nhất nếu vượt giới hạn.
         saveSearchHistory(q);
-        // UC11.1.4 nhấn Enter / nhấp nút Tìm kiếm
+        // UC11.1.4: Hoàn tất nhập từ khóa và nhấn Enter hoặc nhấp nút "Tìm" (🔍).
         if (window.location.pathname.endsWith("search.jsp") || window.location.pathname.endsWith("documents.jsp")) {
           // Allow documents.js to handle or just update URL
           const url = new URL(window.location.href);
           url.searchParams.set("q", q);
           url.searchParams.set("page", "1");
-          // UC11.1.7 updateURL(?q=...&page=1)
+          // UC11.1.7: Cập nhật URL: ?q={từ+khóa}&page=1; đặt lại về trang 1 của kết quả.
           window.history.pushState({}, "", url);
           const applyFiltersEvent = new CustomEvent("applyFilters");
           document.dispatchEvent(applyFiltersEvent);
         } else {
-          // UC11.1.7 updateURL(?q=...&page=1)
+          // UC11.1.7: Cập nhật URL: ?q={từ+khóa}&page=1; đặt lại về trang 1 của kết quả.
           window.location.href = `${contextPath}/page/user/search.jsp?q=${encodeURIComponent(q)}&page=1`;
         }
       });
 
+      // UC11.1.1: Người dùng nhấp vào ô tìm kiếm trên thanh điều hướng hoặc trang danh sách tài liệu và bắt đầu gõ từ khóa.
       headerSearchInput.addEventListener("input", function () {
         const q = headerSearchInput.value.trim();
         clearTimeout(debounceTimer);
 
+        // UC11.2.3.1: Xóa toàn bộ nội dung ô tìm kiếm (bằng phím Backspace hoặc nút ✕).
+        if (q === "") {
+          // UC11.2.3.2: Ẩn danh sách gợi ý autocomplete; xóa tham số ?q khỏi URL.
+          if (suggestionsBox) suggestionsBox.style.display = "none";
+          if (window.location.pathname.endsWith("search.jsp") || window.location.pathname.endsWith("documents.jsp")) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("q");
+            url.searchParams.set("page", "1");
+            window.history.pushState({}, "", url);
+            // UC11.2.3.3: Khôi phục lại danh sách tài liệu đầy đủ (không có bộ lọc từ khóa) – giữ nguyên các bộ lọc danh mục đang áp dụng.
+            const applyFiltersEvent = new CustomEvent("applyFilters");
+            document.dispatchEvent(applyFiltersEvent);
+          }
+          return;
+        }
         if (q.length < 2) {
           if (suggestionsBox) suggestionsBox.style.display = "none";
-          // UC11.2.3.1 xóa từ khóa (Backspace hoặc X) -> hideDropdown
           return;
         }
 
-        // UC11.1.2 chờ debounce (300ms) rồi gửi yêu cầu autocomplete
+        // UC11.1.2: Sau 300ms kể từ lúc người dùng ngừng gõ (debounce), hệ thống gửi yêu cầu tìm kiếm gợi ý (autocomplete) với từ khóa hiện tại.
         debounceTimer = setTimeout(() => {
           fetch(`${contextPath}/api/suggestions?q=${encodeURIComponent(q)}`)
             .then(res => res.json())
             .then(data => {
               if (data && data.length > 0 && suggestionsList) {
                 suggestionsList.innerHTML = "";
-                // UC11.1.3 trả về tối đa 5 gợi ý
+                // UC11.1.3: Hiển thị danh sách gợi ý (tối đa 5 mục) phía dưới ô tìm kiếm: tên tài liệu hoặc chủ đề khớp.
                 data.slice(0, 5).forEach(item => {
                   const li = document.createElement("li");
                   li.style.padding = "10px 16px";
@@ -96,7 +111,7 @@
                   li.style.borderBottom = "1px solid #f3f4f6";
                   li.style.color = "#1f2937";
                   li.style.fontSize = "14px";
-                  // UC11.1.11 Highlight từ khóa trong danh sách gợi ý
+                  // UC11.1.11: Xem danh sách kết quả gợi ý có highlight từ khóa
                   const regex = new RegExp(`(${q})`, 'gi');
                   const highlighted = item.replace(regex, '<mark style="background-color: #fde047; padding: 0 2px; border-radius: 2px;">$1</mark>');
                   li.innerHTML = highlighted;
@@ -104,13 +119,13 @@
                   li.addEventListener("mouseenter", () => li.style.background = "#f9fafb");
                   li.addEventListener("mouseleave", () => li.style.background = "transparent");
                   
-                  // UC11.2.2.1 nhấp chọn gợi ý
+                  // UC11.2.2.1: Nhấp vào một gợi ý trong dropdown autocomplete.
                   li.addEventListener("click", () => {
                     headerSearchInput.value = item;
                     suggestionsBox.style.display = "none";
-                    // UC11.1.10 Lưu từ khóa vừa tìm kiếm vào lịch sử tìm kiếm
+                    // UC11.1.10: Lưu từ khóa vừa tìm kiếm vào lịch sử tìm kiếm của người dùng đã đăng nhập; giữ tối đa 10 mục gần nhất, xóa mục cũ nhất nếu vượt giới hạn.
                     saveSearchHistory(item);
-                    // UC11.2.2.2 search(q), bỏ qua nhấn Enter
+                    // UC11.2.2.2: Điền từ khóa gợi ý vào ô tìm kiếm; tự động kích hoạt tìm kiếm (bỏ qua bước nhấn Enter).
                     if (window.location.pathname.endsWith("search.jsp") || window.location.pathname.endsWith("documents.jsp")) {
                       const url = new URL(window.location.href);
                       url.searchParams.set("q", item);
@@ -132,7 +147,7 @@
         }, 300);
       });
 
-      // UC11.2.5 Người dùng sử dụng lịch sử tìm kiếm
+      // UC11.2.5 – Người Dùng Sử Dụng Lịch Sử Tìm Kiếm
       headerSearchInput.addEventListener("focus", function() {
           const q = headerSearchInput.value.trim();
           if (q.length === 0) {
@@ -172,7 +187,7 @@
           renderSearchHistory();
       }
       function renderSearchHistory() {
-          // UC11.2.5.1 Hiển thị danh sách lịch sử tìm kiếm
+          // UC11.2.5.1: Người dùng nhấp vào ô tìm kiếm; hệ thống tự động hiển thị danh sách lịch sử tìm kiếm gần nhất (tối đa 10 mục) phía dưới ô tìm kiếm.
           const key = getHistoryKey();
           if (!key) return;
           const history = JSON.parse(localStorage.getItem(key) || "[]");
@@ -193,7 +208,7 @@
               headerLi.innerHTML = `<span>Lịch sử tìm kiếm</span> <span class="clear-history" style="cursor:pointer; color:#dc2626; font-weight:bold;">Xóa tất cả</span>`;
               headerLi.querySelector(".clear-history").addEventListener("click", (e) => {
                   e.stopPropagation();
-                  // UC11.2.5.3 Xóa toàn bộ lịch sử
+                  // UC11.2.5.3: Người dùng có thể xóa từng mục lịch sử riêng lẻ hoặc xóa toàn bộ lịch sử tìm kiếm qua biểu tượng xóa.
                   clearAllSearchHistory();
               });
               suggestionsList.appendChild(headerLi);
@@ -216,7 +231,7 @@
                   delBtn.style.padding = "0 5px";
                   delBtn.addEventListener("mouseenter", () => delBtn.style.color = "#dc2626");
                   delBtn.addEventListener("mouseleave", () => delBtn.style.color = "#9ca3af");
-                  // UC11.2.5.3 Xóa mục riêng lẻ
+                  // UC11.2.5.3: Người dùng có thể xóa từng mục lịch sử riêng lẻ hoặc xóa toàn bộ lịch sử tìm kiếm qua biểu tượng xóa.
                   delBtn.addEventListener("click", (e) => {
                       e.stopPropagation();
                       removeSearchHistory(item);
@@ -225,7 +240,7 @@
                   li.appendChild(delBtn);
                   li.addEventListener("mouseenter", () => li.style.background = "#f9fafb");
                   li.addEventListener("mouseleave", () => li.style.background = "transparent");
-                  // UC11.2.5.2 Nhấp vào mục lịch sử
+                  // UC11.2.5.2: Người dùng nhấp vào một mục trong lịch sử; hệ thống điền từ khóa đó vào ô tìm kiếm và tự động kích hoạt tìm kiếm (bỏ qua bước nhấn Enter).
                   li.addEventListener("click", () => {
                       headerSearchInput.value = item;
                       suggestionsBox.style.display = "none";
@@ -246,10 +261,27 @@
               suggestionsBox.style.display = "block";
           }
       }
+      // Lắng nghe sự kiện search để bắt nút ✕ mặc định trên input type="search"
+      headerSearchInput.addEventListener("search", function () {
+        const q = headerSearchInput.value.trim();
+        if (q === "") {
+          // UC11.2.3.2: Ẩn danh sách gợi ý autocomplete; xóa tham số ?q khỏi URL.
+          if (suggestionsBox) suggestionsBox.style.display = "none";
+          if (window.location.pathname.endsWith("search.jsp") || window.location.pathname.endsWith("documents.jsp")) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("q");
+            url.searchParams.set("page", "1");
+            window.history.pushState({}, "", url);
+            // UC11.2.3.3: Khôi phục lại danh sách tài liệu đầy đủ (không có bộ lọc từ khóa) – giữ nguyên các bộ lọc danh mục đang áp dụng.
+            const applyFiltersEvent = new CustomEvent("applyFilters");
+            document.dispatchEvent(applyFiltersEvent);
+          }
+        }
+      });
       // Hide dropdown when clicking outside
       document.addEventListener("click", (e) => {
         if (!headerSearchForm.contains(e.target) && suggestionsBox) {
-          // UC11.2.3.2 hideDropdown()
+          // UC11.2.3.2: Ẩn danh sách gợi ý autocomplete; xóa tham số ?q khỏi URL.
           suggestionsBox.style.display = "none";
         }
       });

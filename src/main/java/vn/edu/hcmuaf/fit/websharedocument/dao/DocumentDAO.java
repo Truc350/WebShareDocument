@@ -479,7 +479,7 @@ public class DocumentDAO {
         return doc;
     }
 
-    // UC11.1.2 getSuggestions(q)
+    // UC11.1.2: Sau 300ms kể từ lúc người dùng ngừng gõ (debounce), hệ thống gửi yêu cầu tìm kiếm gợi ý (autocomplete) với từ khóa hiện tại.
     public List<String> getSuggestions(String q) {
         List<String> suggestions = new ArrayList<>();
         String sql = "SELECT title as suggestion FROM documents WHERE title LIKE ? AND is_active = 1 " +
@@ -502,7 +502,7 @@ public class DocumentDAO {
         return suggestions;
     }
 
-    // UC11.2.1.2 exactMatchQuery(q)
+    // UC11.2.1.2: Thực hiện hai truy vấn song song: (1) tìm theo chủ đề/tag chính xác; (2) tìm full-text trên tên và mô tả.
     public List<Document> exactMatchQuery(String q) {
         List<Document> list = new ArrayList<>();
         String sql = "SELECT d.*, u.full_name as uploader_name, c.name as category_name " +
@@ -524,7 +524,7 @@ public class DocumentDAO {
         return list;
     }
 
-    // UC11.2.1.2 fullTextQuery(q)
+    // UC11.2.1.2: Thực hiện hai truy vấn song song: (1) tìm theo chủ đề/tag chính xác; (2) tìm full-text trên tên và mô tả.
     public List<Document> fullTextQuery(String q) {
         List<Document> list = new ArrayList<>();
         String sql = "SELECT d.*, u.full_name as uploader_name, c.name as category_name " +
@@ -549,7 +549,7 @@ public class DocumentDAO {
         return list;
     }
 
-    // UC11.2.1.3 mergeAndPrioritize(results)
+    // UC11.2.1.3: Kết hợp kết quả: ưu tiên tài liệu khớp chủ đề/tag lên đầu; các kết quả full-text xếp sau.
     public List<Document> mergeAndPrioritize(List<Document> list1, List<Document> list2) {
         List<Document> merged = new ArrayList<>(list1);
         Set<Integer> existingIds = new HashSet<>();
@@ -565,12 +565,97 @@ public class DocumentDAO {
         return merged;
     }
 
-    // UC11.1.6 synonymSearch(q)
+    // UC11.2.6.1: Hệ thống kiểm tra từ khóa nhập vào trong bảng đồng nghĩa (synonym dictionary) được quản lý tập trung trên hệ thống.
+    private void initSynonymTable() {
+        String createTableSql = "CREATE TABLE IF NOT EXISTS synonyms (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                "group_id INT NOT NULL, " +
+                "word VARCHAR(255) NOT NULL, " +
+                "UNIQUE KEY (group_id, word)" +
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement psTable = conn.prepareStatement(createTableSql)) {
+            psTable.execute();
+            // Kiểm tra xem đã có dữ liệu chưa
+            String checkSql = "SELECT COUNT(*) FROM synonyms";
+            try (PreparedStatement psCheck = conn.prepareStatement(checkSql);
+                 ResultSet rs = psCheck.executeQuery()) {
+                if (rs.next() && rs.getInt(1) == 0) {
+                    // Chèn dữ liệu mẫu (các từ đồng nghĩa tiếng Việt)
+                    String insertSql = "INSERT INTO synonyms (group_id, word) VALUES " +
+                            "(1, 'giải tích'), (1, 'toán cao'), (1, 'calculus'), (1, 'vi tích phân'), " +
+                            "(2, 'java'), (2, 'lập trình java'), (2, 'oop'), (2, 'hướng đối tượng'), " +
+                            "(3, 'mạng máy tính'), (3, 'computer network'), (3, 'networking')";
+                    try (PreparedStatement psInsert = conn.prepareStatement(insertSql)) {
+                        psInsert.executeUpdate();
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    // UC11.2.6.2: Nếu từ khóa có trong bảng đồng nghĩa, hệ thống tự động mở rộng truy vấn với tất cả các từ đồng nghĩa tương ứng / UC11.2.6.3: Thực hiện truy vấn full-text song song cho từ khóa gốc và tất cả từ đồng nghĩa; kết hợp kết quả và loại bỏ trùng lặp.
+    public List<Document> synonymSearch(String q, List<String> synonymsUsed) {
+        List<Document> list = new ArrayList<>();
+        if (q == null || q.trim().isEmpty()) return list;
+        initSynonymTable();
+        // 1. Tìm các group_id chứa từ khóa q
+        String findGroupsSql = "SELECT DISTINCT group_id FROM synonyms WHERE LOWER(word) = LOWER(?)";
+        List<Integer> groupIds = new ArrayList<>();
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(findGroupsSql)) {
+            ps.setString(1, q.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    groupIds.add(rs.getInt("group_id"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        if (groupIds.isEmpty()) {
+            return list;
+        }
+        // 2. Lấy tất cả các từ đồng nghĩa trong các group đó (loại trừ từ khóa gốc)
+        List<String> synonyms = new ArrayList<>();
+        StringBuilder sb = new StringBuilder("SELECT word FROM synonyms WHERE group_id IN (");
+        for (int i = 0; i < groupIds.size(); i++) {
+            sb.append(groupIds.get(i));
+            if (i < groupIds.size() - 1) sb.append(",");
+        }
+        sb.append(") AND LOWER(word) != LOWER(?)");
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sb.toString())) {
+            ps.setString(1, q.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    synonyms.add(rs.getString("word"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        // 3. Thực hiện truy vấn song song (hoặc tuần tự) cho từ đồng nghĩa, kết hợp kết quả
+        for (String syn : synonyms) {
+            if (synonymsUsed != null) {
+                synonymsUsed.add(syn);
+            }
+            List<Document> synDocs = fullTextQuery(syn);
+            for (Document doc : synDocs) {
+                if (list.stream().noneMatch(d -> d.getId() == doc.getId())) {
+                    list.add(doc);
+                }
+            }
+        }
+        return list;
+    }
+    // UC11.1.6: Truy vấn cả các từ đồng nghĩa / từ khóa liên quan (nếu hệ thống hỗ trợ synonym search); sắp xếp kết quả theo relevance score giảm dần.
     public List<Document> synonymSearch(String q) {
-        return new ArrayList<>(); // Basic implementation without DB synonyms
+        return synonymSearch(q, new ArrayList<>());
     }
 
-    // UC11.1.6 sortByRelevanceScore(results)
+    // UC11.1.6: Truy vấn cả các từ đồng nghĩa / từ khóa liên quan (nếu hệ thống hỗ trợ synonym search); sắp xếp kết quả theo relevance score giảm dần.
     public void sortByRelevanceScore(List<Document> results, String q) {
         results.sort((d1, d2) -> {
             int score1 = calculateRelevance(d1, q);
@@ -588,18 +673,49 @@ public class DocumentDAO {
         return score;
     }
 
-    // UC11.1.5 fullTextSearch(q)
-    public List<Document> fullTextSearch(String q) {
+    // UC11.1.5: Nhận tham số q={từ+khóa}; thực hiện truy vấn full-text search trên các trường: tên tài liệu, mô tả, chủ đề, tags. / UC11.2.6.3: Thực hiện truy vấn full-text song song cho từ khóa gốc và tất cả từ đồng nghĩa; kết hợp kết quả và loại bỏ trùng lặp.
+    public List<Document> fullTextSearch(String q, List<String> synonymsUsed) {
         List<Document> exactMatches = exactMatchQuery(q);
         List<Document> fullTextMatches = fullTextQuery(q);
         List<Document> results = mergeAndPrioritize(exactMatches, fullTextMatches);
-        List<Document> synonyms = synonymSearch(q);
+        List<Document> synonyms = synonymSearch(q, synonymsUsed);
+        // UC11.2.6.4: Sắp xếp kết quả theo độ liên quan: tài liệu khớp từ khóa gốc được ưu tiên hàng đầu, tiếp theo là các tài liệu khớp từ đồng nghĩa.
         results = mergeAndPrioritize(results, synonyms);
         sortByRelevanceScore(results, q);
         return results;
     }
 
-    // UC11.2.3.3 getFullDocumentList()
+    // UC11.1.5: Nhận tham số q={từ+khóa}; thực hiện truy vấn full-text search trên các trường: tên tài liệu, mô tả, chủ đề, tags.
+    public List<Document> fullTextSearch(String q) {
+        return fullTextSearch(q, new ArrayList<>());
+    }
+    // UC11.2.4.3: Gợi ý: hiển thị các từ khóa tìm kiếm phổ biến hoặc các chủ đề đề xuất.
+    public List<String> getPopularSearchKeywords() {
+        List<String> keywords = new ArrayList<>();
+        String sql = "SELECT c.name, COUNT(d.id) as count_docs " +
+                     "FROM categories c JOIN documents d ON c.id = d.category_id " +
+                     "WHERE d.is_active = 1 " +
+                     "GROUP BY c.name ORDER BY count_docs DESC LIMIT 5";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                keywords.add(rs.getString("name"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        // Nếu DB chưa có dữ liệu, trả về danh sách mặc định phong phú
+        if (keywords.isEmpty()) {
+            keywords.add("giải tích");
+            keywords.add("lập trình java");
+            keywords.add("kinh tế vi mô");
+            keywords.add("toán cao");
+            keywords.add("mạng máy tính");
+        }
+        return keywords;
+    }
+    // UC11.2.3.3: Khôi phục lại danh sách tài liệu đầy đủ (không có bộ lọc từ khóa) – giữ nguyên các bộ lọc danh mục đang áp dụng.
     public List<Document> getFullDocumentList() {
         List<Document> list = new ArrayList<>();
         String sql = "SELECT d.*, u.full_name as uploader_name, c.name as category_name " +

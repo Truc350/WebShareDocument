@@ -78,13 +78,50 @@
     return (text || "").replace(regex, '<mark style="background-color: #fde047; padding: 0 2px; border-radius: 2px;">$1</mark>');
   }
 
-  function renderResults(results, q) {
+  // UC11.1.8: Render lại khu vực danh sách: hiển thị kết quả, thông báo số lượng, highlight từ khóa trong mỗi thẻ tài liệu.
+  function renderResults(results, q, synonymsUsed = [], popularKeywords = []) {
     grid.innerHTML = "";
+    // Hiển thị phần đuôi từ khóa tìm kiếm (Ví dụ: cho 'giải tích')
+    const searchQuerySuffix = document.querySelector("#searchQuerySuffix");
+    if (searchQuerySuffix) {
+      searchQuerySuffix.innerHTML = q ? ` cho '<strong>${q}</strong>'` : "";
+    }
+    // UC11.2.6.5: Hiển thị thông báo bổ sung phía trên danh sách kết quả: “Hiển thị kết quả bao gồm các từ đồng nghĩa: [danh sách từ]” để người dùng biết hệ thống đã mở rộng tìm kiếm.
+    const synonymInfoBox = document.querySelector("#synonymInfoBox");
+    if (synonymInfoBox) {
+      if (synonymsUsed && synonymsUsed.length > 0) {
+        synonymInfoBox.innerHTML = `Hiển thị kết quả bao gồm các từ đồng nghĩa: <strong>${synonymsUsed.join(", ")}</strong>`;
+        synonymInfoBox.style.display = "block";
+      } else {
+        synonymInfoBox.style.display = "none";
+      }
+    }
     if (results.length === 0) {
-      // UC11.2.4.2 showNotFound(q)
-      // UC11.2.4.3 showSuggestions()
+      // UC11.2.4.2: Hiển thị thông báo thân thiện: "Không tìm thấy tài liệu nào cho '{từ khóa}'. Vui lòng thử lại với từ khóa khác."
+      // UC11.2.4.3: Gợi ý: hiển thị các từ khóa tìm kiếm phổ biến hoặc các chủ đề đề xuất.
       if (emptyState) {
-        emptyState.innerHTML = `Không tìm thấy tài liệu nào cho '<b>${q}</b>'. Vui lòng thử lại với từ khóa khác.<br><br><small>Gợi ý: giải tích, lập trình java, kinh tế vi mô...</small>`;
+        let suggestionsHtml = "";
+        if (popularKeywords && popularKeywords.length > 0) {
+          suggestionsHtml = popularKeywords.map(kw => `<a href="#" class="suggested-keyword" style="color: #2563eb; text-decoration: underline; margin-right: 8px;">${kw}</a>`).join(", ");
+        } else {
+          suggestionsHtml = "giải tích, lập trình java, kinh tế vi mô...";
+        }
+        emptyState.innerHTML = `Không tìm thấy tài liệu nào cho '<b>${q}</b>'. Vui lòng thử lại với từ khóa khác.<br><br><small>Gợi ý: ${suggestionsHtml}</small>`;
+        // UC11.2.4.4: Chỉnh sửa từ khóa và thực hiện tìm kiếm lại (quay lại bước UC11.1.1) hoặc xóa từ khóa (UC11.2.3).
+        emptyState.querySelectorAll(".suggested-keyword").forEach(link => {
+          link.addEventListener("click", function(e) {
+            e.preventDefault();
+            const keyword = this.textContent;
+            if (headerSearchInput) {
+              headerSearchInput.value = keyword;
+            }
+            const url = new URL(window.location.href);
+            url.searchParams.set("q", keyword);
+            url.searchParams.set("page", "1");
+            window.history.pushState({}, "", url);
+            fetchSearchResults();
+          });
+        });
         emptyState.classList.add("visible");
       }
       if (resultCount) resultCount.textContent = "0";
@@ -98,6 +135,7 @@
       const article = document.createElement("article");
       article.className = "doc-card";
       article.style.cursor = "pointer";
+      // UC11.1.9: Xem danh sách kết quả và nhấp vào tài liệu mong muốn để xem chi tiết (kết thúc use case).
       article.onclick = function() { window.location.href = `${window.CONTEXT_PATH || ""}/document-detail?id=${doc.id}`; };
       
       article.dataset.title = doc.title || "";
@@ -140,12 +178,12 @@
     const urlParams = new URLSearchParams(window.location.search);
     const q = urlParams.get("q") || "";
     
-    // UC11.1.5 fullTextSearch(q)
+    // UC11.1.5: Nhận tham số q={từ+khóa}; thực hiện truy vấn full-text search trên các trường: tên tài liệu, mô tả, chủ đề, tags.
     fetch(`${window.CONTEXT_PATH || ""}/api/search?q=${encodeURIComponent(q)}`)
       .then(res => res.json())
       .then(data => {
-        // UC11.1.8 renderResults(results) + highlightKeyword(q)
-        renderResults(data.results || [], q);
+        // UC11.1.8: Render lại khu vực danh sách: hiển thị kết quả, thông báo số lượng, highlight từ khóa trong mỗi thẻ tài liệu.
+        renderResults(data.results || [], q, data.synonymsUsed || [], data.popularKeywords || []);
       })
       .catch(err => console.error("Search error:", err));
   }
@@ -171,7 +209,7 @@
       if (headerSearchInput) {
         headerSearchInput.value = "";
       }
-      // UC11.2.3.1 xóa từ khóa -> resetSearch -> renderFullList
+      // UC11.2.3.1: Xóa toàn bộ nội dung ô tìm kiếm (bằng phím Backspace hoặc nút ✕).
       const url = new URL(window.location.href);
       url.searchParams.delete("q");
       window.history.pushState({}, "", url);

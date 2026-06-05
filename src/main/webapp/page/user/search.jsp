@@ -64,7 +64,7 @@
 
             <section class="documents-content">
                 <div class="documents-toolbar">
-                    <p>Tìm thấy <strong id="resultCount">0</strong> tài liệu</p>
+                    <p>Tìm thấy <strong id="resultCount">0</strong> tài liệu<span id="searchQuerySuffix"></span></p>
                     <div class="toolbar-actions">
                         <button class="view-toggle active" type="button" data-view="grid" aria-label="Xem dạng lưới">
                             <span class="material-symbols-outlined">grid_view</span>
@@ -80,6 +80,8 @@
                     </div>
                 </div>
 
+                <!-- UC11.2.6.5: Thông báo bổ sung hiển thị từ đồng nghĩa -->
+                <div id="synonymInfoBox" style="display: none; background-color: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; font-size: 14px;"></div>
                 <div class="documents-grid" id="documentsGrid">
                     <!-- Danh sách tài liệu sẽ được render bằng JS tại đây -->
                 </div>
