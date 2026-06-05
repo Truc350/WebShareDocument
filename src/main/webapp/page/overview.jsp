@@ -69,6 +69,11 @@
         <button class="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100" type="button">
           <span class="material-symbols-outlined">history</span>
         </button>
+        <a href="${pageContext.request.contextPath}/logout"
+           class="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors flex items-center justify-center"
+           title="Đăng xuất">
+          <span class="material-symbols-outlined">logout</span>
+        </a>
       </div>
       <div class="h-8 w-px bg-slate-200"></div>
       <div class="flex items-center gap-3">

@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <!DOCTYPE html>
 
 <html class="light" lang="vi"><head>
@@ -164,6 +164,11 @@
 <div class="flex items-center gap-2 p-1 rounded-full hover:bg-slate-50 transition-colors cursor-pointer">
 <span class="material-symbols-outlined text-slate-500" data-icon="help">help</span>
 </div>
+<a href="${pageContext.request.contextPath}/logout"
+   class="p-1.5 text-red-600 hover:bg-red-50 rounded-full transition-colors flex items-center justify-center cursor-pointer"
+   title="Đăng xuất">
+    <span class="material-symbols-outlined">logout</span>
+</a>
 <div class="h-8 w-px bg-slate-200 mx-1"></div>
 <div class="flex items-center gap-3 cursor-pointer group">
 <div class="text-right">
