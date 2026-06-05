@@ -24,6 +24,22 @@
       <h1 class="font-headline-sm text-headline-sm text-on-surface" style="margin-top:4px;">Đăng nhập</h1>
     </div>
 
+    <%-- Alert flashError/flashSuccess từ session (EX-02 Timeout) --%>
+    <% if (session.getAttribute("flashError") != null) { %>
+    <div class="alert-error" style="margin-bottom: 16px;">
+      <span class="material-symbols-outlined icon">error</span>
+      <span class="msg"><%= session.getAttribute("flashError") %></span>
+    </div>
+    <% session.removeAttribute("flashError"); %>
+    <% } %>
+    <% if (session.getAttribute("flashSuccess") != null) { %>
+    <div class="alert-success" style="background-color: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; display: flex; align-items: center; gap: 8px; padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 16px;">
+      <span class="material-symbols-outlined icon" style="color: #059669;">check_circle</span>
+      <span class="msg"><%= session.getAttribute("flashSuccess") %></span>
+    </div>
+    <% session.removeAttribute("flashSuccess"); %>
+    <% } %>
+
     <%-- Alert: sai email/mật khẩu --%>
     <% if ("invalid_credentials".equals(request.getAttribute("errorType"))) { %>
     <div class="alert-error">

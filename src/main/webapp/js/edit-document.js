@@ -1,20 +1,21 @@
 /**
- * edit-document.js – Chỉnh sửa thông tin và thay thế file tài liệu
+ * edit-document.js – Logic xử lý giao diện chỉnh sửa thông tin tài liệu (UC15)
  */
 (function () {
     'use strict';
 
+    // Các thành phần DOM trên Form
     const form         = document.getElementById('editDocumentForm');
     const btnSave      = document.getElementById('btnSave');
     const btnCancel    = document.getElementById('btnCancel');
     
-    // Counter elements
+    // Các phần hiển thị đếm ký tự
     const titleInput   = document.getElementById('title');
     const titleLen     = document.getElementById('titleLen');
     const descInput    = document.getElementById('description');
     const descLen      = document.getElementById('descLen');
 
-    // Replace File UI elements
+    // Các thành phần UI thay thế tệp tin
     const currentFileBox = document.getElementById('currentFileBox');
     const newFileSection = document.getElementById('newFileSection');
     const btnReplaceFile = document.getElementById('btnReplaceFile');
@@ -27,18 +28,19 @@
     const newFileMetaDisplay = document.getElementById('newFileMetaDisplay');
     const removeFileBtn = document.getElementById('removeFile');
 
-    // Progress elements
+    // Các phần hiển thị tiến trình tải tệp (Progress Bar)
     const progressContainer = document.getElementById('progressContainer');
     const progressBarFill = document.getElementById('progressBarFill');
     const progressText = document.getElementById('progressText');
     const progressStatus = document.getElementById('progressStatus');
     const cancelUploadBtn = document.getElementById('cancelUpload');
 
-    const maxSize = 50 * 1024 * 1024;
+    // Các ràng buộc tệp tin
+    const maxSize = 50 * 1024 * 1024; // Giới hạn kích thước tệp là 50MB
     const allowedExtensions = ["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "txt", "png", "jpg", "jpeg"];
     let currentXhr = null;
 
-    // Live Preview elements
+    // Các thành phần hiển thị trên Live Preview Card
     const previewTitle = document.getElementById('previewTitle');
     const previewCategory = document.getElementById('previewCategory');
     const previewTagsContainer = document.getElementById('previewTagsContainer');
@@ -48,12 +50,12 @@
     const previewFileSize = document.getElementById('previewFileSize');
     const previewFileExt = document.getElementById('previewFileExt');
 
-    // Store original file info
+    // Lưu trữ siêu dữ liệu tệp gốc để khôi phục khi hủy thay thế
     const originalFileName = previewFileName ? previewFileName.textContent.trim() : '';
     const originalFileSize = previewFileSize ? previewFileSize.textContent.trim() : '';
     const originalFileExt = previewFileExt ? previewFileExt.textContent.trim() : '';
 
-    // ── Counters ────────────────────────────────────────────────────────
+    // ── HÀM ĐẾM KÝ TỰ CHO CÁC TRƯỜNG NHẬP LIỆU ────────────────────────────────
     function updateCounter(input, display, max) {
         const len = input.value.length;
         display.textContent = len;
@@ -69,7 +71,7 @@
         descInput.addEventListener('input', () => updateCounter(descInput, descLen, 2000));
     }
 
-    // ── Replace File UI Logic ───────────────────────────────────────────
+    // ── LOGIC XỬ LÝ GIAO DIỆN THAY THẾ FILE ───────────────────────────────────
     if (btnReplaceFile) {
         btnReplaceFile.addEventListener('click', () => {
             currentFileBox.classList.add('hidden');
@@ -85,13 +87,14 @@
         });
     }
 
+    // Hàm xóa tệp mới đã chọn và khôi phục thông tin tệp cũ
     function clearNewFile() {
         if (fileInput) fileInput.value = '';
         if (filePreview) filePreview.classList.add('hidden');
         if (dropzone) dropzone.classList.remove('hidden');
         clearErrors();
 
-        // Restore original file info on Preview Card
+        // Khôi phục thông tin tệp gốc trên Live Preview Card
         if (previewFileName) previewFileName.textContent = originalFileName;
         if (previewFileSize) previewFileSize.textContent = originalFileSize;
         if (previewFileExt) previewFileExt.textContent = originalFileExt;
@@ -111,6 +114,7 @@
         return (bytes / 1024).toFixed(1) + " KB";
     }
 
+    // Hiển thị thông tin tệp mới được chọn lên giao diện và Live Preview
     function showFile(file) {
         clearErrors();
         const extension = getExtension(file.name);
@@ -129,12 +133,13 @@
         newFileNameDisplay.textContent = file.name;
         newFileMetaDisplay.textContent = formatSize(file.size) + " · " + extension.toUpperCase();
 
-        // Update file info on Preview Card
+        // Cập nhật thông tin file mới lên Live Preview Card
         if (previewFileName) previewFileName.textContent = file.name;
         if (previewFileSize) previewFileSize.textContent = formatSize(file.size);
         if (previewFileExt) previewFileExt.textContent = extension.toUpperCase();
     }
 
+    // Xử lý kéo thả tệp tin (Drag & Drop)
     if (dropzone && fileInput) {
         ['dragenter', 'dragover'].forEach(eventName => {
             dropzone.addEventListener(eventName, e => {
@@ -161,34 +166,73 @@
         });
     }
 
-    // ── UC15.1.5 / UC15.1.6: Form Submit & Validation ───────────────────
+    // ── UC15.1.7 / UC15.1.8 / UC15.2.2: SUBMIT FORM & KIỂM TRA HỢP LỆ (VALIDATION) ──
     if (form) {
+        // UC15.1.7: User nhấp nút "Lưu thay đổi" để xác nhận cập nhật thông tin tài liệu
         form.addEventListener('submit', function (e) {
             e.preventDefault();
             clearErrors();
             
-            // UC15.1.6 & UC15.2.2.1: Hệ thống phát hiện lỗi validation (tên tài liệu để trống)
+            // UC15.1.8 & UC15.2.2.1: Hệ thống kiểm tra tính hợp lệ của dữ liệu nhập
+            // Kiểm tra Tiêu đề tài liệu
             const title = titleInput ? titleInput.value.trim() : '';
             if (!title) {
-                // UC15.2.2.2: Hệ thống highlight trường nhập liệu bị lỗi và hiển thị thông báo lỗi
-                // UC15.2.2.3: User sửa lại thông tin không hợp lệ trên form và nhấp lại nút “Lưu thay đổi” (chờ user thao tác lại)
+                // UC15.2.2.1: Phát hiện lỗi tên tài liệu để trống -> highlight và hiện thông báo lỗi
                 showError('title', 'Tên tài liệu không được để trống.');
                 return;
+            }
+            if (title.length > 255) {
+                // UC15.2.2.1: Phát hiện tên tài liệu vượt quá giới hạn ký tự
+                showError('title', 'Tên tài liệu không được vượt quá 255 ký tự.');
+                return;
+            }
+
+            // Kiểm tra Mô tả tài liệu
+            const description = descInput ? descInput.value.trim() : '';
+            if (description.length > 2000) {
+                // UC15.2.2.1: Phát hiện lỗi mô tả vượt quá giới hạn ký tự
+                showError('description', 'Mô tả không được vượt quá 2000 ký tự.');
+                return;
+            }
+
+            // Kiểm tra Định dạng các thẻ Tags
+            const tagsInput = document.getElementById('tags');
+            if (tagsInput) {
+                const tagsVal = tagsInput.value.trim();
+                if (tagsVal) {
+                    const tagsArr = tagsVal.split(',')
+                        .map(t => t.trim())
+                        .filter(t => t !== '');
+                    const tagRegex = /^[a-zA-Z0-9\sÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸĐđ\-]+$/;
+                    for (let tag of tagsArr) {
+                        if (tag.length > 50) {
+                            // UC15.2.2.1: Phát hiện tag dài quá 50 ký tự
+                            showError('tags', 'Mỗi thẻ không được vượt quá 50 ký tự.');
+                            return;
+                        }
+                        if (!tagRegex.test(tag)) {
+                            // UC15.2.2.1: Phát hiện tag chứa ký tự đặc biệt không được phép
+                            showError('tags', 'Thẻ chứa ký tự không hợp lệ. Chỉ cho phép chữ, số, khoảng trắng và dấu gạch ngang.');
+                            return;
+                        }
+                    }
+                }
             }
 
             const fileToUpload = fileInput && fileInput.files.length > 0 ? fileInput.files[0] : null;
             
-            // Nếu có file mới, upload lên Supabase trước
+            // Nếu có tệp mới được chọn thay thế, upload lên Supabase Storage trước
             if (fileToUpload && !newFileSection.classList.contains('hidden')) {
                 uploadToSupabaseAndSubmit(fileToUpload);
             } else {
-                // Nếu không có file mới, submit form bình thường
+                // Nếu không có tệp mới, tiến hành gửi Form cập nhật thông tin trực tiếp (UC15.1.9)
                 setLoadingState(true);
                 form.submit();
             }
         });
     }
 
+    // Hàm tải tệp lên Supabase Storage qua Ajax
     function uploadToSupabaseAndSubmit(file) {
         currentXhr = new XMLHttpRequest();
         progressContainer.classList.remove('hidden');
@@ -219,13 +263,13 @@
 
                 const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
                 
-                // Set hidden inputs
+                // Thiết lập các giá trị ẩn để gửi lên Servlet
                 document.getElementById('secureUrl').value = publicUrl;
                 document.getElementById('newFileNameInput').value = file.name;
                 document.getElementById('newFileSizeInput').value = file.size;
                 document.getElementById('newExtensionInput').value = getExtension(file.name);
                 
-                // Submit form
+                // Gửi form lưu thông tin tài liệu lên DB (UC15.1.9)
                 form.submit();
             } else {
                 alert("Lỗi tải lên: " + currentXhr.responseText);
@@ -259,18 +303,22 @@
         setLoadingState(false);
     }
 
-    // UC15.2.3: Alternate Flow - User huỷ thao tác chỉnh sửa
+    // ── UC15.2.3: ALTERNATE FLOW - USER HUỶ THAO TÁC CHỈNH SỬA ────────────────
     if (btnCancel) {
+        // UC15.2.3.1: User nhấp nút "Huỷ"
         btnCancel.addEventListener('click', function () {
-            // UC15.2.3.1: User nhấp nút “Huỷ”
-            // UC15.2.3.2: Hệ thống không lưu bất kỳ thay đổi nào và chuyển hướng User về trang chi tiết tài liệu với dữ liệu cũ còn nguyên
-            history.back();
+            // UC15.2.3.2: Hệ thống hủy thao tác, không lưu gì và chuyển hướng về Trang cá nhân
+            const context = window.originalDocInfo ? window.originalDocInfo.contextPath : '';
+            window.location.href = context + '/profile';
         });
     }
 
+    // Hàm hiển thị lỗi validation trên giao diện và đánh dấu đỏ bên Live Preview
     function showError(fieldId, message) {
         const input = document.getElementById(fieldId);
         if (!input) return;
+        
+        // Highlight đỏ trường nhập liệu bị lỗi (UC15.2.2.1)
         input.classList.add('field-error');
         const parent = input.closest('.space-y-1\\.5') || input.parentElement;
         let errP = parent.querySelector('.js-error');
@@ -283,25 +331,33 @@
             errP.innerHTML = `<span class="material-symbols-outlined text-[14px]">error</span> ${message}`;
         }
 
-        // Highlight corresponding preview card elements
+        // UC15.2.2.1: Live Preview Card đánh dấu viền đỏ các trường không hợp lệ trong thẻ xem trước
         if (fieldId === 'title' && previewTitle) {
             previewTitle.classList.add('text-red-500', 'border', 'border-red-200', 'p-1', 'rounded');
         } else if (fieldId === 'tags' && previewTagsContainer) {
             previewTagsContainer.classList.add('border', 'border-red-200', 'p-1', 'rounded');
+        } else if (fieldId === 'description' && previewDescription) {
+            previewDescription.classList.add('text-red-500', 'border', 'border-red-200', 'p-1', 'rounded');
         }
 
+        // Cuộn màn hình đến phần tử bị lỗi để người dùng dễ nhìn thấy
         input.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+
+    // Xóa các vết đỏ và thông báo lỗi cũ
     function clearErrors() {
         form.querySelectorAll('.js-error').forEach(el => el.remove());
         form.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
 
-        // Clear preview highlights
+        // Xóa đánh dấu đỏ trên Live Preview Card
         if (previewTitle) {
             previewTitle.classList.remove('text-red-500', 'border', 'border-red-200', 'p-1', 'rounded');
         }
         if (previewTagsContainer) {
             previewTagsContainer.classList.remove('border', 'border-red-200', 'p-1', 'rounded');
+        }
+        if (previewDescription) {
+            previewDescription.classList.remove('text-red-500', 'border', 'border-red-200', 'p-1', 'rounded');
         }
     }
 
@@ -314,21 +370,21 @@
         if (btnSaveText) btnSaveText.textContent  = loading ? 'Đang lưu...' : 'Lưu thay đổi';
     }
 
-    // ── Live Preview Logic ────────────────────────────────────────────────
+    // ── UC15.1.6: CẬP NHẬT LIVE PREVIEW CARD THEO THỜI GIAN THỰC (REAL-TIME) ──
     function updateLivePreview() {
-        // Title
+        // Cập nhật Tiêu đề lên Live Preview Card
         if (titleInput && previewTitle) {
             const titleVal = titleInput.value.trim();
             previewTitle.textContent = titleVal || 'Chưa đặt tên tài liệu';
         }
 
-        // Description
+        // Cập nhật Mô tả lên Live Preview Card
         if (descInput && previewDescription) {
             const descVal = descInput.value.trim();
             previewDescription.textContent = descVal || 'Chưa có mô tả nào cho tài liệu này.';
         }
 
-        // Category
+        // Cập nhật Tên danh mục lên Live Preview Card
         const categorySelect = document.getElementById('categoryId');
         if (categorySelect && previewCategory) {
             const selectedOption = categorySelect.options[categorySelect.selectedIndex];
@@ -336,7 +392,7 @@
             previewCategory.textContent = catName;
         }
 
-        // Privacy Badge
+        // Cập nhật Trạng thái hiển thị (Công khai / Nháp) lên Live Preview Card
         if (previewPrivacyBadge) {
             const checkedRadio = document.querySelector('input[name="privacy"]:checked');
             const isPublic = checkedRadio && checkedRadio.value === 'public';
@@ -348,7 +404,7 @@
             }
         }
 
-        // Tags
+        // Cập nhật các Thẻ Tags lên Live Preview Card
         const tagsInput = document.getElementById('tags');
         if (tagsInput && previewTagsContainer) {
             const tagsVal = tagsInput.value.trim();
@@ -381,7 +437,7 @@
         previewTagsContainer.appendChild(span);
     }
 
-    // Setup Preview Event Listeners
+    // Lắng nghe sự kiện thay đổi dữ liệu để cập nhật Live Preview tức thì (UC15.1.6)
     if (titleInput) {
         titleInput.addEventListener('input', updateLivePreview);
     }
@@ -400,9 +456,9 @@
         radio.addEventListener('change', updateLivePreview);
     });
 
-    // ==========================================
-    // DOCUMENT PREVIEW PANEL LOGIC (UC15.1.5)
-    // ==========================================
+    // ========================================================================
+    // UC15.1.4 & UC15.1.5: XỬ LÝ PANEL XEM TRƯỚC NỘI DUNG TỆP (FILE PREVIEW)
+    // ========================================================================
     const btnViewFile = document.getElementById('btnViewFile');
     const btnViewNewFile = document.getElementById('btnViewNewFile');
     const filePreviewPanel = document.getElementById('filePreviewPanel');
@@ -412,15 +468,16 @@
     const panelFileExtBadge = document.getElementById('panelFileExtBadge');
     const panelFileIcon = document.getElementById('panelFileIcon');
 
+    // Hàm mở modal panel
     function openPreviewModal() {
         if (!filePreviewPanel) return;
         filePreviewPanel.classList.remove('hidden');
         filePreviewPanel.classList.add('flex');
-        // Force reflow for CSS transitions
-        filePreviewPanel.offsetHeight;
+        filePreviewPanel.offsetHeight; // Force reflow
         filePreviewPanel.classList.add('modal-active');
     }
 
+    // Hàm đóng modal panel
     function closePreviewModal() {
         if (!filePreviewPanel) return;
         filePreviewPanel.classList.remove('modal-active');
@@ -440,7 +497,6 @@
         });
     }
 
-    // Dynamic loader spinner
     function showPanelLoading() {
         if (!panelBody) return;
         panelBody.innerHTML = `
@@ -479,10 +535,11 @@
         }
     }
 
+    // UC15.1.5: Hàm hiển thị nội dung tệp theo định dạng
     function renderPreview(fileName, extension, source) {
         if (!panelBody || !panelFileName || !panelFileExtBadge || !panelFileIcon) return;
 
-        // Set metadata on header
+        // Thiết lập tiêu đề và icon trên thanh tiêu đề của panel
         panelFileName.textContent = fileName;
         panelFileExtBadge.textContent = extension.toUpperCase();
         panelFileIcon.textContent = getMaterialIconByExt(extension);
@@ -492,8 +549,8 @@
 
         const ext = extension.toLowerCase();
 
+        // 1. Đối với file Ảnh (png, jpg, jpeg) hiển thị trực tiếp
         if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') {
-            // Render Image
             const img = document.createElement('img');
             img.className = 'max-w-full max-h-[70vh] rounded-lg shadow-md object-contain transition-all duration-300';
             img.alt = fileName;
@@ -508,8 +565,8 @@
             panelBody.innerHTML = '';
             panelBody.appendChild(img);
         }
+        // 2. Đối với file PDF hiển thị dạng trang cuộn được qua iframe
         else if (ext === 'pdf') {
-            // Render PDF in standard scrollable iframe (natively supported by all browsers)
             let pdfUrl = '';
             if (source instanceof File) {
                 pdfUrl = URL.createObjectURL(source);
@@ -521,8 +578,8 @@
                 <iframe src="${pdfUrl}" class="w-full h-[70vh] border border-slate-200/60 rounded-xl bg-white shadow-sm" title="Preview PDF"></iframe>
             `;
         }
+        // 3. Đối với file văn bản mới .docx: chuyển đổi HTML hiển thị dạng text định dạng (Mammoth.js)
         else if (ext === 'docx') {
-            // Render DOCX utilizing Mammoth.js
             if (source instanceof File) {
                 const reader = new FileReader();
                 reader.onload = function (e) {
@@ -545,7 +602,7 @@
                 reader.onerror = () => showPanelError('Không thể đọc dữ liệu tệp từ máy tính.');
                 reader.readAsArrayBuffer(source);
             } else {
-                // Fetch the remote/online DOCX and render
+                // Tải file docx trực tuyến và convert sang HTML
                 fetch(source)
                     .then(response => {
                         if (!response.ok) throw new Error('Không thể tải tệp từ máy chủ.');
@@ -564,7 +621,6 @@
                             })
                             .catch(err => {
                                 console.error(err);
-                                // Fallback to office apps live preview if mammoth fails (e.g. file protected or complex formatting)
                                 loadOfficeAppsFallback(source);
                             });
                     })
@@ -574,16 +630,16 @@
                     });
             }
         }
+        // 4. Đối với các tệp Office cũ (.doc, .xls, .ppt): sử dụng nhúng Office Online Viewer
         else if (ext === 'doc' || ext === 'xls' || ext === 'xlsx' || ext === 'ppt' || ext === 'pptx') {
-            // Older Word or Spreadsheet format: use Office Online embed if remote, or show instruction if local
             if (source instanceof File) {
                 showPanelError(`Định dạng tệp .${ext} không hỗ trợ xem trước trực tiếp khi chưa lưu. Vui lòng sử dụng tệp dạng .docx, .pdf hoặc hình ảnh.`);
             } else {
                 loadOfficeAppsFallback(source);
             }
         }
+        // 5. Đối với tệp văn bản thô (.txt) hiển thị trong thẻ pre
         else if (ext === 'txt') {
-            // Text file
             if (source instanceof File) {
                 const reader = new FileReader();
                 reader.onload = function (e) {
@@ -619,7 +675,6 @@
 
     function loadOfficeAppsFallback(fileUrl) {
         if (!panelBody) return;
-        // Office Online requires an absolute URL.
         let absoluteUrl = fileUrl;
         if (!fileUrl.startsWith('http')) {
             absoluteUrl = window.location.origin + fileUrl;
@@ -639,7 +694,7 @@
             .replace(/'/g, "&#039;");
     }
 
-    // Bind original file preview button
+    // UC15.1.4: Lắng nghe sự kiện bấm nút “Xem nội dung file” trên tệp hiện tại
     if (btnViewFile) {
         btnViewFile.addEventListener('click', () => {
             if (!window.originalDocInfo || !window.originalDocInfo.viewUrl) {
@@ -648,10 +703,8 @@
             }
 
             const info = window.originalDocInfo;
-            // Resolve fileUrl correctly taking contextPath into account
             let fileUrl = info.viewUrl;
             if (fileUrl && !fileUrl.startsWith('http')) {
-                // If it doesn't already start with the contextPath, prepend it
                 const context = info.contextPath || '';
                 if (context && !fileUrl.startsWith(context)) {
                     fileUrl = context + fileUrl;
@@ -662,7 +715,7 @@
         });
     }
 
-    // Bind newly selected local file preview button
+    // UC15.1.4: Lắng nghe sự kiện bấm nút “Xem nội dung file” cho tệp mới tải lên ở dropzone
     if (btnViewNewFile) {
         btnViewNewFile.addEventListener('click', () => {
             if (!fileInput || fileInput.files.length === 0) {
@@ -675,9 +728,10 @@
         });
     }
 
-    // Initialize preview on page load
+    // Khởi tạo hiển thị Live Preview lần đầu khi vừa tải trang
     updateLivePreview();
 
+    // Tự động ẩn các Flash Message sau 5 giây
     setTimeout(() => {
         ['flash-success', 'flash-error'].forEach(id => {
             const el = document.getElementById(id);

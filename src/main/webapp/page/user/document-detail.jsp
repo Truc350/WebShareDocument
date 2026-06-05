@@ -1,11 +1,23 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="vn.edu.hcmuaf.fit.websharedocument.model.Document" %>
+<%@ page import="vn.edu.hcmuaf.fit.websharedocument.model.User" %>
 <%
     Document doc = (Document) request.getAttribute("document");
     if (doc == null) {
         response.sendRedirect(request.getContextPath() + "/");
         return;
     }
+    
+    // UC15.1.2: Check if the logged in user is the owner of the document
+    boolean isOwner = false;
+    User authUser = (User) session.getAttribute("authUser");
+    if (authUser == null) {
+        authUser = (User) session.getAttribute("adminUser");
+    }
+    if (authUser != null && authUser.getId() == doc.getUserId()) {
+        isOwner = true;
+    }
+
     // Tiện ích format kích thước file
     String sizeDisplay;
     double sizeMB = doc.getFileSize() / (1024.0 * 1024.0);
@@ -612,6 +624,55 @@
 </head>
 <body>
 <jsp:include page="/common/header.jsp"/>
+
+<%-- UC15.1.10 / UC15.2.1.2: Hiển thị thông báo flashSuccess hoặc flashError --%>
+<%
+    String flashSuccess = (String) session.getAttribute("flashSuccess");
+    String flashError = (String) session.getAttribute("flashError");
+    if (flashSuccess != null) {
+        session.removeAttribute("flashSuccess");
+%>
+    <div class="alert-toast" style="position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; align-items: center; gap: 12px; background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); font-size: 14px; font-weight: 500; transition: opacity 0.5s;" id="successAlert">
+        <span class="material-symbols-outlined" style="color: #059669;">check_circle</span>
+        <span><%= flashSuccess %></span>
+        <button onclick="document.getElementById('successAlert').remove()" style="background: none; border: none; cursor: pointer; color: #059669; margin-left: 12px; display: flex; align-items: center;">
+            <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
+        </button>
+    </div>
+    <script>
+        setTimeout(function() {
+            var alert = document.getElementById('successAlert');
+            if (alert) {
+                alert.style.opacity = '0';
+                setTimeout(function() { alert.remove(); }, 500);
+            }
+        }, 5000);
+    </script>
+<%
+    }
+    if (flashError != null) {
+        session.removeAttribute("flashError");
+%>
+    <div class="alert-toast" style="position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; align-items: center; gap: 12px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); font-size: 14px; font-weight: 500; transition: opacity 0.5s;" id="errorAlert">
+        <span class="material-symbols-outlined" style="color: #dc2626;">error</span>
+        <span><%= flashError %></span>
+        <button onclick="document.getElementById('errorAlert').remove()" style="background: none; border: none; cursor: pointer; color: #dc2626; margin-left: 12px; display: flex; align-items: center;">
+            <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
+        </button>
+    </div>
+    <script>
+        setTimeout(function() {
+            var alert = document.getElementById('errorAlert');
+            if (alert) {
+                alert.style.opacity = '0';
+                setTimeout(function() { alert.remove(); }, 500);
+            }
+        }, 5000);
+    </script>
+<%
+    }
+%>
+
 <div class="detail-container">
     <div style="grid-column: 1 / -1;">
         <nav class="breadcrumb">
@@ -675,6 +736,19 @@
                 <span class="material-symbols-outlined">download</span>
                 Tải xuống ngay
             </button>
+            
+            <%-- UC15.1.1: Nút Chỉnh sửa hiển thị nếu User là chủ sở hữu tài liệu --%>
+            <% if (isOwner) { %>
+            <a href="${pageContext.request.contextPath}/edit-document?id=<%= doc.getId() %>" 
+               class="btn-edit" 
+               style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; width: 100%; padding: 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; color: #334155; font-size: 14px; font-weight: 600; text-decoration: none; transition: all 0.15s;"
+               onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a'"
+               onmouseout="this.style.background='#f8fafc'; this.style.color='#334155'">
+                <span class="material-symbols-outlined" style="font-size: 18px;">edit</span>
+                Chỉnh sửa tài liệu
+            </a>
+            <% } %>
+            
             <div class="stat-row">
                 <div class="stat-item">
                     <span class="material-symbols-outlined">visibility</span>
