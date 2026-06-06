@@ -216,9 +216,21 @@ public class DownloadDocumentServlet extends HttpServlet {
     }
 
     private void showSaveDialog(HttpServletResponse response, String fileName, long fileSize, String signedUrl) {
-        response.setContentType(getServletContext().getMimeType(fileName));
+        String mimeType = getServletContext().getMimeType(fileName);
+        if (mimeType != null) {
+            response.setContentType(mimeType);
+        } else {
+            response.setContentType("application/octet-stream");
+        }
         response.setContentLength((int) fileSize);
-        response.setHeader("Content-Disposition", String.format("attachment; filename=\"%s\"", fileName));
+        
+        try {
+            String encodedFileName = java.net.URLEncoder.encode(fileName, "UTF-8").replaceAll("\\+", "%20");
+            String asciiFileName = fileName.replaceAll("[^\\x20-\\x7E]", "?");
+            response.setHeader("Content-Disposition", String.format("attachment; filename=\"%s\"; filename*=UTF-8''%s", asciiFileName, encodedFileName));
+        } catch (java.io.UnsupportedEncodingException e) {
+            response.setHeader("Content-Disposition", String.format("attachment; filename=\"%s\"", fileName));
+        }
     }
 
     private void startFileTransfer(String signedUrl) {

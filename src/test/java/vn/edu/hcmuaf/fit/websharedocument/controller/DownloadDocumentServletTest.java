@@ -42,7 +42,7 @@ public class DownloadDocumentServletTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        servlet = new DownloadDocumentServlet();
+        servlet = spy(new DownloadDocumentServlet());
         mockAuth = mock(AuthService.class);
         mockStorage = mock(FileStorage.class);
         mockDms = mock(DMS.class);
@@ -56,7 +56,7 @@ public class DownloadDocumentServletTest {
         setField(servlet, "storage", mockStorage);
         setField(servlet, "dms", mockDms);
         // Set up servlet context mock for real/mock servlet behaviour if needed
-        setField(servlet, "servletContext", servletContext);
+        doReturn(servletContext).when(servlet).getServletContext();
         when(servletContext.getMimeType(anyString())).thenReturn("application/pdf");
         // Set up basic request mock behaviour
         when(request.getSession()).thenReturn(session);
@@ -111,7 +111,7 @@ public class DownloadDocumentServletTest {
         // Verify headers set correctly (UC13.1.6)
         verify(response).setContentType("application/pdf");
         verify(response).setContentLength(dummyContent.length);
-        verify(response).setHeader("Content-Disposition", "attachment; filename=\"document.pdf\"");
+        verify(response).setHeader("Content-Disposition", "attachment; filename=\"document.pdf\"; filename*=UTF-8''document.pdf\"");
 
         // Verify the stream content is exactly written
         assertArrayEquals(dummyContent, responseOutputStream.toByteArray());
@@ -142,7 +142,7 @@ public class DownloadDocumentServletTest {
         servlet.doGet(request, response);
 
         // Check if file header Content-Disposition has "Report2026.pdf" (UC13.2.6.5)
-        verify(response).setHeader("Content-Disposition", "attachment; filename=\"Report2026.pdf\"");
+        verify(response).setHeader("Content-Disposition", "attachment; filename=\"Report2026.pdf\"; filename*=UTF-8''Report2026.pdf\"");
         assertArrayEquals(dummyContent, responseOutputStream.toByteArray());
     }
 
@@ -166,7 +166,7 @@ public class DownloadDocumentServletTest {
         servlet.doGet(request, response);
 
         // Content-Disposition must be "Report2026.pdf"
-        verify(response).setHeader("Content-Disposition", "attachment; filename=\"Report2026.pdf\"");
+        verify(response).setHeader("Content-Disposition", "attachment; filename=\"Report2026.pdf\"; filename*=UTF-8''Report2026.pdf\"");
     }
 
     /**

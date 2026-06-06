@@ -1030,16 +1030,29 @@
 
                     // Extract filename from Content-Disposition header
                     var contentDisposition = res.headers.get('Content-Disposition');
+                    console.log("Download Content-Disposition header:", contentDisposition);
                     if (contentDisposition) {
-                        var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-                        var matches = filenameRegex.exec(contentDisposition);
-                        if (matches != null && matches[1]) { 
-                            finalFileName = matches[1].replace(/['"]/g, '');
+                        var filenameStarRegex = /filename\*=UTF-8''([^;\n]*)/i;
+                        var matchesStar = filenameStarRegex.exec(contentDisposition);
+                        if (matchesStar != null && matchesStar[1]) {
                             try {
-                                finalFileName = decodeURIComponent(finalFileName);
-                            } catch(e) {}
+                                finalFileName = decodeURIComponent(matchesStar[1]);
+                            } catch (e) {
+                                console.error("Error decoding filename*:", e);
+                            }
+                        }
+                        if (!finalFileName) {
+                            var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                            var matches = filenameRegex.exec(contentDisposition);
+                            if (matches != null && matches[1]) { 
+                                finalFileName = matches[1].replace(/['"]/g, '');
+                                try {
+                                    finalFileName = decodeURIComponent(finalFileName);
+                                } catch(e) {}
+                            }
                         }
                     }
+                    console.log("Resolved download filename:", finalFileName);
 
                     // [UC13.1.7] Đọc Content-Length để tính % tiến trình
                     // → Nếu server không trả → dùng animation indeterminate
